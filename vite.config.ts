@@ -17,7 +17,8 @@ export default defineConfig({
       'ws': path.resolve(__dirname, './src/shims/ws-browser.js'),
       '@': path.resolve(__dirname, './src'),
       '@/hooks': path.resolve(__dirname, './src/hooks'),
-      '@/services': path.resolve(__dirname, './src/services')
+      '@/services': path.resolve(__dirname, './src/services'),
+      '@/utils': path.resolve(__dirname, './src/utils')
     }
   },
   define: {

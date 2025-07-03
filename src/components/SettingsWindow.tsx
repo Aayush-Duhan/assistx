@@ -18,7 +18,7 @@ export const SettingsWindow: React.FC<{ isVisible: boolean }> = observer(({ isVi
         <Portal.Notification>
             <MovableWindow 
                 show={isVisible} 
-                width={700}
+                width={400}
                 title="Settings"
                 opaque={true}
             >

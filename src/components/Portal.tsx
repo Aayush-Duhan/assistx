@@ -8,7 +8,7 @@ import React, {
   ReactNode,
   Ref,
 } from 'react';
-import ReactDOM from 'react-dom';
+import {createPortal} from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { electron } from '@/services/electron';
@@ -131,46 +131,47 @@ function PortalProvider({ children }: PortalProviderProps) {
   );
 }
 
-// --- Portal Consumer Components ---
+function GenericPortal({ children, targetKey }: { children: ReactNode; targetKey: keyof PortalContextValue  }) {
+  const portalContext = useContext(PortalContext);
 
-interface PortalConsumerProps {
-  children: ReactNode;
+  if (!portalContext) {
+    console.error("Portal components must be used within a PortalProvider.");
+    return null;
+  }
+
+  const targetNode = portalContext[targetKey];
+
+  // Only render the portal if the target DOM node has been created and attached.
+  return targetNode ? createPortal(children, targetNode) : null;
 }
+
 
 /**
  * Renders children into the 'commandBar' portal target.
  */
-function CommandBarPortal({ children }: PortalConsumerProps) {
-  const portalContext = useContext(PortalContext);
-  const targetNode = portalContext?.commandBar;
-    return targetNode ? ReactDOM.createPortal(children, targetNode) : null;
+function CommandBarPortal({ children }: { children: ReactNode }) {
+  return <GenericPortal targetKey="commandBar">{children}</GenericPortal>;
 }
 
 /**
  * Renders children into the 'movableWindows' portal target.
  */
-function MovableWindowsPortal({ children }: PortalConsumerProps) {
-  const portalContext = useContext(PortalContext);
-  const targetNode = portalContext?.movableWindows;
-  return targetNode ? ReactDOM.createPortal(children, targetNode) : null;
+function MovableWindowsPortal({ children }: { children: ReactNode }) {
+  return <GenericPortal targetKey="movableWindows">{children}</GenericPortal>;
 }
 
 /**
  * Renders children into the 'notifications' portal target.
  */
-function NotificationPortal({ children }: PortalConsumerProps) {
-  const portalContext = useContext(PortalContext);
-  const targetNode = portalContext?.notifications;
-  return targetNode ? ReactDOM.createPortal(children, targetNode) : null;
+function NotificationPortal({ children }: { children: ReactNode }) {
+  return <GenericPortal targetKey="notifications">{children}</GenericPortal>;
 }
 
 /**
  * Renders children into the 'fullscreen' portal target.
  */
-function FullscreenPortal({ children }: PortalConsumerProps) {
-  const portalContext = useContext(PortalContext);
-  const targetNode = portalContext?.fullscreen;
-  return targetNode ? ReactDOM.createPortal(children, targetNode) : null;
+function FullscreenPortal({ children }: { children: ReactNode }) {
+  return <GenericPortal targetKey="fullscreen">{children}</GenericPortal>;
 }
 
 // --- Inline Portal Component (Styled Wrapper) ---

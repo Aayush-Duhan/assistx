@@ -8,34 +8,15 @@ const MAX_TRANSCRIPTIONS_IN_CONTEXT = 1000;
 // Type definitions
 type AudioSource = 'mic' | 'system';
 
-interface AudioTranscription {
-    createdAt: Date;
-    source: AudioSource;
-    text: string;
-    contextAsText: string;
-}
-
 interface ContextServiceDependencies {
     micAudioCaptureService: AudioCaptureService;
     systemAudioCaptureService: AudioCaptureService;
 }
 
 /**
- * Maps the audio source to a human-readable role for the AI prompt.
- */
-function getRoleFromSource(source: AudioSource): string {
-    switch (source) {
-        case 'mic':
-            return 'Me';
-        case 'system':
-            return 'Them';
-    }
-}
-
-/**
  * Represents a single piece of transcribed audio.
  */
-class AudioTranscriptionImpl implements AudioTranscription {
+class Transcription {
     createdAt = new Date();
     source: AudioSource;
     text: string;
@@ -47,7 +28,8 @@ class AudioTranscriptionImpl implements AudioTranscription {
     }
 
     get contextAsText(): string {
-        return `[${getRoleFromSource(this.source)}]\nTranscription: ${this.text}`;
+        const speaker = this.source === 'mic' ? 'Me' : 'Them';
+        return `[${speaker}]\nTranscription: ${this.text}`;
     }
 }
 
@@ -55,9 +37,10 @@ class AudioTranscriptionImpl implements AudioTranscription {
  * Holds the complete, aggregated context, primarily the list of audio transcriptions.
  */
 export class FullContext {
-    audioTranscriptions: AudioTranscription[] = [];
+    audioTranscriptions: Transcription[] = [];
+    private readonly maxTranscriptions = MAX_TRANSCRIPTIONS_IN_CONTEXT;
 
-    constructor(initialTranscriptions: AudioTranscription[] = []) {
+    constructor(initialTranscriptions: Transcription[] = []) {
         this.audioTranscriptions = initialTranscriptions;
         makeObservable(this);
     }
@@ -69,33 +52,40 @@ export class FullContext {
     diff(oldContext: FullContext): FullContext {
         const oldTranscriptionSet = new Set(oldContext.audioTranscriptions);
         const newTranscriptions = this.audioTranscriptions.filter(
-            (transcription) => !oldTranscriptionSet.has(transcription)
+            (t) => !oldTranscriptionSet.has(t)
         );
         return new FullContext(newTranscriptions);
     }
 
-    addAudioTranscription(transcription: AudioTranscription, maxLength: number): void {
-        while (this.audioTranscriptions.length >= maxLength) {
+    addAudioTranscription(transcription: Transcription): void {
+        if (this.audioTranscriptions.length >= this.maxTranscriptions) {
             this.audioTranscriptions.shift();
         }
         this.audioTranscriptions.push(transcription);
     }
 
-    clearAudioTranscriptions(): void {
+    clearAudioTranscriptions() {
         this.audioTranscriptions.length = 0;
     }
 
     get audioContextAsText(): string {
-        if (!this.audioTranscriptions.length) return "";
-        return `Audio:\n\n${this.audioTranscriptions.map((t) => t.contextAsText).join('\n\n')}`;
+        if (this.audioTranscriptions.length === 0) return "";
+        return `Audio:\n\n${this.audioTranscriptions.map(t => t.contextAsText).join('\n\n')}`;
+    }
+    get serializedTranscript(): string {
+        return JSON.stringify(
+            this.audioTranscriptions.map(t => ({
+                createdAt: t.createdAt,
+                role: t.source,
+                text: t.text,
+            }))
+        );
     }
 }
 
 /**
  * The main service for managing application context.
  * It aggregates data from various sources (mic, system audio) and manages the AI session lifecycle.
- * 
- * Note: For open source version, API client dependencies have been removed.
  */
 export class ContextService {
     micAudioCaptureService: AudioCaptureService;
@@ -136,26 +126,26 @@ export class ContextService {
 
         // Reaction 2: Listen for new transcriptions from the microphone.
         const disposeMicTranscriptionListener = autorun(() => {
-            const transcriptionService = this.micAudioCaptureService.state.state === 'running' 
-                ? this.micAudioCaptureService.state.metadata?.transcriptionService 
+            const transcriptionService = this.micAudioCaptureService.state.state === 'running'
+                ? this.micAudioCaptureService.state.metadata?.transcriptionService
                 : null;
-            
+
             if (transcriptionService) {
-                transcriptionService.onTranscription((transcription: AudioTranscription) => {
-                    this.fullContext.addAudioTranscription(transcription, MAX_TRANSCRIPTIONS_IN_CONTEXT);
+                transcriptionService.onTranscription((transcription: Transcription) => {
+                    this.fullContext.addAudioTranscription(transcription);
                 });
             }
         });
 
         // Reaction 3: Listen for new transcriptions from the system audio.
         const disposeSystemTranscriptionListener = autorun(() => {
-            const transcriptionService = this.systemAudioCaptureService.state.state === 'running' 
-                ? this.systemAudioCaptureService.state.metadata?.transcriptionService 
+            const transcriptionService = this.systemAudioCaptureService.state.state === 'running'
+                ? this.systemAudioCaptureService.state.metadata?.transcriptionService
                 : null;
-            
+
             if (transcriptionService) {
-                transcriptionService.onTranscription((transcription: AudioTranscription) => {
-                    this.fullContext.addAudioTranscription(transcription, MAX_TRANSCRIPTIONS_IN_CONTEXT);
+                transcriptionService.onTranscription((transcription: Transcription) => {
+                    this.fullContext.addAudioTranscription(transcription);
                 });
             }
         });
@@ -181,12 +171,12 @@ export class ContextService {
      * This is used to get a stable snapshot of the context to send to the AI.
      */
     async commitTranscriptionsAndGetFullContext(): Promise<FullContext> {
-        const micTranscriptionService = this.micAudioCaptureService.state.state === 'running' 
-            ? this.micAudioCaptureService.state.metadata?.transcriptionService 
+        const micTranscriptionService = this.micAudioCaptureService.state.state === 'running'
+            ? this.micAudioCaptureService.state.metadata?.transcriptionService
             : null;
-        
-        const systemTranscriptionService = this.systemAudioCaptureService.state.state === 'running' 
-            ? this.systemAudioCaptureService.state.metadata?.transcriptionService 
+
+        const systemTranscriptionService = this.systemAudioCaptureService.state.state === 'running'
+            ? this.systemAudioCaptureService.state.metadata?.transcriptionService
             : null;
 
         await Promise.all([
@@ -201,12 +191,12 @@ export class ContextService {
      * Computed property to check if both mic and system are actively transcribing.
      */
     get isTranscribing(): boolean {
-        const micTranscriptionService = this.micAudioCaptureService.state.state === 'running' 
-            ? this.micAudioCaptureService.state.metadata?.transcriptionService 
+        const micTranscriptionService = this.micAudioCaptureService.state.state === 'running'
+            ? this.micAudioCaptureService.state.metadata?.transcriptionService
             : null;
-        
-        const systemTranscriptionService = this.systemAudioCaptureService.state.state === 'running' 
-            ? this.systemAudioCaptureService.state.metadata?.transcriptionService 
+
+        const systemTranscriptionService = this.systemAudioCaptureService.state.state === 'running'
+            ? this.systemAudioCaptureService.state.metadata?.transcriptionService
             : null;
 
         const isMicTranscribing = micTranscriptionService?.state.state === "running";

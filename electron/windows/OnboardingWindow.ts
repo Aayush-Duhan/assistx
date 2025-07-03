@@ -19,8 +19,7 @@ export class OnboardingWindow extends BaseWindow {
       skipTaskbar: true,
       webPreferences: {
         preload: joinPath(__dirname, 'preload.cjs'),
-        sandbox: false
-      }
+      } 
     };
     super(options, extraConfig);
     super.moveToPrimaryDisplay();
