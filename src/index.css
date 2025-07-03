@@ -1,0 +1,194 @@
+@import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: transparent;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: transparent;
+  user-select: none;
+}
+
+/* Custom highlight.js theme that matches our color scheme */
+.hljs {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #9ca3af !important; /* Comment - matches shj-syn-cmnt */
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-type {
+  color: #d8b4fe !important; /* Keyword - matches shj-syn-kwd */
+}
+
+.hljs-string,
+.hljs-title {
+  color: #a5b4fc !important; /* String - matches shj-syn-str */
+}
+
+.hljs-number {
+  color: #fca5a5 !important; /* Number - matches shj-syn-num */
+}
+
+.hljs-class .hljs-title,
+.hljs-title.class_ {
+  color: #fde047 !important; /* Class - matches shj-syn-class */
+}
+
+.hljs-function .hljs-title,
+.hljs-title.function_ {
+  color: #7dd3fc !important; /* Function - matches shj-syn-func */
+}
+
+.hljs-variable,
+.hljs-property {
+  color: #6ee7b7 !important; /* Variable - matches shj-syn-var */
+}
+
+.hljs-operator,
+.hljs-punctuation {
+  color: #f0abfc !important; /* Operator - matches shj-syn-oper */
+}
+
+.hljs-section {
+  color: #fca5a5 !important; /* Section - matches shj-syn-section */
+}
+
+.hljs-addition {
+  color: #4ade80 !important; /* Insert - matches shj-syn-insert */
+}
+
+.hljs-deletion {
+  color: #f87171 !important; /* Deleted - matches shj-syn-deleted */
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: #fbbf24 !important;
+}
+
+.hljs-meta,
+.hljs-meta .hljs-string {
+  color: #a78bfa !important;
+}
+
+.hljs-tag {
+  color: #ef4444 !important;
+}
+
+.hljs-name {
+  color: #3b82f6 !important;
+}
+
+.hljs-built_in,
+.hljs-symbol {
+  color: #10b981 !important;
+}
+
+/* Legacy shj styles (keeping for compatibility) */
+.shj-syn-cmnt { color: #9ca3af; } /* Comment */
+.shj-syn-kwd { color: #d8b4fe; }  /* Keyword */
+.shj-syn-str { color: #a5b4fc; }  /* String */
+.shj-syn-num { color: #fca5a5; }  /* Number */
+.shj-syn-class { color: #fde047; }/* Class */
+.shj-syn-func { color: #7dd3fc; }  /* Function */
+.shj-syn-var { color: #6ee7b7; }  /* Variable */
+.shj-syn-oper { color: #f0abfc; } /* Operator */
+.shj-syn-section { color: #fca5a5; } /* Section (e.g., in diffs) */
+.shj-syn-insert { color: #4ade80; } /* Insert (e.g., in diffs) */
+.shj-syn-deleted { color: #f87171; } /* Deleted (e.g., in diffs) */
+
+.app {
+  padding: 2rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.app.loading {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.spinner {
+  font-size: 1.2rem;
+  color: white;
+  font-weight: 500;
+}
+
+.app h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.app p {
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  
+  .app:not(.loading) {
+    color: #213547;
+    background-color: #ffffff;
+  }
+}
+
+/* Custom scrollbar styling */
+.custom-scrollbar {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
