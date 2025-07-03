@@ -102,9 +102,9 @@ function SyntaxHighlighter({ children, language, className }: SyntaxHighlighterP
   return (
     <div className="relative group my-4">
       <pre className={cn(
-        'bg-gray-900/60 backdrop-blur-sm rounded-xl p-6 overflow-x-auto text-sm',
+        'bg-black/60 backdrop-blur-sm rounded-xl p-6 overflow-x-auto text-sm',
         'border border-white/10 shadow-lg',
-        'transition-all duration-300 hover:bg-gray-900/70 hover:border-white/20',
+        'transition-all duration-300 hover:bg-black/70 hover:border-white/20',
         className
       )}>
         <code 
@@ -517,7 +517,6 @@ export function Markdown({ hideCopyButton = false, children }: MarkdownProps) {
   const [hoveredRef, setHoveredRef] = useState<React.RefObject<HTMLElement> | null>(null);
   const [hoveredContent, setHoveredContent] = useState('');
   const [containerY, setContainerY] = useState<number | null>(null);
-  const [isCopyButtonHovered, setIsCopyButtonHovered] = useState(false);
 
   // Sanitize and prepare the markdown content, especially for math
   const sanitizedContent = children
@@ -577,38 +576,23 @@ export function Markdown({ hideCopyButton = false, children }: MarkdownProps) {
 
         {/* Enhanced Floating Copy Button */}
         {!hideCopyButton && containerY !== null && hoveredContent && (
-          <>
+          <div
+            className="absolute -left-4 z-50 pointer-events-none transition-all duration-200 ease-out"
+            style={{
+              top: 0,
+              transform: `translateY(${containerY || 0}px)`,
+            }}
+          >
             <div
-              className="absolute -left-4 z-50 pointer-events-none transition-all duration-200 ease-out"
-              style={{
-                top: 0,
-                transform: `translateY(${containerY || 0}px)`,
-              }}
+              className="pointer-events-auto"
             >
-              <div
-                className="pointer-events-auto"
-                onMouseEnter={() => setIsCopyButtonHovered(true)}
-                onMouseLeave={() => setIsCopyButtonHovered(false)}
-              >
-                <CopyButton 
-                  content={hoveredContent} 
-                  size="md" 
-                  className="shadow-lg border border-white/10"
-                />
-              </div>
-            </div>
-
-            {/* Enhanced highlight effect */}
-            {isCopyButtonHovered && (
-              <div
-                className="absolute top-0 left-0 right-0 z-1 pointer-events-none transition-all duration-200 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-md border border-white/10"
-                style={{
-                  transform: `translateY(${containerY || 0}px)`,
-                  height: hoveredRef?.current?.offsetHeight || 'auto',
-                }}
+              <CopyButton 
+                content={hoveredContent} 
+                size="md" 
+                className="shadow-lg border border-white/10"
               />
-            )}
-          </>
+            </div>
+          </div>
         )}
       </div>
     </HoverContext.Provider>

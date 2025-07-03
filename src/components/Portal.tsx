@@ -228,11 +228,10 @@ const InlinePortal = forwardRef<HTMLDivElement, InlinePortalProps>(
           {!transparent && (
             <motion.div
               className={cn(
-                'absolute inset-0 shadow-md inset-ring-1 inset-ring-zinc-400/33 border-[0.5px] border-black/80',
+                'absolute inset-0 shadow-md inset-ring-1 inset-ring-zinc-400/33 border-[0.5px] border-black/80 rounded-3xl',
                 opaque ? 'bg-zinc-950/95' : 'bg-black/60',
                 backgroundClassname
               )}
-              style={{ borderRadius: 8 }}
               transition={{ duration, ease }}
               layout
             />
