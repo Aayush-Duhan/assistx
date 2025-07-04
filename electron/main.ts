@@ -9,7 +9,7 @@ import { windowManager } from './windows/WindowManager';
 import { setupAppMenu, setupDisplayMediaHandler, setupAutoUpdater } from './setup';
 import { setupIpcHandlers } from './ipcHandlers';
 import { setupDisplayListeners } from './display-listeners';
-import { setupProtocolHandler } from './protocol-handler';
+// import { setupProtocolHandler } from './protocol-handler';
 import { applyGlobalShortcuts } from './shortcuts';
 
 const APP_ID = 'AssistX';
@@ -49,7 +49,7 @@ async function main(): Promise<void> {
   setupAutoUpdater();
   setupIpcHandlers();
   setupDisplayListeners();
-  setupProtocolHandler();
+  // setupProtocolHandler();
   applyGlobalShortcuts();
 }
 

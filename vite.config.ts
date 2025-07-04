@@ -8,21 +8,29 @@ import dotenv from 'dotenv'
 // Load environment variables
 dotenv.config({ path: '.env.local' })
 // https://vitejs.dev/config/
-export default defineConfig({
-  optimizeDeps: {
-    exclude: ['electron-app-universal-protocol-client'],
-  },
+export default defineConfig({ 
   resolve: {
     alias: {
       'ws': path.resolve(__dirname, './src/shims/ws-browser.js'),
       '@': path.resolve(__dirname, './src'),
       '@/hooks': path.resolve(__dirname, './src/hooks'),
       '@/services': path.resolve(__dirname, './src/services'),
-      '@/utils': path.resolve(__dirname, './src/utils')
+      '@/utils': path.resolve(__dirname, './src/utils'),
+      // Add polyfills for Node.js modules
+      'buffer': 'buffer',
+      'events': 'events',
+      'stream': 'stream-browserify',
+      'util': 'util',
+      'process/browser': 'process/browser'
     }
   },
   define: {
     'process.env.GOOGLE_GENERATIVE_AI_API_KEY': JSON.stringify(process.env.GOOGLE_GENERATIVE_AI_API_KEY),
+    'process.env.DEEPGRAM_API_KEY': JSON.stringify(process.env.DEEPGRAM_API_KEY),
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['buffer', 'process', 'events', 'stream-browserify', 'util']
   },
   build: {
     rollupOptions: {
@@ -39,13 +47,6 @@ export default defineConfig({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
-        vite: {
-          build: {
-            rollupOptions: {
-              external: ['electron-app-universal-protocol-client'],
-            },
-          },
-        },
       },
       preload: {
         // Shortcut of `build.rollupOptions.input`.
@@ -54,7 +55,6 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ['electron-app-universal-protocol-client'],
               output: {
                 format: 'cjs',
                 entryFileNames: '[name].cjs',

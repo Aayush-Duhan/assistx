@@ -1,99 +1,119 @@
 import { makeObservable, observable, computed, reaction, runInAction, autorun } from 'mobx';
 import { AudioCaptureService } from './AudioCaptureService';
 import { AudioSession } from './AudioSession';
+import { AudioSource, AudioTranscription, Transcription } from './types';
 
 // --- Constants ---
 const MAX_TRANSCRIPTIONS_IN_CONTEXT = 1000;
 
 // Type definitions
-type AudioSource = 'mic' | 'system';
-
 interface ContextServiceDependencies {
     micAudioCaptureService: AudioCaptureService;
     systemAudioCaptureService: AudioCaptureService;
 }
 
 /**
- * Represents a single piece of transcribed audio.
- */
-class Transcription {
-    createdAt = new Date();
-    source: AudioSource;
-    text: string;
-
-    constructor({ source, text }: { source: AudioSource; text: string }) {
-        this.source = source;
-        this.text = text;
-        makeObservable(this);
-    }
-
-    get contextAsText(): string {
-        const speaker = this.source === 'mic' ? 'Me' : 'Them';
-        return `[${speaker}]\nTranscription: ${this.text}`;
-    }
-}
-
-/**
- * Holds the complete, aggregated context, primarily the list of audio transcriptions.
+ * Full context including screenshots and transcriptions for AI processing
  */
 export class FullContext {
-    audioTranscriptions: Transcription[] = [];
-    private readonly maxTranscriptions = MAX_TRANSCRIPTIONS_IN_CONTEXT;
+    screenshots: string[] = [];
+    audioTranscriptions: AudioTranscription[] = [];
 
-    constructor(initialTranscriptions: Transcription[] = []) {
-        this.audioTranscriptions = initialTranscriptions;
-        makeObservable(this);
+    constructor({ screenshots = [], audioTranscriptions = [] }: {
+        screenshots?: string[];
+        audioTranscriptions?: AudioTranscription[];
+    } = {}) {
+        this.screenshots = screenshots;
+        this.audioTranscriptions = audioTranscriptions;
+        
+        makeObservable(this, {
+            audioTranscriptions: observable,
+            screenshots: observable,
+        });
     }
 
-    clone(): FullContext {
-        return new FullContext([...this.audioTranscriptions]);
-    }
-
-    diff(oldContext: FullContext): FullContext {
-        const oldTranscriptionSet = new Set(oldContext.audioTranscriptions);
-        const newTranscriptions = this.audioTranscriptions.filter(
-            (t) => !oldTranscriptionSet.has(t)
-        );
-        return new FullContext(newTranscriptions);
-    }
-
-    addAudioTranscription(transcription: Transcription): void {
-        if (this.audioTranscriptions.length >= this.maxTranscriptions) {
-            this.audioTranscriptions.shift();
-        }
+    /**
+     * Adds a new audio transcription to the context.
+     */
+    addAudioTranscription(transcription: AudioTranscription): void {
+        // Add the new transcription
         this.audioTranscriptions.push(transcription);
+
+        // Keep only the most recent transcriptions to prevent memory bloat
+        if (this.audioTranscriptions.length > MAX_TRANSCRIPTIONS_IN_CONTEXT) {
+            this.audioTranscriptions.splice(0, this.audioTranscriptions.length - MAX_TRANSCRIPTIONS_IN_CONTEXT);
+        }
     }
 
-    clearAudioTranscriptions() {
-        this.audioTranscriptions.length = 0;
+    /**
+     * Creates a deep clone of this context for use in AI requests.
+     */
+    clone(): FullContext {
+        const cloned = new FullContext();
+        cloned.screenshots = [...this.screenshots];
+        cloned.audioTranscriptions = [...this.audioTranscriptions];
+        return cloned;
     }
 
+    /**
+     * Clears all audio transcriptions from the context.
+     */
+    clearTranscriptions(): void {
+        this.audioTranscriptions.splice(0, this.audioTranscriptions.length);
+    }
+
+    /**
+     * Returns the difference between this context and a previous one.
+     * For now, we return the full context as we don't implement diffing logic.
+     */
+    diff(prevContext: FullContext): FullContext {
+        // Simple implementation: return new transcriptions since the previous context
+        const newTranscriptions = this.audioTranscriptions.slice(prevContext.audioTranscriptions.length);
+        return new FullContext({
+            screenshots: this.screenshots,
+            audioTranscriptions: newTranscriptions
+        });
+    }
+
+    /**
+     * Converts the entire context to a text representation for the AI.
+     */
+    asText(): string {
+        const sections: string[] = [];
+
+        // Add transcriptions as a conversation log
+        if (this.audioTranscriptions.length > 0) {
+            sections.push("=== Conversation Log ===");
+            const conversationText = this.audioTranscriptions
+                .map(t => t.contextAsText)
+                .join('\n\n');
+            sections.push(conversationText);
+        }
+
+        return sections.join('\n\n');
+    }
+
+    /**
+     * Get text representation of audio context for compatibility
+     */
     get audioContextAsText(): string {
-        if (this.audioTranscriptions.length === 0) return "";
-        return `Audio:\n\n${this.audioTranscriptions.map(t => t.contextAsText).join('\n\n')}`;
-    }
-    get serializedTranscript(): string {
-        return JSON.stringify(
-            this.audioTranscriptions.map(t => ({
-                createdAt: t.createdAt,
-                role: t.source,
-                text: t.text,
-            }))
-        );
+        return this.asText();
     }
 }
 
 /**
- * The main service for managing application context.
- * It aggregates data from various sources (mic, system audio) and manages the AI session lifecycle.
+ * Manages the global context that is sent to the AI for generating responses.
+ * This includes audio transcriptions and other contextual information.
  */
 export class ContextService {
+    fullContext = new FullContext();
+    cleanUp: () => void = () => {};
     micAudioCaptureService: AudioCaptureService;
     systemAudioCaptureService: AudioCaptureService;
-    cleanUp: () => void;
-
-    fullContext = new FullContext();
-    audioSession: AudioSession | null = null;
+    
+    // Track subscription cleanup functions
+    private micTranscriptionCleanup: (() => void) | null = null;
+    private systemTranscriptionCleanup: (() => void) | null = null;
 
     constructor(services: ContextServiceDependencies) {
         this.micAudioCaptureService = services.micAudioCaptureService;
@@ -101,26 +121,17 @@ export class ContextService {
 
         makeObservable(this, {
             fullContext: observable,
-            audioSession: observable,
             isTranscribing: computed,
-            isInAudioSession: computed,
         });
 
-        // --- MobX Reactions ---
-
-        // Reaction 1: Manage the AudioSession lifecycle based on whether we are in a session.
+        // Reaction 1: Listen for changes in audio session states to trigger context updates.
         const disposeAudioSessionReaction = reaction(
             () => this.isInAudioSession,
-            (isInSession) => {
-                this.audioSession?.disposeWithAudioTranscriptions(this.fullContext.audioTranscriptions);
-                runInAction(() => {
-                    if (isInSession) {
-                        this.audioSession = new AudioSession(true);
-                    } else {
-                        this.audioSession = null;
-                        this.fullContext.clearAudioTranscriptions();
-                    }
-                });
+            (isInSession, wasInSession) => {
+                if (wasInSession && !isInSession) {
+                    // Audio session ended - save context to session
+                    console.log('Audio session ended, saving context...');
+                }
             }
         );
 
@@ -130,8 +141,17 @@ export class ContextService {
                 ? this.micAudioCaptureService.state.metadata?.transcriptionService
                 : null;
 
+            // Clean up previous subscription
+            if (this.micTranscriptionCleanup) {
+                this.micTranscriptionCleanup();
+                this.micTranscriptionCleanup = null;
+            }
+
+            // Subscribe to new transcription service if available
             if (transcriptionService) {
-                transcriptionService.onTranscription((transcription: Transcription) => {
+                console.log('ContextService: Subscribing to mic transcriptions');
+                this.micTranscriptionCleanup = transcriptionService.onTranscription((transcription: AudioTranscription) => {
+                    console.log('ContextService: Received mic transcription:', transcription.text);
                     this.fullContext.addAudioTranscription(transcription);
                 });
             }
@@ -143,8 +163,17 @@ export class ContextService {
                 ? this.systemAudioCaptureService.state.metadata?.transcriptionService
                 : null;
 
+            // Clean up previous subscription
+            if (this.systemTranscriptionCleanup) {
+                this.systemTranscriptionCleanup();
+                this.systemTranscriptionCleanup = null;
+            }
+
+            // Subscribe to new transcription service if available
             if (transcriptionService) {
-                transcriptionService.onTranscription((transcription: Transcription) => {
+                console.log('ContextService: Subscribing to system transcriptions');
+                this.systemTranscriptionCleanup = transcriptionService.onTranscription((transcription: AudioTranscription) => {
+                    console.log('ContextService: Received system transcription:', transcription.text);
                     this.fullContext.addAudioTranscription(transcription);
                 });
             }
@@ -155,15 +184,32 @@ export class ContextService {
             disposeAudioSessionReaction();
             disposeMicTranscriptionListener();
             disposeSystemTranscriptionListener();
+            
+            // Clean up transcription subscriptions
+            if (this.micTranscriptionCleanup) {
+                this.micTranscriptionCleanup();
+                this.micTranscriptionCleanup = null;
+            }
+            if (this.systemTranscriptionCleanup) {
+                this.systemTranscriptionCleanup();
+                this.systemTranscriptionCleanup = null;
+            }
         };
     }
 
     /**
-     * Disposes of the service and all its resources.
+     * Disposes of the context service and cleans up all subscriptions.
      */
     dispose(): void {
         this.cleanUp();
-        this.audioSession?.disposeWithAudioTranscriptions(this.fullContext.audioTranscriptions);
+    }
+
+    /**
+     * Clears all transcriptions from the context.
+     * This resets the context to a fresh state.
+     */
+    clearTranscriptions(): void {
+        this.fullContext.clearTranscriptions();
     }
 
     /**

@@ -158,22 +158,22 @@ export function ScrollableContent({
   return (
     <div className="relative">
       {/* Top gradient fade */}
-      <motion.div
-        animate={{
+      <div
+        className="transition-all duration-150"
+        style={{
           WebkitMaskImage: isAtTop
             ? `linear-gradient(to top, black calc(100% - 0px), transparent 100%)`
             : `linear-gradient(to top, black calc(100% - ${SCROLL_INDICATOR_FADE_HEIGHT_PX}px), transparent 100%)`,
         }}
-        transition={{ duration: 0.15 }}
       >
         {/* Bottom gradient fade */}
-        <motion.div
-          animate={{
+        <div
+          className="transition-all duration-150"
+          style={{
             WebkitMaskImage: isAtBottom && !showAsTruncated
               ? `linear-gradient(to bottom, black calc(100% - 0px), transparent 100%)`
               : `linear-gradient(to bottom, black calc(100% - ${SCROLL_INDICATOR_FADE_HEIGHT_PX}px), transparent 100%)`,
           }}
-          transition={{ duration: 0.15 }}
         >
           <div
             ref={scrollContainerRef}
@@ -186,8 +186,8 @@ export function ScrollableContent({
           >
             {children}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* Floating scroll indicator */}
       <motion.div

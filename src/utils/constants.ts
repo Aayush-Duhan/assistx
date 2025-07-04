@@ -20,6 +20,7 @@ export const FeatureFlags = {
     DEV_INSPECT_APP: "dev_inspect_app",
     TRIGGER_AI_MODEL: "trigger_ai_model",
     MAX_ATTACHMENT_COUNT: "max_attachment_count",
+    USE_DEEPGRAM_TRANSCRIPTION: "use_deepgram_transcription",
 } as const;
 
 // Type for feature flag keys
@@ -31,6 +32,7 @@ export const DEFAULT_FEATURE_FLAGS: Record<FeatureFlagKey, boolean | string | nu
     [FeatureFlags.DEV_INSPECT_APP]: process.env.NODE_ENV === 'development',
     [FeatureFlags.TRIGGER_AI_MODEL]: 'gpt-4', // Default AI model
     [FeatureFlags.MAX_ATTACHMENT_COUNT]: 3, // Default attachment limit
+    [FeatureFlags.USE_DEEPGRAM_TRANSCRIPTION]: true, // Default to Deepgram for realtime transcription
 };
 
 // --- AI and Media Processing ---

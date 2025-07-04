@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { observer } from 'mobx-react-lite';
 import { cn } from '@/lib/utils';
 
 // --- Custom Hooks & Stores ---
@@ -15,6 +16,7 @@ import {
   MicMutedIcon,
   ChevronDownIcon,
 } from '../ui/icons';
+import { Pause, Play, Square } from 'lucide-react';
 import { PuffLoader } from 'react-spinners';
 import { TranscriptionView } from '../ui/TranscriptionView';
 
@@ -76,7 +78,15 @@ const ListenButton = React.memo(function ListenButton({
 /**
  * The view shown when audio capture is active and listening.
  */
-const ListeningView = React.memo(function ListeningView({ onClick }: { onClick: () => void }) {
+const ListeningView = observer(function ListeningView({ 
+  onStop, 
+  onPause, 
+  isPaused 
+}: { 
+  onStop: () => void;
+  onPause: () => void;
+  isPaused: boolean;
+}) {
   const { aiResponsesService } = useGlobalServices();
   const { showMainAppAiContent } = aiResponsesService;
   const [isTranscriptVisible, setIsTranscriptVisible] = useState(false);
@@ -105,26 +115,44 @@ const ListeningView = React.memo(function ListeningView({ onClick }: { onClick: 
   );
 
   const controls = (
-    <div className="w-18 flex items-center justify-center gap-2.5">
+    <div className="w-24 flex items-center justify-center gap-2">
       <Tooltip tooltipContent={isTranscriptVisible ? 'Hide transcript' : 'Show transcript'}>
         <HeadlessButton
-          className="relative overflow-hidden h-8 flex items-center gap-1 transition"
+          className={cn('relative overflow-hidden h-8 flex items-center gap-1 transition', isPaused && 'text-white/60')}
           onClick={() => setIsTranscriptVisible(!isTranscriptVisible)}
         >
-          <Waveform isStatic={false} />
+          <Waveform isStatic={isPaused} />
           <ChevronDownIcon
             className={cn('text-white/60 size-2.5 transition', isTranscriptVisible && 'scale-y-[-1]')}
           />
         </HeadlessButton>
       </Tooltip>
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-        <HeadlessButton
-          className="relative overflow-hidden size-6 rounded-full bg-white/20 shadow-sm flex items-center justify-center hover:bg-white/30 focus:bg-white/40 transition"
-          onClick={onClick}
-        >
-          <StopIcon className="text-white size-3" />
-        </HeadlessButton>
-      </motion.div>
+      
+      <Tooltip tooltipContent={isPaused ? 'Resume' : 'Pause'}>
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+          <HeadlessButton
+            className={cn('relative overflow-hidden size-6 rounded-full bg-white/20 shadow-sm flex items-center justify-center hover:bg-white/30 focus:bg-white/40 transition', isPaused && 'bg-white/30')}
+            onClick={onPause}
+          >
+            {isPaused ? (
+              <Play className="text-white size-3" />
+            ) : (
+              <Pause className="text-white size-3" />
+            )}
+          </HeadlessButton>
+        </motion.div>
+      </Tooltip>
+
+      <Tooltip tooltipContent="Stop and clear">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+          <HeadlessButton
+            className="relative overflow-hidden size-6 rounded-full bg-white/20 shadow-sm flex items-center justify-center hover:bg-white/30 focus:bg-white/40 transition"
+            onClick={onStop}
+          >
+            <Square className="text-white size-3" />
+          </HeadlessButton>
+        </motion.div>
+      </Tooltip>
     </div>
   );
 
@@ -139,25 +167,45 @@ const ListeningView = React.memo(function ListeningView({ onClick }: { onClick: 
 /**
  * The view shown when audio capture is paused.
  */
-const PausedView = React.memo(function PausedView({ onClick }: { onClick: () => void }) {
+const PausedView = React.memo(function PausedView({ 
+  onResume, 
+  onStop 
+}: { 
+  onResume: () => void;
+  onStop: () => void;
+}) {
   return (
-    <div className="w-18 flex items-center justify-center gap-2.5">
+    <div className="w-24 flex items-center justify-center gap-2">
       <Tooltip tooltipContent="Resume listening">
         <HeadlessButton
           className="relative overflow-hidden h-8 flex items-center gap-1 transition"
-          onClick={onClick}
+          onClick={onResume}
         >
           <MicIcon size={14} className="text-white/60" />
         </HeadlessButton>
       </Tooltip>
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-        <HeadlessButton
-          className="relative overflow-hidden size-6 rounded-full bg-white/20 shadow-sm flex items-center justify-center hover:bg-white/30 focus:bg-white/40 transition"
-          onClick={onClick}
-        >
-          <StopIcon className="text-white size-3" />
-        </HeadlessButton>
-      </motion.div>
+      
+      <Tooltip tooltipContent="Resume">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+          <HeadlessButton
+            className="relative overflow-hidden size-6 rounded-full bg-white/20 shadow-sm flex items-center justify-center hover:bg-white/30 focus:bg-white/40 transition"
+            onClick={onResume}
+          >
+            <Play className="text-white size-3" />
+          </HeadlessButton>
+        </motion.div>
+      </Tooltip>
+
+      <Tooltip tooltipContent="Stop and clear">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+          <HeadlessButton
+            className="relative overflow-hidden size-6 rounded-full bg-white/20 shadow-sm flex items-center justify-center hover:bg-white/30 focus:bg-white/40 transition"
+            onClick={onStop}
+          >
+            <Square className="text-white size-3" />
+          </HeadlessButton>
+        </motion.div>
+      </Tooltip>
     </div>
   );
 });
@@ -209,7 +257,7 @@ function ErrorView({
 
 // --- Main ListenUI Component ---
 
-export const ListeningUI = React.memo(function ListeningUI() {
+export const ListeningUI = observer(function ListeningUI() {
   const { micAudioCaptureService, systemAudioCaptureService, contextService } = useGlobalServices();
 
   const micState = micAudioCaptureService.state.state;
@@ -217,6 +265,11 @@ export const ListeningUI = React.memo(function ListeningUI() {
 
   const micPermissionError = micState === 'error' && micAudioCaptureService.state.error === 'permission';
   const systemPermissionError = systemState === 'error' && systemAudioCaptureService.state.error === 'permission';
+
+  // Check if services are paused
+  const micPaused = micAudioCaptureService.state.state === 'running' && (micAudioCaptureService.state.paused ?? false);
+  const systemPaused = systemAudioCaptureService.state.state === 'running' && (systemAudioCaptureService.state.paused ?? false);
+  const isAnyServicePaused = micPaused || systemPaused;
 
   // Get transcription service from metadata when available
   const micTranscriptionService = micAudioCaptureService.state.state === 'running' 
@@ -235,24 +288,39 @@ export const ListeningUI = React.memo(function ListeningUI() {
   const stopCapture = useCallback(() => {
     micAudioCaptureService.stop();
     systemAudioCaptureService.stop();
-  }, [micAudioCaptureService, systemAudioCaptureService]);
+    contextService.clearTranscriptions();
+  }, [micAudioCaptureService, systemAudioCaptureService, contextService]);
 
   const startCapture = useCallback(() => {
     micAudioCaptureService.restart();
     systemAudioCaptureService.restart();
   }, [micAudioCaptureService, systemAudioCaptureService]);
 
-  // Note: pause/resume functionality would need to be implemented in AudioCaptureService
-  // For now, we'll use stop/start as placeholders
-  const resumeCapture = useCallback(() => {
-    micAudioCaptureService.start();
-    systemAudioCaptureService.start();
+  const pauseCapture = useCallback(() => {
+    if (micAudioCaptureService.state.state === 'running') {
+      micAudioCaptureService.pause();
+    }
+    if (systemAudioCaptureService.state.state === 'running') {
+      systemAudioCaptureService.pause();
+    }
   }, [micAudioCaptureService, systemAudioCaptureService]);
 
-  const pauseCapture = useCallback(() => {
-    micAudioCaptureService.stop();
-    systemAudioCaptureService.stop();
+  const resumeCapture = useCallback(() => {
+    if (micAudioCaptureService.state.state === 'running' && micAudioCaptureService.state.paused) {
+      micAudioCaptureService.resume();
+    }
+    if (systemAudioCaptureService.state.state === 'running' && systemAudioCaptureService.state.paused) {
+      systemAudioCaptureService.resume();
+    }
   }, [micAudioCaptureService, systemAudioCaptureService]);
+
+  const handlePauseResume = useCallback(() => {
+    if (isAnyServicePaused) {
+      resumeCapture();
+    } else {
+      pauseCapture();
+    }
+  }, [isAnyServicePaused, resumeCapture, pauseCapture]);
 
   if (micPermissionError || systemPermissionError) {
     return <ErrorView onClose={stopCapture} onRetry={startCapture} error="permission" />;
@@ -273,18 +341,19 @@ export const ListeningUI = React.memo(function ListeningUI() {
     return <ListenButton isLoading onClick={stopCapture} />;
   }
   if (micState === 'running' && systemState === 'running') {
-    // For now, we'll treat any running state as active (not paused)
-    // In the future, you might add a paused state to AudioCaptureState
+    if (isAnyServicePaused) {
+      return <PausedView onResume={resumeCapture} onStop={stopCapture} />;
+    }
     return (
-      <ListeningView onClick={() => {
-        pauseCapture();
-      }} />
+      <ListeningView 
+        onStop={stopCapture}
+        onPause={handlePauseResume}
+        isPaused={isAnyServicePaused}
+      />
     );
   }
   if (micState === 'not-running' && systemState === 'not-running') {
-    return <ListenButton isLoading={false} onClick={() => {
-      startCapture();
-    }} />;
+    return <ListenButton isLoading={false} onClick={startCapture} />;
   }
 
   return <ErrorView onClose={stopCapture} onRetry={startCapture} error="unknown" />;

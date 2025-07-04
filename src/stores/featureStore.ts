@@ -8,6 +8,7 @@ export const FeatureFlags = {
     TRIGGER_AI_MODEL: "trigger_ai_model",
     MAX_ATTACHMENT_COUNT: "max_attachment_count",
     USAGE_LIMIT_VARIANT: "usage_limit_variant",
+    USE_DEEPGRAM_TRANSCRIPTION: "use_deepgram_transcription",
 } as const;
 
 export type FeatureFlagKey = typeof FeatureFlags[keyof typeof FeatureFlags];
@@ -27,6 +28,7 @@ export function useFeatureFlag(flagKey: FeatureFlagKey): boolean | string | unde
         [FeatureFlags.TRIGGER_AI_MODEL]: 'gpt-4',
         [FeatureFlags.MAX_ATTACHMENT_COUNT]: '5',
         [FeatureFlags.USAGE_LIMIT_VARIANT]: 'unlimited',
+        [FeatureFlags.USE_DEEPGRAM_TRANSCRIPTION]: true, // Default to Deepgram for realtime transcription
     };
 
     return defaultFlags[flagKey];

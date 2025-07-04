@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle } from 'lucide-react';
+
 
 // Hooks, Services, and Stores
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
@@ -152,12 +152,7 @@ const ManualInputPrompt = observer(({ response }: ManualInputPromptProps): React
         ),
         React.createElement(
             'div',
-            { className: "flex items-start gap-3 pr-20" }, // Increased right padding for both buttons
-            // Question icon
-            React.createElement(HelpCircle, {
-                size: 20,
-                className: "text-blue-400 mt-0.5 flex-shrink-0"
-            }),
+            { className: "flex items-start pr-20" }, // Increased right padding for buttons
             // Question text
             React.createElement(
                 'div',

@@ -81,8 +81,12 @@ export const Settings: React.FC = observer(() => {
     const useVimBindings = useFeatureFlag(FeatureFlags.VIM_MODE_KEY_BINDINGS);
     const { moveLeft, moveRight } = useMovableWindow();
 
-    const handleUserContextChange = useCallback((value: string) => {
-        userContextStore.setUserContext(value);
+    const handleContextTypeChange = useCallback((value: string) => {
+        userContextStore.setSelectedContextType(value);
+    }, []);
+
+    const handleCustomContextChange = useCallback((value: string) => {
+        userContextStore.setCustomContext(value);
     }, []);
 
     const handleModelChange = useCallback((value: string) => {
@@ -116,15 +120,28 @@ export const Settings: React.FC = observer(() => {
                     <label className="block text-white/90 text-sm font-medium mb-1">
                         User Context
                     </label>
-                    <UI.Input
-                        multiLine
-                        value={userContextStore.userContext}
-                        onChange={handleUserContextChange}
-                        placeholder="Enter context about yourself that will help the AI provide better responses..."
-                        className="w-full bg-white/10 border border-white/20 rounded-md px-4 py-3 min-h-[100px] max-h-[150px] overflow-y-auto resize-none text-sm"
-                    />
+                    <div className="space-y-3">
+                        <UI.Select
+                            value={userContextStore.selectedContextType}
+                            onChange={handleContextTypeChange}
+                            options={userContextStore.getContextOptions()}
+                            className="w-full"
+                        />
+                        {userContextStore.isCustomContextSelected() && (
+                            <UI.Input
+                                multiLine
+                                value={userContextStore.customContext}
+                                onChange={handleCustomContextChange}
+                                placeholder="Enter custom context about yourself that will help the AI provide better responses..."
+                                className="w-full bg-white/10 border border-white/20 rounded-md px-4 py-3 min-h-[100px] max-h-[150px] overflow-y-auto resize-none text-sm"
+                            />
+                        )}
+                    </div>
                     <p className="text-white/60 text-xs mt-1">
-                        This context will be included in AI conversations to provide more personalized responses.
+                        {userContextStore.isCustomContextSelected() 
+                            ? 'Enter your custom context that will be included in AI conversations.'
+                            : 'Selected predefined context will be used for AI conversations. Choose "Custom Context" to enter your own.'
+                        }
                     </p>
                 </div>
             </div>

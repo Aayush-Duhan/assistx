@@ -2,6 +2,7 @@ import * as React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
 import { UI } from '../ui';
+import { AudioCaptureService } from '../../services/AudioCaptureService';
 
 // Type definitions
 interface InspectorLabelProps {
@@ -10,17 +11,6 @@ interface InspectorLabelProps {
 
 interface InspectorContentProps {
     children: React.ReactNode;
-}
-
-interface AudioCaptureService {
-    transcriptionService?: {
-        state: {
-            state: 'running' | 'stopped' | 'error';
-            metadata: {
-                audioBuffers: Map<string, any>;
-            };
-        };
-    };
 }
 
 interface AudioBufferInspectorProps {
@@ -47,8 +37,11 @@ const InspectorContent = ({ children }: InspectorContentProps): React.ReactEleme
     );
 
 const AudioBufferInspector = observer(({ label, audioCaptureService }: AudioBufferInspectorProps): React.ReactElement | null => {
-    const transcriptionState = audioCaptureService.transcriptionService?.state;
-    if (transcriptionState?.state !== 'running') return null;
+    const audioBuffers = audioCaptureService.state.metadata?.transcriptionService?.state.state === 'running'
+        ? audioCaptureService.state.metadata.transcriptionService.state.metadata.audioBuffers
+        : null;
+
+    if (!audioBuffers) return null;
 
     return React.createElement(
         React.Fragment,
@@ -57,7 +50,7 @@ const AudioBufferInspector = observer(({ label, audioCaptureService }: AudioBuff
         React.createElement(
             InspectorContent,
             null,
-            JSON.stringify(Object.fromEntries(transcriptionState.metadata.audioBuffers), null, 2)
+            JSON.stringify(Object.fromEntries(audioBuffers), null, 2)
         )
     );
 });
@@ -74,21 +67,25 @@ export const AudioContextInspector = observer((): React.ReactElement => {
             maxHeight: 800,
             scrollUpAccelerator: "CommandOrControl+[",
             scrollDownAccelerator: "CommandOrControl+]",
-            className: "space-y-2"
-        },
-        React.createElement(InspectorLabel, null, "Audio Context:"),
-        React.createElement(
-            InspectorContent,
-            null,
-            contextService?.fullContext?.audioContextAsText || "No audio context available"
-        ),
-        React.createElement(AudioBufferInspector, {
-            label: "Mic Audio Buffers",
-            audioCaptureService: micAudioCaptureService
-        }),
-        React.createElement(AudioBufferInspector, {
-            label: "System Audio Buffers",
-            audioCaptureService: systemAudioCaptureService
-        })
+            className: "space-y-2",
+            children: React.createElement(
+                React.Fragment,
+                null,
+                React.createElement(InspectorLabel, null, "Audio Context:"),
+                React.createElement(
+                    InspectorContent,
+                    null,
+                    contextService?.fullContext?.audioContextAsText || "No audio context available"
+                ),
+                React.createElement(AudioBufferInspector, {
+                    label: "Mic Audio Buffers",
+                    audioCaptureService: micAudioCaptureService
+                }),
+                React.createElement(AudioBufferInspector, {
+                    label: "System Audio Buffers",
+                    audioCaptureService: systemAudioCaptureService
+                })
+            )
+        }
     );
 }); 

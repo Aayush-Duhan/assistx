@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, Settings } from 'lucide-react';
+import { ArrowUp, Paperclip, X, Mic, Globe, Settings } from 'lucide-react';
 
 // --- Custom Hooks & Services ---
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
@@ -50,7 +50,6 @@ export const ManualInputView = React.memo(function ManualInputView({
   
   // State for different features
   const [showSearch, setShowSearch] = useState(false);
-  const [showThink, setShowThink] = useState(false);
   const [showTool, setShowTool] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<{ [key: string]: string }>({});
@@ -70,28 +69,24 @@ export const ManualInputView = React.memo(function ManualInputView({
    * Callback to submit the input and trigger AI analysis.
    */
   const onSubmit = useCallback(() => {
-    // Add prefixes based on selected modes
+    // Add prefixes for non-search modes (Tool still uses text prefixes)
     let prefixes = [];
-    if (showSearch) prefixes.push("Search");
-    if (showThink) prefixes.push("Think");
     if (showTool) prefixes.push("Tool");
     
     const formattedInput = prefixes.length > 0 
       ? `[${prefixes.join(", ")}: ${inputValue}]` 
       : inputValue;
     
-    // Trigger the AI with the current input value and a screenshot if enabled
-    // If input is empty, just send screenshot only
-    aiResponsesService.triggerAi(canCaptureScreenshots, formattedInput.trim() || null);
+    // Trigger the AI with the current input value, screenshot option, and search grounding
+    // Search is now passed as a separate parameter instead of text prefix
+    aiResponsesService.triggerAi(canCaptureScreenshots, formattedInput.trim() || null, showSearch);
     onDismiss(); // Close the input view after submitting
-  }, [aiResponsesService, canCaptureScreenshots, inputValue, onDismiss, showSearch, showThink, showTool]);
+  }, [aiResponsesService, canCaptureScreenshots, inputValue, onDismiss, showSearch, showTool]);
 
   // Handle toggle changes - now allows multiple selections
   const handleToggleChange = (value: string) => {
     if (value === "search") {
       setShowSearch((prev) => !prev);
-    } else if (value === "think") {
-      setShowThink((prev) => !prev);
     } else if (value === "tool") {
       setShowTool((prev) => !prev);
     }
@@ -189,7 +184,7 @@ export const ManualInputView = React.memo(function ManualInputView({
               className
             )}
             placeholder={
-              [showSearch && "Search the web", showThink && "Think deeply", showTool && "Use tools"]
+              [showTool && "Use tools"]
                 .filter(Boolean)
                 .join(", ") || "Type your message here..."
             }
@@ -270,44 +265,6 @@ export const ManualInputView = React.memo(function ManualInputView({
                         className="text-xs overflow-hidden whitespace-nowrap text-[#1EAEDB] flex-shrink-0"
                       >
                         Search
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
-
-                <CustomDivider />
-
-                {/* Think toggle */}
-                <button
-                  type="button"
-                  onClick={() => handleToggleChange("think")}
-                  className={cn(
-                    "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
-                    showThink
-                      ? "bg-[#8B5CF6]/15 border-[#8B5CF6] text-[#8B5CF6]"
-                      : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
-                  )}
-                  title="Think deeply"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    <motion.div
-                      animate={{ rotate: showThink ? 360 : 0, scale: showThink ? 1.1 : 1 }}
-                      whileHover={{ rotate: showThink ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
-                      transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                    >
-                      <BrainCog className={cn("w-4 h-4", showThink ? "text-[#8B5CF6]" : "text-inherit")} />
-                    </motion.div>
-                  </div>
-                  <AnimatePresence>
-                    {showThink && (
-                      <motion.span
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: "auto", opacity: 1 }}
-                        exit={{ width: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-xs overflow-hidden whitespace-nowrap text-[#8B5CF6] flex-shrink-0"
-                      >
-                        Think
                       </motion.span>
                     )}
                   </AnimatePresence>

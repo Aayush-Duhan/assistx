@@ -3,7 +3,6 @@ import { observer } from 'mobx-react-lite';
 
 // Hooks, Services, and Stores
 import { useGlobalServices } from '../services/GlobalServicesContextProvider';
-import { useCanTakeScreenshot } from '../stores/featureStore';
 import { electron } from '@/services/electron';
 // UI Components
 import { Portal } from './Portal';
@@ -23,9 +22,6 @@ const SHORTCUT_TOGGLE_VISIBILITY = "CommandOrControl+\\";
 export const CommandBar: React.FC = observer(() => {
     const { aiResponsesService } = useGlobalServices();
     const { currentConversation } = aiResponsesService;
-    const canTakeScreenshot = useCanTakeScreenshot();
-    // Determine if there's an active conversation to decide the label for the main action.
-    // A conversation is considered "active" if a response has finished or if there's a history.
     const hasActiveResponse =
         currentConversation?.latestResponse.state.state === 'finished' ||
         !!currentConversation?.prevResponses.length;

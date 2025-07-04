@@ -1,5 +1,6 @@
 import { makeObservable, observable, action } from 'mobx';
-import { TranscriptionService } from './TranscriptionService';
+import { DeepgramTranscriptionService } from './DeepGramTranscriptionService';
+import { AudioSource, AudioData, ITranscriptionService } from './types';
 
 // --- Constants and Helper Classes ---
 
@@ -14,17 +15,12 @@ const WINDOWS_SYSTEM_AUDIO_DEVICE_NAMES = [
 ];
 
 // Type definitions
-type AudioSource = 'mic' | 'system';
 type Platform = 'win32' | 'darwin' | 'linux';
-
-interface AudioData {
-    pcm16Base64: string;
-}
 
 type DataListener = (data: AudioData) => void;
 
 interface AudioCaptureMetadata {
-    transcriptionService?: TranscriptionService;
+    transcriptionService: ITranscriptionService;
     source?: MediaStreamAudioSourceNode;
     cleanUpNativeMacRecorder?: () => void;
 }
@@ -35,6 +31,7 @@ interface AudioCaptureState {
     stream?: MediaStream;
     metadata?: AudioCaptureMetadata;
     error?: 'permission' | 'unknown';
+    paused?: boolean;
 }
 
 /**
@@ -97,7 +94,7 @@ function bufferToBase64(buffer: ArrayBuffer): string {
 }
 
 /**
- * Manages the capture of a single audio source (mic or system).
+ * Manages the capture of a single audio source (mic or system) with Deepgram transcription.
  */
 export class AudioCaptureService extends Subscribable {
     state: AudioCaptureState = { state: 'not-running' };
@@ -111,6 +108,8 @@ export class AudioCaptureService extends Subscribable {
             state: observable,
             restart: action,
             setState: action,
+            pause: action,
+            resume: action,
         });
     }
 
@@ -134,6 +133,26 @@ export class AudioCaptureService extends Subscribable {
     restart(): void { 
         this.stop(); 
         this.start(); 
+    }
+
+    pause(): void {
+        if (this.state.state === 'running' && !this.state.paused) {
+            this.state.stream?.getTracks().forEach(track => (track.enabled = false));
+            this.state.paused = true;
+            this.notify(); // Notify observers of state change
+        }
+    }
+
+    resume(): void {
+        if (this.state.state === 'running' && this.state.paused) {
+            this.state.stream?.getTracks().forEach(track => (track.enabled = true));
+            this.state.paused = false;
+            this.notify(); // Notify observers of state change
+        }
+    }
+
+    get transcriptionService() {
+        return this.state.state === 'running' ? this.state.metadata?.transcriptionService : null;
     }
 
     setState(newState: AudioCaptureState): void {
@@ -176,7 +195,8 @@ export class AudioCaptureService extends Subscribable {
                 state: 'running', 
                 stream, 
                 metadata, 
-                abortController: runningAbortController 
+                abortController: runningAbortController,
+                paused: false
             });
         } catch (error) {
             runningAbortController.abort();
@@ -253,12 +273,15 @@ export class AudioCaptureService extends Subscribable {
     }
 
     async attachStream(stream: MediaStream, signal: AbortSignal): Promise<AudioCaptureMetadata> {
-        const transcriptionService = new TranscriptionService(this, this.source);
+        // Always use Deepgram transcription service
+        console.log(`AudioCaptureService (${this.source}): Creating DeepgramTranscriptionService`);
+        const transcriptionService = new DeepgramTranscriptionService(this, this.source);
 
         const platform = await window.electron.ipcRenderer.invoke('get-platform') as Platform;
 
         if (platform === 'darwin' && this.source === 'system') {
             // For macOS system audio, listen to IPC events from the native recorder.
+            console.log(`AudioCaptureService (${this.source}): Setting up macOS native recorder`);
             const macRecorderHandler = (_event: any, { base64Data }: { base64Data: string }) => {
                 if (signal.aborted) return;
                 for (const listener of this.dataListeners) {
@@ -279,6 +302,7 @@ export class AudioCaptureService extends Subscribable {
         }
 
         // For all other cases, use the Web Audio API.
+        console.log(`AudioCaptureService (${this.source}): Setting up Web Audio API worklet`);
         const audioContext = await getSharedAudioContext();
         const workletNode = new AudioWorkletNode(audioContext, PCM_PROCESSOR_NAME);
         workletNode.port.onmessage = (event) => {
@@ -292,6 +316,7 @@ export class AudioCaptureService extends Subscribable {
 
         const sourceNode = audioContext.createMediaStreamSource(stream);
         sourceNode.connect(workletNode);
+        console.log(`AudioCaptureService (${this.source}): Audio worklet connected`);
 
         return { transcriptionService, source: sourceNode };
     }

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useGlobalShortcut } from '@/hooks/useGlobalShortcut';
 
@@ -91,22 +90,22 @@ export function ScrollableArea({
 
     return (
         // Top fade effect
-        <motion.div
-            animate={{
+        <div
+            className='transition-all duration-150'
+            style={{
                 WebkitMaskImage: isAtTop
-                    ? `linear-gradient(to top, black calc(100% - 0px), transparent 100%)`
+                    ? 'linear-gradient(to top, black calc(100% - 0px), transparent 100%)'
                     : `linear-gradient(to top, black calc(100% - ${FADE_HEIGHT}px), transparent 100%)`
             }}
-            transition={{ duration: 0.15 }}
         >
             {/* Bottom fade effect */}
-            <motion.div
-                animate={{
+            <div
+                 className='transition-all duration-150'
+                 style={{
                     WebkitMaskImage: (isAtBottom && !showAsTruncated)
-                        ? `linear-gradient(to bottom, black calc(100% - 0px), transparent 100%)`
+                        ? 'linear-gradient(to bottom, black calc(100% - 0px), transparent 100%)'
                         : `linear-gradient(to bottom, black calc(100% - ${FADE_HEIGHT}px), transparent 100%)`
                 }}
-                transition={{ duration: 0.15 }}
             >
                 <div
                     ref={scrollRef}
@@ -120,7 +119,7 @@ export function ScrollableArea({
                 >
                     {children}
                 </div>
-            </motion.div>
-        </motion.div>
+            </div>
+        </div>
     );
 } 

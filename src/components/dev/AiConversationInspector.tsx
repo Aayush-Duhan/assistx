@@ -57,55 +57,55 @@ export const AiConversationInspector = observer((): React.ReactElement => {
             scrollUpAccelerator: "CommandOrControl+[",
             scrollDownAccelerator: "CommandOrControl+]",
             scrollToBottomKey: allMessages.length,
-        },
-        React.createElement(
-            'div',
-            { className: "space-y-2" },
-            React.createElement(
+            children: React.createElement(
                 'div',
-                { className: "font-semibold px-0 text-white/90 text-sm" },
-                "Metadata"
-            ),
-            React.createElement(
-                'div',
-                { className: "px-0" },
+                { className: "space-y-2" },
                 React.createElement(
-                    'pre',
-                    { className: "text-[10px] leading-tight text-wrap text-white/70" },
-                    React.createElement('b', null, 'MODEL'),
-                    `: ${provider}/${model}`
-                )
-            ),
-            ...allMessages.map((message, index) =>
+                    'div',
+                    { className: "font-semibold px-0 text-white/90 text-sm" },
+                    "Metadata"
+                ),
                 React.createElement(
-                    React.Fragment,
-                    { key: index },
+                    'div',
+                    { className: "px-0" },
                     React.createElement(
-                        'div',
-                        { className: "font-semibold px-0 text-white/90 text-sm" },
-                        `Role: ${message.role}`
-                    ),
-                    message.experimental_attachments?.length ? React.createElement(
-                        'div',
-                        { className: "px-0" },
-                        React.createElement(
-                            'pre',
-                            { className: "text-[10px] leading-tight text-wrap text-white/70" },
-                            React.createElement('b', null, 'ATTACHMENTS'),
-                            `: ${message.experimental_attachments.length}`
-                        )
-                    ) : null,
+                        'pre',
+                        { className: "text-[10px] leading-tight text-wrap text-white/70" },
+                        React.createElement('b', null, 'MODEL'),
+                        `: ${provider}/${model}`
+                    )
+                ),
+                ...allMessages.map((message, index) =>
                     React.createElement(
-                        'div',
-                        { className: "px-0" },
+                        React.Fragment,
+                        { key: index },
                         React.createElement(
-                            'pre',
-                            { className: "text-[10px] leading-tight text-wrap text-white/70" },
-                            message.content
+                            'div',
+                            { className: "font-semibold px-0 text-white/90 text-sm" },
+                            `Role: ${message.role}`
+                        ),
+                        message.experimental_attachments?.length ? React.createElement(
+                            'div',
+                            { className: "px-0" },
+                            React.createElement(
+                                'pre',
+                                { className: "text-[10px] leading-tight text-wrap text-white/70" },
+                                React.createElement('b', null, 'ATTACHMENTS'),
+                                `: ${message.experimental_attachments.length}`
+                            )
+                        ) : null,
+                        React.createElement(
+                            'div',
+                            { className: "px-0" },
+                            React.createElement(
+                                'pre',
+                                { className: "text-[10px] leading-tight text-wrap text-white/70" },
+                                message.content
+                            )
                         )
                     )
                 )
             )
-        )
+        }
     );
 }); 

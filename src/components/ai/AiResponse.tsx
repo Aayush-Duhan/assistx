@@ -6,7 +6,7 @@ import { aiApiService, AiStreamResult } from '../../services/AiApiService';
 interface Message {
     role: 'system' | 'user' | 'assistant';
     content: string;
-    experimental_attachments?: any[];
+    experimental_attachments?: Array<Record<string, unknown>>;
 }
 
 interface ResponseState {
@@ -48,15 +48,17 @@ export class AiResponse {
     messages: Message[];
     fullContext: ContextData;
     manualInput?: string;
-    attachments: any[];
+    attachments: Array<Record<string, unknown>>;
     session: AudioSession;
+    useSearchGrounding?: boolean;
 
-    constructor(messages: Message[], fullContext: ContextData, manualInput?: string, attachments: any[] = [], session?: AudioSession) {
+    constructor(messages: Message[], fullContext: ContextData, manualInput?: string, attachments: Array<Record<string, unknown>> = [], session?: AudioSession, useSearchGrounding: boolean = false) {
         this.messages = messages;
         this.fullContext = fullContext;
         this.manualInput = manualInput;
         this.attachments = attachments;
         this.session = session || { state: { state: 'created' } };
+        this.useSearchGrounding = useSearchGrounding;
 
         makeObservable(this, {
             state: observable,
@@ -124,6 +126,7 @@ export class AiResponse {
             const streamResult: AiStreamResult = await aiApiService.streamResponse({
                 messages: this.messages,
                 abortSignal: abortController?.signal,
+                useSearchGrounding: this.useSearchGrounding,
             });
 
             if (abortController?.signal.aborted) return;
@@ -145,7 +148,7 @@ export class AiResponse {
             }
 
             // Wait for the stream to finish and get final metadata
-            const finalResult = await streamResult.finishPromise;
+            await streamResult.finishPromise;
             const timeToFinishMs = Date.now() - this.createdAtMs;
 
             this.setState({

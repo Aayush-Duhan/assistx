@@ -14,7 +14,7 @@ interface SettingsButtonProps {
 export const SettingsButton: React.FC<SettingsButtonProps> = observer(({ onToggleSettings, isSettingsVisible }) => {
     return (
         <div
-            className="p-2 cursor-pointer hover:bg-white/10 rounded-md transition-colors duration-200"
+            className="p-2 transition-all duration-200"
             onClick={onToggleSettings}
         >
             {isSettingsVisible ? (

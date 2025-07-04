@@ -1,24 +1,12 @@
 import { makeObservable, observable, computed, action } from 'mobx';
 import { AiConversation } from '../components/ai/AiConversation';
 import { captureScreenshot, ScreenshotData } from './ScreenshotService';
+import { ContextService, FullContext } from './ContextService';
 
 // Type definitions
 interface TriggerAiState {
     abortController: AbortController;
     step: 'capturing-screenshot' | 'committing-transcriptions';
-}
-
-interface FullContext {
-    audioTranscriptions: Array<{
-        createdAt: Date;
-        source: 'mic' | 'system';
-        text: string;
-    }>;
-    audioContextAsText: string;
-}
-
-interface ContextService {
-    commitTranscriptionsAndGetFullContext(): Promise<FullContext>;
 }
 
 /**
@@ -33,7 +21,6 @@ export class AiResponsesService {
 
     // --- Injected Dependencies ---
     contextService: ContextService;
-
     constructor(contextService: ContextService) {
         this.contextService = contextService;
 
@@ -113,8 +100,9 @@ export class AiResponsesService {
      *
      * @param shouldTakeScreenshot - Whether to capture the screen as part of the context.
      * @param manualInput - Any explicit text input from the user.
+     * @param useSearchGrounding - Whether to enable search grounding for this request.
      */
-    triggerAi = async (shouldTakeScreenshot: boolean, manualInput: string | null): Promise<void> => {
+    triggerAi = async (shouldTakeScreenshot: boolean, manualInput: string | null, useSearchGrounding: boolean = false): Promise<void> => {
         const abortController = new AbortController();
         try {
             // Step 1: Set the UI state to "capturing screenshot" to show a loading indicator.
@@ -138,7 +126,7 @@ export class AiResponsesService {
             if (abortController.signal.aborted) return;
 
             // Step 3: With all context gathered, create a new response.
-            this.createNewResponse(fullContext, screenshot, manualInput ?? null);
+            this.createNewResponse(fullContext, screenshot, manualInput ?? null, useSearchGrounding);
 
         } catch (error) {
             console.error('Error in triggerAi:', error);
@@ -166,18 +154,26 @@ export class AiResponsesService {
      * @param fullContext - The complete context from the ContextService.
      * @param screenshot - The captured screenshot data, if any.
      * @param manualInput - The user's text input, if any.
+     * @param useSearchGrounding - Whether to enable search grounding for this request.
      */
-    createNewResponse = (fullContext: FullContext, screenshot: ScreenshotData | null, manualInput: string | null): void => {
+    createNewResponse = (fullContext: FullContext, screenshot: ScreenshotData | null, manualInput: string | null | undefined, useSearchGrounding: boolean = false): void => {
         if (this.currentConversation) {
             // If a conversation is already active, add a new request/response turn to it.
-            this.currentConversation.createNewResponse(fullContext, screenshot, manualInput);
+            this.currentConversation.createNewResponse(fullContext, screenshot, manualInput ?? undefined, useSearchGrounding);
         } else {
             // Otherwise, start a new conversation.
+            // Create a context service adapter that matches the expected interface
+            const contextServiceAdapter = {
+                audioSession: null, // We don't have audio sessions in the simplified version
+                isTranscribing: this.contextService.isTranscribing,
+            };
+            
             this.currentConversation = new AiConversation(
-                this.contextService,
+                contextServiceAdapter,
                 fullContext,
                 screenshot,
-                manualInput
+                manualInput ?? undefined,
+                useSearchGrounding
             );
         }
         // Hide the manual input field after submission.

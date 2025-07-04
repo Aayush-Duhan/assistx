@@ -8,6 +8,7 @@ import { getEnvVar } from '../utils/env';
 export interface AiStreamOptions {
     messages: any[];
     abortSignal?: AbortSignal;
+    useSearchGrounding?: boolean;
 }
 
 // Legacy interface for backwards compatibility
@@ -18,6 +19,7 @@ export interface AiStreamOptionsLegacy {
         url: string;
     };
     abortSignal?: AbortSignal;
+    useSearchGrounding?: boolean;
 }
 
 export interface AiStreamResult {
@@ -30,6 +32,8 @@ export interface AiStreamResult {
             completionTokens: number;
             totalTokens: number;
         };
+        sources?: any[];
+        groundingMetadata?: any;
     }>;
 }
 
@@ -53,10 +57,12 @@ export class AiApiService {
     /**
      * Get the appropriate provider instance based on the selected provider
      */
-    private getProviderInstance(provider: AIProviderKey, model: string) {
+    private getProviderInstance(provider: AIProviderKey, model: string, useSearchGrounding: boolean = false) {
         switch (provider) {
             case 'google':
-                return google(model);
+                return google(model, {
+                    useSearchGrounding, // 🔍 Conditionally enables Google Search
+                });
             default:
                 throw new Error(`Unsupported provider: ${provider}`);
         }
@@ -66,13 +72,14 @@ export class AiApiService {
      * Stream AI response using full message array (new method)
      */
     async streamResponse(options: AiStreamOptions): Promise<AiStreamResult> {
-        const { messages, abortSignal } = options;
+        const { messages, abortSignal, useSearchGrounding = false } = options;
 
         try {
             // Get the provider instance based on current settings
             const modelInstance = this.getProviderInstance(
                 settingsStore.selectedProvider,
-                settingsStore.selectedModel
+                settingsStore.selectedModel,
+                useSearchGrounding
             );
 
             const result = streamText({
@@ -88,10 +95,13 @@ export class AiApiService {
                 finishPromise: (async () => {
                     try {
                         const finalResult = await result;
+                        const providerMetadata = await finalResult.providerMetadata;
                         return {
                             text: await finalResult.text,
                             finishReason: await finalResult.finishReason,
                             usage: await finalResult.usage,
+                            sources: await finalResult.sources,
+                            groundingMetadata: (providerMetadata as any)?.google?.groundingMetadata,
                         };
                     } catch (finishError) {
                         console.error('Error in finishPromise:', finishError);
@@ -109,7 +119,7 @@ export class AiApiService {
      * Stream AI response using legacy interface (for backwards compatibility)
      */
     async streamResponseLegacy(options: AiStreamOptionsLegacy): Promise<AiStreamResult> {
-        const { userMessage, screenshot, abortSignal } = options;
+        const { userMessage, screenshot, abortSignal, useSearchGrounding = false } = options;
 
         // Get user context and inject it into the system prompt
         const userContext = userContextStore.getUserContext() || "No additional context provided.";
@@ -134,7 +144,7 @@ export class AiApiService {
             }
         ];
 
-        return this.streamResponse({ messages, abortSignal });
+        return this.streamResponse({ messages, abortSignal, useSearchGrounding });
     }
 
     /**

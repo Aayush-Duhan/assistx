@@ -20,7 +20,7 @@ const FINAL_CONTENT_TYPE = 'image/webp';
 const FINAL_IMAGE_QUALITY = 0.7;
 
 // Type definitions
-interface ScreenshotData {
+export interface ScreenshotData {
     contentType: string;
     url: string;
 }

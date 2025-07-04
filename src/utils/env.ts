@@ -29,4 +29,11 @@ export function getEnvVar(key: string): string | undefined {
  */
 export function getGoogleAIApiKey(): string | undefined {
     return getEnvVar('GOOGLE_GENERATIVE_AI_API_KEY');
+}
+
+/**
+ * Get Deepgram API key from environment
+ */
+export function getDeepgramApiKey(): string | undefined {
+    return getEnvVar('DEEPGRAM_API_KEY');
 } 
