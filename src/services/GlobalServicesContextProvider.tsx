@@ -6,10 +6,6 @@ import { AudioCaptureService } from './AudioCaptureService';
 import { ContextService } from './ContextService';
 import { AiResponsesService } from './AiResponseService';
 import { LiveInsightsService } from './LiveInsightsService';
-import { conversationHistoryStore } from '../stores/conversationHistoryStore';
-import { contextSearchService } from './ContextSearchService';
-import '../stores/conversationHistoryStore.test'; // Import test for development console access
-import './ContextSearchService.test'; // Import search test for development console access
 
 // Type definitions
 interface GlobalServices {
@@ -18,8 +14,6 @@ interface GlobalServices {
     contextService: ContextService;
     aiResponsesService: AiResponsesService;
     liveInsightsService: LiveInsightsService;
-    conversationHistoryStore: typeof conversationHistoryStore;
-    contextSearchService: typeof contextSearchService;
 }
 
 /**
@@ -71,16 +65,12 @@ export function GlobalServicesContextProvider({ children }: { children: React.Re
         contextService,
         aiResponsesService,
         liveInsightsService,
-        conversationHistoryStore,
-        contextSearchService,
       }), [
         micAudioCaptureService,
         systemAudioCaptureService,
         contextService,
         aiResponsesService,
         liveInsightsService,
-        conversationHistoryStore,
-        contextSearchService,
       ]);
 
     // Expose services to the window for easy debugging in development mode.

@@ -1,15 +1,14 @@
-import { app, globalShortcut } from 'electron';
+import { app } from 'electron';
 import { electronApp } from '@electron-toolkit/utils';
 import * as dotenv from 'dotenv';
 
 // Load environment variables from .env.local
 dotenv.config({ path: '.env.local' });
-import { isMac, isWindows, isDevelopment } from './utils/platform';
+import { isMac, isWindows } from './utils/platform';
 import { windowManager } from './windows/WindowManager';
 import { setupAppMenu, setupDisplayMediaHandler, setupAutoUpdater } from './setup';
 import { setupIpcHandlers } from './ipcHandlers';
 import { setupDisplayListeners } from './display-listeners';
-// import { setupProtocolHandler } from './protocol-handler';
 import { applyGlobalShortcuts } from './shortcuts';
 
 const APP_ID = 'AssistX';
@@ -49,7 +48,6 @@ async function main(): Promise<void> {
   setupAutoUpdater();
   setupIpcHandlers();
   setupDisplayListeners();
-  // setupProtocolHandler();
   applyGlobalShortcuts();
 }
 

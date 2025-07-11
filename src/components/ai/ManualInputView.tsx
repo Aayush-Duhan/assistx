@@ -1,14 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp, Paperclip, X, Mic, Globe, Settings } from 'lucide-react';
-
-// --- Custom Hooks & Services ---
+import { ArrowUp, Globe } from 'lucide-react';
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
 import { useCanTakeScreenshot } from '../../stores/featureStore';
 import { electron } from '@/services/electron';
-
-// --- UI Components ---
 import { UI } from '../ui';
 import { MouseEventsCapture } from '../Portal';
 
@@ -17,17 +13,6 @@ interface ManualInputViewProps {
   className?: string;
 }
 
-// Custom Divider Component
-const CustomDivider: React.FC = () => (
-  <div className="relative h-6 w-[1.5px] mx-1">
-    <div
-      className="absolute inset-0 bg-gradient-to-t from-transparent via-[#9b87f5]/70 to-transparent rounded-full"
-      style={{
-        clipPath: "polygon(0% 0%, 100% 0%, 100% 40%, 140% 50%, 100% 60%, 100% 100%, 0% 100%, 0% 60%, -40% 50%, 0% 40%)",
-      }}
-    />
-  </div>
-);
 
 /**
  * This view provides a text area for the user to manually type a question to the AI.
@@ -50,12 +35,6 @@ export const ManualInputView = React.memo(function ManualInputView({
   
   // State for different features
   const [showSearch, setShowSearch] = useState(false);
-  const [showTool, setShowTool] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
-  const [filePreviews, setFilePreviews] = useState<{ [key: string]: string }>({});
-  
-  // File upload ref
-  const uploadInputRef = useRef<HTMLInputElement>(null);
   
   /**
    * Callback to dismiss the manual input view.
@@ -69,77 +48,37 @@ export const ManualInputView = React.memo(function ManualInputView({
    * Callback to submit the input and trigger AI analysis.
    */
   const onSubmit = useCallback(() => {
-    // Add prefixes for non-search modes (Tool still uses text prefixes)
-    let prefixes = [];
-    if (showTool) prefixes.push("Tool");
-    
-    const formattedInput = prefixes.length > 0 
-      ? `[${prefixes.join(", ")}: ${inputValue}]` 
-      : inputValue;
-    
     // Trigger the AI with the current input value, screenshot option, and search grounding
-    // Search is now passed as a separate parameter instead of text prefix
-    aiResponsesService.triggerAi(canCaptureScreenshots, formattedInput.trim() || null, showSearch);
+    aiResponsesService.triggerAi(canCaptureScreenshots, inputValue.trim() || null, showSearch);
     onDismiss(); // Close the input view after submitting
-  }, [aiResponsesService, canCaptureScreenshots, inputValue, onDismiss, showSearch, showTool]);
+  }, [aiResponsesService, canCaptureScreenshots, inputValue, onDismiss, showSearch]);
 
-  // Handle toggle changes - now allows multiple selections
+  // Handle toggle changes
   const handleToggleChange = (value: string) => {
     if (value === "search") {
       setShowSearch((prev) => !prev);
-    } else if (value === "tool") {
-      setShowTool((prev) => !prev);
     }
   };
 
-  // File handling
-  const isImageFile = (file: File) => file.type.startsWith("image/");
 
-  const processFile = (file: File) => {
-    if (!isImageFile(file)) {
-      console.log("Only image files are allowed");
-      return;
+
+// Effect to handle focus and dismissal based on window visibility
+useEffect(() => {
+  const checkVisibility = async () => {
+    const visible = await electron.getVisibility();
+    if (visible) {
+      // If the window is visible, focus the input field so the user can start typing immediately.
+      inputRef.current?.focus();
+    } else {
+      // If the window becomes hidden (e.g., user clicks away), dismiss the input view.
+      onDismiss();
     }
-    if (file.size > 10 * 1024 * 1024) {
-      console.log("File too large (max 10MB)");
-      return;
-    }
-    setFiles([file]);
-    const reader = new FileReader();
-    reader.onload = (e) => setFilePreviews({ [file.name]: e.target?.result as string });
-    reader.readAsDataURL(file);
-  };
+  }
 
-  const handleRemoveFile = (index: number) => {
-    const fileToRemove = files[index];
-    if (fileToRemove && filePreviews[fileToRemove.name]) setFilePreviews({});
-    setFiles([]);
-  };
+  checkVisibility();
+}, [onDismiss]);
 
-  // Voice input handler
-  const handleStartRecording = () => {
-    console.log("Starting voice input");
-    // TODO: Implement voice-to-text functionality
-    // This will transcribe speech and add it to the input value
-  };
-
-  // Effect to handle focus and dismissal based on window visibility
-  useEffect(() => {
-    const checkVisibility = async () => {
-      const visible = await electron.getVisibility();
-      if (visible) {
-        // If the window is visible, focus the input field so the user can start typing immediately.
-        inputRef.current?.focus();
-      } else {
-        // If the window becomes hidden (e.g., user clicks away), dismiss the input view.
-        onDismiss();
-      }
-    };
-    
-    checkVisibility();
-  }, [onDismiss]);
-
-  const hasContent = inputValue.trim() !== "" || files.length > 0;
+  const hasContent = inputValue.trim() !== "";
 
   return (
       <MouseEventsCapture>
@@ -148,33 +87,6 @@ export const ManualInputView = React.memo(function ManualInputView({
         className
       )}>
         
-        {/* File preview section */}
-        {files.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 transition-all duration-300">
-            {files.map((file, index) => (
-              <div key={index} className="relative group">
-                {file.type.startsWith("image/") && filePreviews[file.name] && (
-                  <div className="w-16 h-16 rounded-xl overflow-hidden cursor-pointer transition-all duration-300">
-                    <img
-                      src={filePreviews[file.name]}
-                      alt={file.name}
-                      className="h-full w-full object-cover"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveFile(index);
-                      }}
-                      className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3 text-white" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Text input area */}
           <UI.Input
@@ -183,11 +95,7 @@ export const ManualInputView = React.memo(function ManualInputView({
               'flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-base text-gray-100 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none',
               className
             )}
-            placeholder={
-              [showTool && "Use tools"]
-                .filter(Boolean)
-                .join(", ") || "Type your message here..."
-            }
+            placeholder="Type your message here..."
             multiLine
             value={inputValue}
             onChange={setInputValue}
@@ -213,24 +121,6 @@ export const ManualInputView = React.memo(function ManualInputView({
           <div className="flex items-center justify-between gap-2 pt-2">
             {/* Left side buttons */}
             <div className="flex items-center gap-1">
-              {/* File upload button */}
-              <button
-                onClick={() => uploadInputRef.current?.click()}
-                className="flex h-8 w-8 text-[#9CA3AF] cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-gray-600/30 hover:text-[#D1D5DB]"
-                title="Upload image"
-              >
-                <Paperclip className="h-5 w-5 transition-colors" />
-                <input
-                  ref={uploadInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) processFile(e.target.files[0]);
-                    if (e.target) e.target.value = "";
-                  }}
-                  accept="image/*"
-                />
-              </button>
 
               {/* Feature toggle buttons */}
               <div className="flex items-center">
@@ -269,58 +159,11 @@ export const ManualInputView = React.memo(function ManualInputView({
                     )}
                   </AnimatePresence>
                 </button>
-
-                <CustomDivider />
-
-                {/* Tool toggle */}
-                <button
-                  type="button"
-                  onClick={() => handleToggleChange("tool")}
-                  className={cn(
-                    "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
-                    showTool
-                      ? "bg-[#F97316]/15 border-[#F97316] text-[#F97316]"
-                      : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
-                  )}
-                  title="Use tools"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    <motion.div
-                      animate={{ rotate: showTool ? 360 : 0, scale: showTool ? 1.1 : 1 }}
-                      whileHover={{ rotate: showTool ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
-                      transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                    >
-                      <Settings className={cn("w-4 h-4", showTool ? "text-[#F97316]" : "text-inherit")} />
-                    </motion.div>
-                  </div>
-                  <AnimatePresence>
-                    {showTool && (
-                      <motion.span
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: "auto", opacity: 1 }}
-                        exit={{ width: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-xs overflow-hidden whitespace-nowrap text-[#F97316] flex-shrink-0"
-                      >
-                        Tool
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
               </div>
             </div>
 
-            {/* Right side - Send/Voice buttons */}
+            {/* Right side - Send button */}
             <div className="flex items-center gap-1">
-              {/* Voice input button */}
-              <button
-                className="h-8 w-8 rounded-full transition-all duration-200 inline-flex items-center justify-center bg-transparent hover:bg-gray-600/30 text-[#9CA3AF] hover:text-[#D1D5DB]"
-                onClick={handleStartRecording}
-                title="Voice input"
-              >
-                <Mic className="h-4 w-4 transition-colors" />
-              </button>
-
               {/* Send button */}
               {hasContent && (
                 <button

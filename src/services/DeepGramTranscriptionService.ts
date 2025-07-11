@@ -14,7 +14,7 @@ type ServiceState =
   | { state: 'not-running' };
 
 // --- Constants ---
-const DEEPGRAM_HEARTBEAT_TIMEOUT = 5000; // 5 seconds
+const DEEPGRAM_HEARTBEAT_TIMEOUT = 10000; // 10 seconds
 
 /**
  * Manages a real-time transcription session with Deepgram.
