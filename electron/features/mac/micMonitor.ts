@@ -1,9 +1,9 @@
 import { app } from "electron";
 import { spawn, ChildProcess } from "child_process";
 import { EventEmitter } from "node:events";
-import { isMac } from "electron/utils/platform";
-import type { BaseWindow } from "electron/windows/baseWindow";
-import type { OnboardingWindow } from "electron/windows/OnboardingWindow";
+import { isMac } from "../../utils/platform";
+import type { BaseWindow } from "../../windows/baseWindow";
+import type { OnboardingWindow } from "../../windows/OnboardingWindow";
 
 const MIC_APP_MATCH_RULES: [string, string][] = [
     ['VoiceMemos', 'Voice Memos'],

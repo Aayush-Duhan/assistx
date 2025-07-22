@@ -1,8 +1,8 @@
 import { ChildProcess, spawn } from "node:child_process";
 import { getMacExtraResourcePath, getChildProcessOutput } from "./utils";
 import { app } from "electron";
-import type { BaseWindow } from "electron/windows/baseWindow";
-import type { OnboardingWindow } from "electron/windows/OnboardingWindow";
+import type { BaseWindow } from "../../windows/baseWindow";
+import type { OnboardingWindow } from "../../windows/OnboardingWindow";
 
 const NATIVE_MAC_RECORDER_PATH = getMacExtraResourcePath('nativeMacRecorder');
 const MAC_RECORDER_TIMEOUT = 24000;

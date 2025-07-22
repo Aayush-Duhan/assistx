@@ -1,16 +1,16 @@
 import { app, desktopCapturer, shell, systemPreferences } from "electron";
-import { windowManager } from "electron/windows/WindowManager";
+import { windowManager } from "../windows/WindowManager";
 import { handle, on } from "./ipcMain";
-import { checkForUpdate, getUpdaterState, quitAndInstallUpdate } from "electron/features/autoUpdater";
-import { finishOnboarding, getOnboardingStatus, resetOnboarding } from "electron/onboarding";
-import { isUndetectabilityEnabled, toggleUndetectability } from "electron/features/undetectability";
-import { enableDevShortcuts, registerGlobalShortcut, resetGlobalShortcuts, unregisterGlobalShortcut } from "electron/features/shortcuts";
-import { captureScreenshot } from "electron/features/screenshot";
-import { displayOverlayManager, getAvailableDisplays, getDisplayById } from "electron/windows/OverlayManager";
-import { isMac } from "electron/utils/platform";
-import { startMicMonitor, stopMicMonitor } from "electron/features/mac/micMonitor";
-import { checkMacOsVersion } from "electron/features/mac/utils";
-import { startMacNativeRecorder, stopMacNativeRecorder } from "electron/features/mac/nativeRecorder";
+import { checkForUpdate, getUpdaterState, quitAndInstallUpdate } from "../features/autoUpdater";
+import { finishOnboarding, getOnboardingStatus, resetOnboarding } from "../onboarding";
+import { isUndetectabilityEnabled, toggleUndetectability } from "../features/undetectability";
+import { enableDevShortcuts, registerGlobalShortcut, resetGlobalShortcuts, unregisterGlobalShortcut } from "../features/shortcuts";
+import { captureScreenshot } from "../features/screenshot";
+import { displayOverlayManager, getAvailableDisplays, getDisplayById } from "../windows/OverlayManager";
+import { isMac } from "../utils/platform";
+import { startMicMonitor, stopMicMonitor } from "../features/mac/micMonitor";
+import { checkMacOsVersion } from "../features/mac/utils";
+import { startMacNativeRecorder, stopMacNativeRecorder } from "../features/mac/nativeRecorder";
 
 export function initializeIpcHandlers(): void {
   let currentWindow = windowManager.getCurrentWindow();

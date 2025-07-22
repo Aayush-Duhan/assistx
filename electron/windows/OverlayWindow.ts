@@ -1,6 +1,6 @@
 import { BrowserWindow, Display, ipcMain, Rectangle } from "electron";
 import { join } from "node:path";
-import { isDev } from "electron/utils/platform";
+import { isDev } from "../utils/platform";
 
 interface DisplayData {
     display: {
