@@ -1,34 +1,52 @@
 import { app } from 'electron';
-import { getHasOnboarded } from '../onboarding';
+import { getOnboardingStatus } from '../onboarding';
 import { BaseWindow } from './baseWindow';
 import { OnboardingWindow } from './OnboardingWindow';
 import { isMac } from '../utils/platform';
+import { isUndetectabilityEnabled } from '../features/undetectability';
+
+export interface CreateWindowOptions {
+  finishedOnboarding?: boolean;
+}
 
 type AppWindow = BaseWindow | OnboardingWindow;
 type WindowChangeHandler = (window: AppWindow) => void;
 
 class WindowManager {
-  currentWindow: AppWindow | null = null;
-  private handlers: Set<WindowChangeHandler> = new Set();
-  private extraConfig: { skipUndetectability: boolean } = { skipUndetectability: false };
+  private currentWindow: AppWindow | null = null;
+  private handlers = new Set<WindowChangeHandler>();
 
-  handleDockIcon() {
+  public handleDockIcon(): void {
     if (!isMac) return;
-    if (this.currentWindow instanceof OnboardingWindow || this.extraConfig.skipUndetectability) {
-      app.dock.show();
-    } else {
+
+    const isOnboarding = this.currentWindow instanceof OnboardingWindow;
+    if (isUndetectabilityEnabled() && !isOnboarding) {
       app.dock.hide();
+    } else {
+      app.dock.show();
     }
   }
 
-  createWindow(): AppWindow {
-    const options = { skipUndetectability: this.extraConfig.skipUndetectability };
-    this.currentWindow = getHasOnboarded() ? new BaseWindow(undefined, options) : new OnboardingWindow(options);
+  createOrRecreateWindow(options?: CreateWindowOptions): AppWindow {
+    const creationOptions = {
+      undetectabilityEnabled: isUndetectabilityEnabled(),
+      ...options,
+    };
 
-    // Notify all listeners about the new window
+    if (this.currentWindow && !this.currentWindow.isDestroyed()) {
+      this.currentWindow.close();
+    }
+
+    if (getOnboardingStatus()) {
+      this.currentWindow = new BaseWindow(creationOptions);
+    } else {
+      this.currentWindow = new OnboardingWindow(creationOptions);
+    }
+
     for (const handler of this.handlers) {
       handler(this.currentWindow);
     }
+
     this.handleDockIcon();
     return this.currentWindow;
   }
@@ -42,21 +60,6 @@ class WindowManager {
       throw new Error('No current window. Did you call createWindow()?');
     }
     return this.currentWindow;
-  }
-
-  recreateWindow(): void {
-    if (this.currentWindow) {
-      this.currentWindow.close();
-    }
-    this.createWindow();
-  }
-
-  /**
-   * Toggles the skipUndetectability flag and recreates the window.
-   */
-  toggleSkipUndetectability() {
-    this.extraConfig.skipUndetectability = !this.extraConfig.skipUndetectability;
-    this.recreateWindow();
   }
 
   /**

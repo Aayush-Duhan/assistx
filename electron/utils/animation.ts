@@ -1,6 +1,9 @@
 import { screen, BrowserWindow } from 'electron';
-import { easeInOutCubic } from './easing';
 import { isWindows } from './platform';
+
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
 
 /**
  * Animates a BrowserWindow to a new size and centers it.
@@ -94,59 +97,6 @@ export function animateWindowResize(
       }
       browserWindow.setBounds({ x: targetX, y: targetY, width: targetWidth, height: targetHeight });
       browserWindow.setResizable(wasResizable);
-    }
-  };
-}
-
-/**
- * Animates a BrowserWindow's opacity.
- * @returns An object with a 'cancel' function to stop the animation.
- */
-export function animateWindowOpacity(
-  browserWindow: BrowserWindow,
-  targetOpacity: number,
-  duration: number,
-  onComplete?: () => void
-): { cancel: () => void } {
-  const displayFrequency = screen.getPrimaryDisplay().displayFrequency;
-  let targetFps = Math.min(Math.max(displayFrequency, 30), 360);
-  if (displayFrequency > 60) {
-    targetFps = Math.max(60, Math.floor(displayFrequency / 2));
-  }
-  const frameInterval = 1000 / targetFps;
-
-  const startOpacity = browserWindow.getOpacity();
-  const deltaOpacity = targetOpacity - startOpacity;
-
-  const startTime = Date.now();
-  let animationTimeout: NodeJS.Timeout | null = null;
-
-  const animationStep = (): void => {
-    const elapsedTime = Date.now() - startTime;
-    const progress = Math.min(1, elapsedTime / duration);
-
-    if (progress < 1) {
-      const easedProgress = easeInOutCubic(progress);
-      const newOpacity = startOpacity + deltaOpacity * easedProgress;
-      browserWindow.setOpacity(newOpacity);
-      animationTimeout = setTimeout(animationStep, frameInterval);
-    } else {
-      browserWindow.setOpacity(targetOpacity);
-      animationTimeout = null;
-      onComplete?.();
-    }
-  };
-
-  animationStep();
-
-  return {
-    cancel: () => {
-      if (animationTimeout !== null) {
-        clearTimeout(animationTimeout);
-        animationTimeout = null;
-      }
-      browserWindow.setOpacity(targetOpacity);
-      onComplete?.();
     }
   };
 }

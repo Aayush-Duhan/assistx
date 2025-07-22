@@ -85,7 +85,7 @@ export const Onboarding = observer(() => {
     useEffect(() => {
         if (page === 1) electron.resizeWindow({ width: 640, height: 600, duration: 800 });
         if (page === 2) electron.resizeWindow({ width: 720, height: 550, duration: 450 });
-        if (page === 3) electron.resizeWindow({ width: 700, height: 500, duration: 450 });  
+        if (page === 3) electron.resizeWindow({ width: 700, height: 500, duration: 450 });
     }, [page]);
 
     // --- Content for each page ---
@@ -149,7 +149,7 @@ export const Onboarding = observer(() => {
                     <UI.Shortcut large accelerator="CommandOrControl+Enter" />
                 </OnboardingCommands>
                 <OnboardingCommands title="Hide/Show" description="Toggle visibility of AssistX">
-                    <UI.Shortcut large accelerator="CommandOrControl+\\" />
+                    <UI.Shortcut large accelerator="CommandOrControl+\" />
                 </OnboardingCommands>
                 <OnboardingCommands title="Clear" description="Reset and clear current conversation">
                     <UI.Shortcut large accelerator="CommandOrControl+R" />

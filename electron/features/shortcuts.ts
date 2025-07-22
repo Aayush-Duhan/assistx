@@ -1,8 +1,9 @@
 import { globalShortcut } from 'electron';
-import { isDevelopment } from './utils/platform';
-import { windowManager } from './windows/WindowManager';
+import { isDev } from '../utils/platform';
+import { windowManager } from '../windows/WindowManager';
+import { toggleUndetectability } from '../features/undetectability';
 
-let devShortcutsEnabled = isDevelopment;
+let devShortcutsEnabled = isDev;
 const registeredShortcuts = new Set<string>();
 
 export function registerGlobalShortcut(accelerator: string): void {
@@ -36,33 +37,19 @@ export function resetGlobalShortcuts(): void {
 export function applyGlobalShortcuts(): void {
   globalShortcut.unregisterAll();
 
-  // Register user-defined shortcuts
-  for (const accelerator of registeredShortcuts) {
-    if (!accelerator) {
-      console.warn(`[shortcuts] Skipping invalid accelerator: ${accelerator}`);
-      continue;
-    }
-    
+  for (const accelerator of registeredShortcuts) {    
     const success = globalShortcut.register(accelerator, () => {
-      try {
-        // Send just the accelerator string, not an object
-        windowManager.getCurrentWindow().sendToWebContents('global-shortcut-triggered', accelerator);
-      } catch (error) {
-        console.error(`[shortcuts] Error sending shortcut trigger for ${accelerator}:`, error);
-      }
+      windowManager.getCurrentWindow().sendToWebContents('global-shortcut-triggered', accelerator);
     });
     if (!success) {
       console.error(`Failed to register global shortcut: ${accelerator}`);
     }
   }
 
-  // Register fixed internal shortcuts
-  globalShortcut.register('CommandOrControl+Alt+Shift+I', () => {
-    windowManager.toggleSkipUndetectability();
-  });
-
-  // Register developer shortcuts
   if (devShortcutsEnabled) {
+    globalShortcut.register('CommandOrControl+Alt+Shift+I', () => {
+      toggleUndetectability();
+    });
     globalShortcut.register('CommandOrControl+Alt+R', () => {
       windowManager.getCurrentWindow().reload();
     });

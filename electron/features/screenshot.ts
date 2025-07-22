@@ -1,9 +1,10 @@
 import { desktopCapturer } from 'electron';
 import { Buffer } from 'node:buffer';
+import { isMac } from '../utils/platform';
 import { windowManager } from '../windows/WindowManager';
 import { resetOnboarding } from '../onboarding';
 
-interface ScreenshotResult {
+interface Screenshot {
   data: Buffer;
   contentType: 'image/png';
 }
@@ -12,10 +13,9 @@ interface ScreenshotResult {
  * Captures a screenshot of the entire desktop using Electron's desktopCapturer.
  * This avoids the __dirname issue with the screenshot-desktop library.
  */
-export async function captureScreenshot(): Promise<ScreenshotResult> {
+export async function captureScreenshot(): Promise<Screenshot> {
   const currentDisplay = windowManager.getCurrentWindow().getCurrentDisplay();
   try {
-    // Get available screen sources
     const sources = await desktopCapturer.getSources({
       types: ['screen'],
       thumbnailSize: {
@@ -30,7 +30,9 @@ export async function captureScreenshot(): Promise<ScreenshotResult> {
     }
     return { data: source.thumbnail.toPNG(), contentType: 'image/png' };
   } catch (error) {
-    resetOnboarding(); // Reset onboarding if screenshot fails (e.g. permissions)
+    if (isMac) {
+      resetOnboarding();
+    }
     throw error;
   }
 }

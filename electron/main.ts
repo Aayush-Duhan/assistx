@@ -1,55 +1,77 @@
-import { app } from 'electron';
+import { app, desktopCapturer, Menu, MenuItemConstructorOptions, screen, session } from 'electron';
 import { electronApp } from '@electron-toolkit/utils';
 import * as dotenv from 'dotenv';
 
-// Load environment variables from .env.local
 dotenv.config({ path: '.env.local' });
 import { isMac, isWindows } from './utils/platform';
 import { windowManager } from './windows/WindowManager';
-import { setupAppMenu, setupDisplayMediaHandler, setupAutoUpdater } from './setup';
-import { setupIpcHandlers } from './ipcHandlers';
-import { setupDisplayListeners } from './display-listeners';
-import { applyGlobalShortcuts } from './shortcuts';
+import { initializeIpcHandlers } from './ipc/ipcHandlers';
+import { applyGlobalShortcuts } from './features/shortcuts';
+import { initializeUpdater } from './features/autoUpdater';
+import { getAvailableDisplays } from './windows/OverlayManager';
 
 const APP_ID = 'AssistX';
 
-// Hide the dock icon on macOS.
 if (isMac) {
   app.dock.hide();
 }
 
-// Ensure only one instance of the app can run, primarily for Windows.
 if (isWindows) {
-  const isSingleInstance = app.requestSingleInstanceLock();
-  if (!isSingleInstance) {
+  if (!app.requestSingleInstanceLock()) {
     app.quit();
     process.exit(0);
   }
 }
 
-/**
- * The main application function.
- */
+function initializeDisplayListeners(): void {
+  const handler = () => {
+    windowManager.getCurrentWindow().moveToPrimaryDisplay();
+    const displays = getAvailableDisplays();
+    windowManager.getCurrentWindow().sendToWebContents('available-displays', { displays });
+  };
+  screen.on('display-added', handler);
+  screen.on('display-removed', handler);
+  screen.on('display-metrics-changed', handler);
+}
+
+function setupAppMenu(): void {
+  const template: (MenuItemConstructorOptions)[] = [
+    { role: 'editMenu' }
+  ];
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
+function setupDisplayMediaHandler(): void {
+  session.defaultSession.setDisplayMediaRequestHandler(
+    (_request, callback) => {
+      desktopCapturer
+        .getSources({ types: ['screen'] })
+        .then((sources) => {
+          // TODO: This currently just picks the first screen. It should be smarter.
+          callback({ video: sources[0], audio: 'loopback' });
+        })
+        .catch(() => {
+          callback({});
+        });
+    }
+  );
+}
+
 async function main(): Promise<void> {
-  // Wait for Electron to be ready.
   await app.whenReady();
 
-  // Set the App User Model ID for Windows notifications and taskbar grouping.
   electronApp.setAppUserModelId(`com.${APP_ID}`);
 
-  // Perform initial, non-window-dependent setup.
   setupAppMenu();
   setupDisplayMediaHandler();
 
-  // Create the main application window (this will be the onboarding or main overlay).
-  windowManager.createWindow();
+  windowManager.createOrRecreateWindow();
 
-  // After creating the window, set up handlers and services that depend on it.
-  setupAutoUpdater();
-  setupIpcHandlers();
-  setupDisplayListeners();
+  initializeUpdater();
+  initializeIpcHandlers();
+  initializeDisplayListeners();
   applyGlobalShortcuts();
 }
 
-// Start the application.
 main();
