@@ -11,7 +11,7 @@ import React, {
 import {createPortal} from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { electron } from '@/services/electron';
+import { send } from '@/services/electron';
 // --- Global State for Mouse Event Handling ---
 // This is a common pattern in transparent Electron apps to allow "clicking through"
 // the window unless the mouse is over an interactive element.
@@ -19,7 +19,7 @@ const mouseEventCaptureRegions = new Set<symbol>();
 
 function updateWindowIgnoreMouseEvents() {
   const shouldIgnore = mouseEventCaptureRegions.size === 0;
-  electron.setIgnoreMouseEvents({ ignore: shouldIgnore });   
+  send('set-ignore-mouse-events', { ignore: shouldIgnore });   
 }
 
 function addMouseCaptureRegion(id: symbol) {

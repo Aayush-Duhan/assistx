@@ -25,6 +25,7 @@
     "electron-updater": "^6.6.2",
     "events": "^3.3.0",
     "framer-motion": "^12.16.0",
+    "jotai": "^2.12.5",
     "lucide-react": "^0.513.0",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0",
@@ -41,6 +42,7 @@
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.8",
+    "usehooks-ts": "^3.1.1",
     "util": "^0.12.5",
     "zustand": "^5.0.5"
   },

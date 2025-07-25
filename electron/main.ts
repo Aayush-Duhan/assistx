@@ -21,7 +21,17 @@ if (isWindows) {
     app.quit();
     process.exit(0);
   }
+
+  app.on('second-instance', () => {
+    const currentWindow = windowManager.getCurrentWindow();
+    currentWindow.sendToWebContents("unhide-window", null);
+  });
 }
+
+app.on('activate', () => {
+  windowManager.handleDockIcon();
+  windowManager.getCurrentWindow().sendToWebContents("unhide-window", null);
+});
 
 function initializeDisplayListeners(): void {
   const handler = () => {

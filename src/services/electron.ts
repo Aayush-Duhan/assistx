@@ -1,154 +1,66 @@
-/**
- * Represents a single display connected to the system.
- */
-export interface Display {
-    id: number;
-    label: string;
-    bounds: { x: number; y: number; width: number; height: number };
-    scaleFactor: number;
-    primary: boolean;
-    current: boolean; // Custom flag to indicate if it's the window's current display
+import { Display } from "./types";
+
+type IpcChannels = {
+    'reset-global-shortcuts': [null, void];
+    'global-shortcut-triggered': [{ accelerator: string }, void];
+    'register-global-shortcuts': [{ accelerator: string }, void];
+    'unregister-global-shortcut': [{ accelerator: string }, void];
+    'set-ignore-mouse-events': [{ ignore: boolean }, void];
+    'unhide-window': [null, void];
+    'focus-window': [null, void];
+    'unfocus-window': [null, void];
+    'check-for-update': [null, void];
+    'install-update': [null, void];
+    'updater-state': [{ state: 'available' | 'downloaded' | 'error' }, void];
+    'quit-app': [null, void];
+    'finish-onboarding': [null, void];
+    'reset-onboarding': [null, void];
+    'enable-dev-shortcuts': [null, void];
+    'mac-set-mic-monitor-enabled': [{ enabled: boolean }, void];
+    'mac-set-native-recorder-enabled': [{ enabled: boolean }, void];
+    'mac-native-recorder-data': [{ source: 'mic' | 'system'; base64Data: string }, void];
+    'mic-used': [{ app: string }, void];
+    'mic-off': [{ app: string }, void];
+    'available-displays': [{ display: Display[] }, void];
+    'get-available-displays': [null, void];
+    'show-display-overlays': [null, void];
+    'hide-display-overlays': [null, void];
+    'move-window-to-display': [{ displayId: number }, void];
+    'highlight-display': [{ displayId: number }, void];
+    'unhighlight-display': [{ displayId: number }, void];
+    'display-changed': [null, void];
+    'get-invisible': [null, void];
+    'invisible-changed': [{ invisible: boolean }, void];
+    'toggle-invisible': [null, void];
+    'resize-window': [{ width: number; height: number; duration: number }, void];
+    'mac-open-system-settings': [{ section: string }, void];
+
+    // Invoke channels (request/response)
+    'capture-screenshot': [null, { contentType: string; data: Buffer }];
+    'request-has-onboarded': [null, { hasOnboarded: boolean }];
+    'request-media-permission': ['microphone' | 'screen', boolean];
+    'mac-check-macos-version': [null, { isSupported: boolean }];
 }
 
-/**
- * Represents the data for an application that is using the microphone.
- */
-export interface MicUsedData {
-    app: string; // e.g., "Google Chrome"
+type Channel = keyof IpcChannels;
+type Payload<C extends Channel> = IpcChannels[C][0];
+type Response<C extends Channel> = IpcChannels[C][1];
+
+
+export function send<C extends Channel>(channel: C, payload: Payload<C>): void {
+    window.electron.ipcRenderer.send(channel, payload);
 }
 
-/**
- * A singleton service to manage the state of available displays.
- * It subscribes to updates from the main process and notifies its own listeners.
- */
-class DisplayService {
-    private displays: Display[] = [];
-    private listeners = new Set<(displays: Display[]) => void>();
-    private isInitialized = false;
-
-    constructor() {
-        this.initialize();
-    }
-
-    private initialize() {
-        if (this.isInitialized || typeof window.electron === 'undefined') return;
-        this.isInitialized = true;
-
-        // Listen for display updates from the main process
-        window.electron.ipcRenderer.on('available-displays', (_, { displays }) => {
-            this.displays = displays;
-            for (const listener of this.listeners) {
-                listener(this.displays);
-            }
-        });
-
-        // Initial fetch
-        window.electron.ipcRenderer.send('get-available-displays');
-    }
-
-    getDisplays(): Display[] {
-        return this.displays;
-    }
-
-    subscribe(callback: (displays: Display[]) => void): () => void {
-        this.listeners.add(callback);
-        // Immediately call back with current data if available
-        if (this.displays.length > 0) {
-            callback(this.displays);
-        }
-        return () => this.listeners.delete(callback);
-    }
-
-    refresh() {
-        window.electron.ipcRenderer.send('get-available-displays');
-    }
+export function on<C extends Channel>(
+    channel: C,
+    callback: (payload: Payload<C>) => void
+): void {
+    window.electron.ipcRenderer.on(channel, (_event, payload) => callback(payload));
 }
 
-const displayService = new DisplayService();
-
-export const electron = {
-    // --- Platform ---
-    getPlatform: () => window.electron.ipcRenderer.invoke('get-platform'),
-
-    // --- Window Management ---
-    resizeWindow: (args: { width: number; height: number; duration?: number }) =>
-        window.electron.ipcRenderer.send('resize-window', args),
-    moveWindowToDisplay: (args: { displayId: number }) =>
-        window.electron.ipcRenderer.send('move-window-to-display', args),
-    focusWindow: () => window.electron.ipcRenderer.send('focus-window'),
-    unfocusWindow: () => window.electron.ipcRenderer.send('unfocus-window'),
-    quitApp: () => window.electron.ipcRenderer.send('quit-app'),
-    setIgnoreMouseEvents: (args: { ignore: boolean }) =>
-        window.electron.ipcRenderer.send('set-ignore-mouse-events', args),
-    toggleVisibility: () => window.electron.ipcRenderer.send('toggle-visibility'),
-    getVisibility: () => window.electron.ipcRenderer.invoke('get-visibility'),
-    hideWindow: () => window.electron.ipcRenderer.send('hide-window'),
-    openExternalUrl: (url: string) => window.electron.ipcRenderer.send('open-external-url', url),
-
-    // --- Display Management & Overlays ---
-    showDisplayOverlays: () => window.electron.ipcRenderer.send('show-display-overlays'),
-    hideDisplayOverlays: () => window.electron.ipcRenderer.send('hide-display-overlays'),
-    highlightDisplay: (args: { displayId: number }) =>
-        window.electron.ipcRenderer.send('highlight-display', args),
-    unhighlightDisplay: (args: { displayId: number }) =>
-        window.electron.ipcRenderer.send('unhighlight-display', args),
-    subscribeToDisplays: (callback: (displays: Display[]) => void) =>
-        displayService.subscribe(callback),
-    getDisplays: () => displayService.getDisplays(),
-
-    // --- Permissions ---
-    requestMediaPermission: (mediaType: 'microphone' | 'screen'): Promise<boolean> =>
-        window.electron.ipcRenderer.invoke('request-media-permission', mediaType),
-    checkMacosVersion: (): Promise<{ isSupported: boolean }> =>
-        window.electron.ipcRenderer.invoke('mac-check-macos-version'),
-
-    // --- Global Shortcuts ---
-    registerGlobalShortcut: (args: { accelerator: string }) =>
-        window.electron.ipcRenderer.send('register-global-shortcut', args),
-    unregisterGlobalShortcut: (args: { accelerator: string }) =>
-        window.electron.ipcRenderer.send('unregister-global-shortcut', args),
-    resetGlobalShortcuts: () => window.electron.ipcRenderer.send('reset-global-shortcuts'),
-
-    // --- Updates ---
-    checkForUpdate: () => window.electron.ipcRenderer.send('check-for-update'),
-    installUpdate: () => window.electron.ipcRenderer.send('install-update'),
-
-    // --- Onboarding & Auth ---
-    openProductionWebUrl: (args: { path: string }) =>
-        window.electron.ipcRenderer.send('open-production-web-url', args),
-    requestHasOnboarded: (): Promise<{ hasOnboarded: boolean }> =>
-        window.electron.ipcRenderer.invoke('request-has-onboarded'),
-    setHasOnboardedTrue: () => window.electron.ipcRenderer.send('set-has-onboarded-true'),
-
-    // --- Native macOS Recorder ---
-    setNativeMacRecorderEnabled: (args: { enabled: boolean; useV2?: boolean }) =>
-        window.electron.ipcRenderer.send('mac-set-native-recorder-enabled', args),
-    subscribeToNativeMacRecorderData: (
-        callback: (data: { source: 'mic' | 'system'; base64Data: string }) => void
-    ) => {
-        const handler = (_: any, data: { source: 'mic' | 'system'; base64Data: string }) => callback(data);
-        window.electron.ipcRenderer.on('mac-native-recorder-data', handler);
-        return () => window.electron.ipcRenderer.removeListener('mac-native-recorder-data', handler);
-    },
-
-    // --- Microphone Monitoring (macOS) ---
-    setMicMonitorEnabled: (args: { enabled: boolean }) =>
-        window.electron.ipcRenderer.send('mac-set-mic-monitor-enabled', args),
-    subscribeToMicUsed: (callback: (data: MicUsedData) => void) => {
-        const handler = (_: any, data: MicUsedData) => callback(data);
-        window.electron.ipcRenderer.on('mic-used', handler);
-        return () => window.electron.ipcRenderer.removeListener('mic-used', handler);
-    },
-    subscribeToMicOff: (callback: (data: MicUsedData) => void) => {
-        const handler = (_: any, data: MicUsedData) => callback(data);
-        window.electron.ipcRenderer.on('mic-off', handler);
-        return () => window.electron.ipcRenderer.removeListener('mic-off', handler);
-    },
-
-    // --- Generic Event Subscription ---
-    subscribe: (channel: string, callback: (data: any) => void) => {
-        const handler = (_: any, data: any) => callback(data);
-        window.electron.ipcRenderer.on(channel, handler);
-        return () => window.electron.ipcRenderer.removeListener(channel, handler);
-    },
-}
+export async function invoke<C extends Channel>(
+    channel: C,
+    payload: Payload<C>
+): Promise<Response<C>> {
+    return window.electron.ipcRenderer.invoke(channel, payload);
+}    

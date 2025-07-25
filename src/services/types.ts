@@ -1,5 +1,11 @@
-// --- Shared Type Definitions for Deepgram Transcription Services ---
-
+export interface Display {
+    id: number;
+    label: string;
+    bounds: { x: number; y: number; width: number; height: number };
+    scaleFactor: number;
+    primary: boolean;
+    current: boolean; // Custom flag to indicate if it's the window's current display
+}
 export type AudioSource = 'mic' | 'system';
 
 export interface AudioTranscription {

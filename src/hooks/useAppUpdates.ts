@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GITHUB_API_RELEASES_URL } from '../utils/constants';
+import { GITHUB_API_RELEASES_URL } from '../lib/constants';
 
 // Type definitions
 interface GitHubRelease {
