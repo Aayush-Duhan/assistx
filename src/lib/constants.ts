@@ -94,3 +94,22 @@ export const AI_CONFIG = {
 
 export type AIProvider = 'google';
 export type AIModel = string;
+
+export const SHORTCUTS = {
+    GENERATE: 'CommandOrControl+Enter',
+    SPECIFY: 'CommandOrControl+Shift+Enter',
+    ASK: 'CommandOrControl+Enter', // Same as GENERATE for some configurations
+    CLEAR: 'CommandOrControl+R',
+    TOGGLE_VISIBILITY: 'CommandOrControl+\\',
+    SCROLL_UP: 'CommandOrControl+[',
+    SCROLL_DOWN: 'CommandOrControl+]',
+    VIM_SCROLL_UP: 'CommandOrControl+K',
+    VIM_SCROLL_DOWN: 'CommandOrControl+J',
+    MOVE_LEFT: 'CommandOrControl+Left',
+    MOVE_RIGHT: 'CommandOrControl+Right',
+    VIM_MOVE_LEFT: 'CommandOrControl+H',
+    VIM_MOVE_RIGHT: 'CommandOrControl+L',
+    VIM_MOVE_UP: 'CommandOrControl+Shift+K',
+    VIM_MOVE_DOWN: 'CommandOrControl+Shift+J',
+    };
+    

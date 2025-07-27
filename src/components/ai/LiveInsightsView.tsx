@@ -14,7 +14,7 @@ import { CopyButton } from '../ui/CopyButton';
 import { AudioLines, Lightbulb } from 'lucide-react';
 
 // --- Type Definitions ---
-import { LiveInsights, LiveInsightsAction, LiveInsightsSummary } from '../../services/types';
+import { LiveInsights, LiveInsightsAction, LiveInsightsSummary } from '../../types';
 
 interface LiveInsightsViewProps {
   onShowTranscript: () => void;

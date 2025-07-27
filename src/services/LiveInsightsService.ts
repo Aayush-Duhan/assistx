@@ -1,7 +1,7 @@
 import { makeObservable, observable, computed, runInAction, reaction } from 'mobx';
 import { aiApiService } from './AiApiService';
 import { ContextService } from './ContextService';
-import { LiveInsights, LiveInsightsSummary, LiveInsightsAction, AudioTranscription } from './types';
+import { LiveInsights, LiveInsightsSummary, LiveInsightsAction, AudioTranscription } from '../types';
 
 /**
  * Service for generating live insights from transcriptions using AI

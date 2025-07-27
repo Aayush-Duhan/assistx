@@ -1,7 +1,9 @@
 import { FC, useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Portal, MouseEventsCapture } from './Portal';
-import { MovableWindowsProvider } from './windows/MovableWindowsProvider';
+import { PortalProvider } from './Portal';
+import { MouseEventsCapture } from './windows/MouseEventCapture';
+import { MovableWindowsProvider } from '../hooks/useMovableWindow';
+import { InlineWindow } from './windows/InlineWindow';
 import { UpdateAvailableNotification } from './UpdateAvailableNotification';
 import { CommandBar } from './CommandBar';
 import { SettingsButton } from './SettingsButton';
@@ -36,7 +38,7 @@ export const App: FC = observer(() => {
     }, [micAudioCaptureService.state.state, systemAudioCaptureService.state.state, isAudioSessionVisible]);
 
     return (
-        <Portal.Provider>
+        <PortalProvider>
             {({ commandBar, movableWindows, notifications, fullscreen }) => (
                 <MovableWindowsProvider>
                     <div ref={fullscreen} className="absolute inset-0" />
@@ -47,7 +49,7 @@ export const App: FC = observer(() => {
                     
                     <div className="absolute left-0 right-0 top-5 flex justify-center">
                         <MouseEventsCapture>
-                            <Portal.Inline>
+                            <InlineWindow>
                                 <div className="h-10 flex items-center px-2 gap-4">
                                     <ListeningUI />
                                     <div ref={commandBar} className="flex items-center gap-8" />
@@ -56,7 +58,7 @@ export const App: FC = observer(() => {
                                         isSettingsVisible={isSettingsVisible} 
                                     />
                                 </div>
-                            </Portal.Inline>
+                            </InlineWindow>
                         </MouseEventsCapture>
                     </div>
                         <UpdateAvailableNotification />
@@ -70,6 +72,6 @@ export const App: FC = observer(() => {
                         <SettingsWindow isVisible={isSettingsVisible} />
                 </MovableWindowsProvider>
             )}
-        </Portal.Provider>
+        </PortalProvider>
     );
 }); 

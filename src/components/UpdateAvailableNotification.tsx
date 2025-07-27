@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { electron } from '@/services/electron';
+import { invoke } from '@/services/electron';
 // Hooks and Utils
 import { useAppVersion, useUpdateAvailable, useUpdateInfo } from '../hooks/useAppUpdates';
 
@@ -30,7 +30,7 @@ export const UpdateAvailableNotification: React.FC = observer(() => {
         const handleUpdateClick = () => {
             // For open source version, open the GitHub release page or download URL
             if (updateInfo.downloadUrl) {
-                electron.openExternalUrl(updateInfo.downloadUrl);
+                invoke('open-external-url', { url: updateInfo.downloadUrl });
             }
             console.log('Opening update URL:', updateInfo.downloadUrl, {
                 currentVersion: appVersion,

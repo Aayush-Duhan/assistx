@@ -1,7 +1,7 @@
 import { makeObservable, observable, computed, reaction, runInAction, autorun } from 'mobx';
 import { AudioCaptureService } from './AudioCaptureService';
 import { AudioSession } from './AudioSession';
-import { AudioSource, AudioTranscription, Transcription } from './types';
+import { AudioSource, AudioTranscription, Transcription } from '../types';
 
 // --- Constants ---
 const MAX_TRANSCRIPTIONS_IN_CONTEXT = 1000;

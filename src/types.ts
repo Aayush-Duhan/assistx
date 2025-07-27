@@ -79,4 +79,19 @@ export interface LiveInsights {
     summary: LiveInsightsSummary;
     actions: LiveInsightsAction[];
     lastUpdated: Date;
-} 
+}
+
+export enum FeatureFlag {
+    VIM_MODE_KEY_BINDINGS = 'vim_mode_key_bindings',
+    DEV_INSPECT_APP = 'dev_inspect_app',
+    TRIGGER_AI_MODEL_PRIORITIES = 'trigger_ai_model_priorities',
+    MAX_ATTACHMENT_COUNT = 'max_attachment_count',
+    USAGE_LIMIT_VARIANT = 'usage_limit_variant',
+    USE_ASSEMBLY_AI_TRANSCRIPTION = 'use_assembly_ai_transcription',
+    USE_SELF_HOSTED_DEEPGRAM_TRANSCRIPTION = 'use_self_hosted_deepgram_transcription',
+    DEEPGRAM_LANGUAGE = 'deepgram_language',
+    NATIVE_MAC_RECORDER_V2 = 'native_mac_recorder_v2',
+    ONLY_COMMAND_ENTER = 'only_command_enter',
+    LIVE_INSIGHTS_ACTIONS_MODEL = 'live_insights_actions_model',
+  }
+  

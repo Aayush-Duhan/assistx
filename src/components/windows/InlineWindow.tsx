@@ -1,57 +1,76 @@
-import { ReactNode, ReactElement, createElement } from 'react';
-import { clsx } from 'clsx';
-import { CSSProperties } from 'react';
+import { forwardRef } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { MouseEventsCapture } from "./MouseEventCapture";
 
-interface InlineWindowProps {
-    children: ReactNode;
-    width?: number;
-    height?: number;
-    className?: string;
+export interface InlineWindowProps {
+    positionClassName?: string;
+    backgroundClassname?: string;
     contentClassName?: string;
-    title?: string;
+    width?: string | number;
+    fullBorderRadius?: boolean;
+    opaque?: boolean;
+    captureMouseEvents?: boolean;
+    fastAnimations?: boolean;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
+    layoutTransition?: boolean;
+    children: React.ReactNode;
 }
 
-export function InlineWindow({ 
-    children, 
-    width, 
-    height, 
-    className, 
-    contentClassName,
-    title 
-}: InlineWindowProps): ReactElement {
-    const style: CSSProperties = {};
-    
-    if (width !== undefined) {
-        style.width = width;
-    }
-    
-    if (height !== undefined) {
-        style.height = height;
-    }
-
-    return createElement(
-        'div',
+export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
+    (
         {
-            className: clsx(
-                "bg-black/80 backdrop-blur-md rounded-lg border border-white/10 shadow-lg",
-                "text-white overflow-hidden",
-                className
-            ),
-            style
+            positionClassName,
+            backgroundClassname,
+            contentClassName,
+            width = 'fit-content',
+            fullBorderRadius = false,
+            opaque = false,
+            captureMouseEvents = false,
+            fastAnimations = false,
+            onMouseEnter,
+            onMouseLeave,
+            layoutTransition = false,
+            children,
         },
-        title && createElement(
-            'div',
-            {
-                className: "px-4 py-2 border-b border-white/10 text-sm font-medium"
-            },
-            title
-        ),
-        createElement(
-            'div',
-            {
-                className: clsx("p-4", contentClassName)
-            },
-            children
+        ref
+    ) => {
+        const duration = fastAnimations ? 0.02 : 0.15;
+        const ease = fastAnimations ? 'linear' : 'easeOut';
+        return (
+            <div
+                className={cn('relative', positionClassName)}
+                style={{ width}}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
+            >
+                <MouseEventsCapture enabled={captureMouseEvents}>
+                    <motion.div
+                        className={cn(
+                            'absolute inset-0 shadow-md inset-ring-1 inset-ring-zinc-400/33 border-[0.5px] border-black/80',
+                            opaque ? 'bg-zinc-950/95' : 'bg-black/60',
+                            backgroundClassname
+                        )}
+                        style={{
+                            borderRadius: fullBorderRadius ? 999 : 8,
+                            backgroundColor: undefined
+                        }}
+                        transition={{ duration, ease }}
+                        layout={layoutTransition}
+                        layoutDependency={children}
+                    />
+                    <motion.div
+                        ref={ref}
+                        className={cn('relative', contentClassName)}
+                        transition={{ duration, ease }}
+                        layout={layoutTransition ? 'position' : false}
+                        layoutDependency={children}
+                    >
+                        {children}
+                    </motion.div>
+                </MouseEventsCapture>
+            </div>
         )
-    );
-} 
+    }
+)

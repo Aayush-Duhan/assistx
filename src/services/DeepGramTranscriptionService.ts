@@ -5,7 +5,7 @@ import { makeObservable, observable } from 'mobx';
 // --- Imports ---
 import { getDeepgramClient } from './DeepGramClient';
 import { AudioCaptureService } from './AudioCaptureService';
-import { AudioSource, AudioTranscription, Transcription, ITranscriptionService, BufferState } from './types';
+import { AudioSource, AudioTranscription, Transcription, ITranscriptionService, BufferState } from '../types';
 
 type ServiceState =
   | { state: 'loading'; abortController: AbortController }

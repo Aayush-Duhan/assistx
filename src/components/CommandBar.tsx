@@ -3,9 +3,9 @@ import { observer } from 'mobx-react-lite';
 
 // Hooks, Services, and Stores
 import { useGlobalServices } from '../services/GlobalServicesContextProvider';
-import { electron } from '@/services/electron';
+import { send } from '@/services/electron';
 // UI Components
-import { Portal } from './Portal';
+import { CommandBarPortal } from './Portal';
 import { UI } from './ui';
 
 // Constants for keyboard shortcuts to keep them consistent and maintainable.
@@ -34,7 +34,7 @@ export const CommandBar: React.FC = observer(() => {
     return (
         // CommandBarPortal ensures this UI is rendered into the correct DOM node
         // managed by Portal.Provider in App.tsx.
-        <Portal.CommandBar>
+        <CommandBarPortal>
                 {/* "Ask AI" or "Ask Follow-Up" Shortcut */}
                 <UI.Shortcut
                     label={hasActiveResponse ? "Ask Follow-Up" : "Ask AI"}
@@ -46,8 +46,8 @@ export const CommandBar: React.FC = observer(() => {
                 <UI.Shortcut
                     label="Show/Hide"
                     accelerator={SHORTCUT_TOGGLE_VISIBILITY}
-                    onTrigger={() => electron.toggleVisibility()}
+                    onTrigger={() => send('toggle-invisible', null)}
                 />
-        </Portal.CommandBar>
+        </CommandBarPortal>
     );
 }); 

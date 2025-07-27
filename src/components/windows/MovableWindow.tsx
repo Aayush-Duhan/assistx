@@ -1,61 +1,60 @@
-import { ReactNode, ReactElement, createElement } from 'react';
-import { motion } from 'framer-motion';
-import { Portal } from '../Portal'; 
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSetAtom } from "jotai";
+import { InlineWindow, InlineWindowProps } from "./InlineWindow";
+import { MovableWindowsPortal } from "../Portal"
+import { movableWindowCountAtom } from "@/state/atoms";
 
-const BOUNCE_ANIMATION_MS = 250;
-
-// Type definitions
-type BounceDirection = 'up' | 'down' | null;
-
-interface MovableWindowProps {
+interface MovableWindowProps extends InlineWindowProps {
     show?: boolean;
-    bounceDirection?: BounceDirection;
-    children: ReactNode;
-    width?: number;
-    height?: number;
-    className?: string;
-    contentClassName?: string;
-    title?: string;
-    transparent?: boolean;
-    opaque?: boolean;
+    bounceDirection?: 'up' | 'down';
 }
 
-/**
- * A window component that can be moved horizontally along with other movable windows.
- * It also supports a "bounce" animation to indicate the user has reached the end of a list.
- */
-export function MovableWindow({ 
-    show = true, 
-    bounceDirection, 
-    children,
-    transparent,
-    opaque,
-    ...restProps 
-}: MovableWindowProps): ReactElement {
-    // The bounce animation is a simple up/down movement.
-    const yAnimation = bounceDirection === 'up'
-        ? [0, -10, 0]
-        : bounceDirection === 'down'
-        ? [0, 10, 0]
+const MovableWindow = ({
+    show = true,
+    bounceDirection,
+    ...props
+  }: MovableWindowProps) => {
+    const y = bounceDirection === 'up' 
+      ? [0, -10, 0] 
+      : bounceDirection === 'down' 
+        ? [0, 10, 0] 
         : 0;
-
-    return createElement(
-        Portal.Movable,
-        { 
-            transparent,
-            opaque,
-            show,
-            bounceDirection: bounceDirection === null ? undefined : bounceDirection,
-            captureMouseEvents: true,
-            ...restProps,
-            children: createElement(
-                motion.div,
-                {
-                    animate: { y: yAnimation },
-                    transition: { ease: "easeInOut", duration: BOUNCE_ANIMATION_MS / 1000 }
-                },
-                children
-            )
-        }
+    
+    const setMovableWindowCount = useSetAtom(movableWindowCountAtom);
+  
+    useEffect(() => {
+      if (show) {
+        setMovableWindowCount((count) => count + 1);
+        return () => {
+          setMovableWindowCount((count) => count - 1);
+        };
+      }
+    }, [show, setMovableWindowCount]);
+  
+    return (
+      <MovableWindowsPortal>
+        <AnimatePresence>
+          {show && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <motion.div
+                animate={{ y }}
+                transition={{ 
+                  ease: 'easeInOut', 
+                  duration: 25 / 1000 
+                }}
+              >
+                <InlineWindow layoutTransition {...props} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </MovableWindowsPortal>
     );
-} 
+  };
+  
+  export default MovableWindow;

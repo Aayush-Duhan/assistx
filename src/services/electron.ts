@@ -1,4 +1,4 @@
-import { Display } from "./types";
+import { Display } from "../types";
 
 type IpcChannels = {
     'reset-global-shortcuts': [null, void];
@@ -40,6 +40,7 @@ type IpcChannels = {
     'request-has-onboarded': [null, { hasOnboarded: boolean }];
     'request-media-permission': ['microphone' | 'screen', boolean];
     'mac-check-macos-version': [null, { isSupported: boolean }];
+    'open-external-url': [{ url: string }, void];
 }
 
 type Channel = keyof IpcChannels;

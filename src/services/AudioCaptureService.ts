@@ -1,6 +1,6 @@
 import { makeObservable, observable, action } from 'mobx';
 import { DeepgramTranscriptionService } from './DeepGramTranscriptionService';
-import { AudioSource, AudioData, ITranscriptionService } from './types';
+import { AudioSource, AudioData, ITranscriptionService } from '../types';
 
 // --- Constants and Helper Classes ---
 
