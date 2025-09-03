@@ -1,8 +1,11 @@
-// <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" xml:space="preserve"><path d="M512 253.42V71.11c0-15.65-12.8-28.44-28.44-28.44H270c-15.65 0-28.44 12.8-28.44 28.44 0 15.65 12.8 28.44 28.44 28.44h185.11v127.56H97.42l39.11-39.82c11.38-11.38 11.38-29.87 0-41.24-5.69-5.69-12.81-8.53-19.92-8.53s-14.22 2.84-19.91 8.53L8.53 233.51C2.84 239.2 0 246.31 0 253.42c0 7.82 2.84 14.93 8.53 19.91l88.18 87.47c11.38 11.38 29.16 11.38 40.53 0s10.67-28.44 0-39.82L97.42 284h386.13c15.65 0 28.45-14.93 28.45-30.58"/></svg>
 
 export const APP_NAME = "AssistX";
+export const APP_VERSION = "1.0.0";
 export const APP_DESCRIPTION = 'An invisible desktop assistant that sees your screen and hears your audio. Helpful for meetings, sales calls, and more.';
-export const IS_DEV = process.env.NODE_ENV === 'development';
+export const IS_DEV = window.electron.process.env.NODE_ENV === 'development';
+
+export const IS_MAC = window.electron.process.platform === 'darwin';
+export const IS_WINDOWS = window.electron.process.platform === 'win32';
 
 export const PREDEFINED_PROMPTS = {
     whatShouldISay: {
@@ -30,24 +33,24 @@ export const PREDEFINED_PROMPTS = {
 
 export const FOLLOW_UP_PROMPTS = {
     draftFollowUpEmail: {
-        display: ' Draft a follow-up email',
+        display: '✉️ Draft a follow-up email',
         input: `Draft a follow-up email Output the email greeting, body, and closing in a
     code block Use placeholders for the sender and recipient names, unless the names were
     explicitly mentioned in the conversation`,
     },
     generateActionItems: {
-        display: ' Generate action items',
+        display: '✅ Generate action items',
         input: 'List all action items discussed, formatted as bullet points',
     },
     generateExecutiveSummary: {
-        display: ' Generate executive summary',
+        display: '📝 Generate executive summary',
         input: 'Generate a one-paragraph executive summary of the conversation, including key points and decisions made',
     },
     openSummaryInDashboard: {
-        display: ' Show summary in dashboard',
+        display: '📊 Show summary in dashboard',
     },
     closeLiveInsights: {
-        display: ' Close live insights',
+        display: '❌ Close live insights',
     },
 } as const;
 

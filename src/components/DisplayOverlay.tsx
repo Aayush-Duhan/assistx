@@ -1,85 +1,120 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
 
-declare module 'react' {
-  interface CSSProperties {
-    WebkitAppRegion?: 'no-drag' | 'drag';
-  }
+interface Display {
+	id: number;
+	label: string;
+	bounds: { width: number; height: number };
 }
 
-interface DisplayData {
-  display: {
-    id: number;
-    label: string;
-    bounds: { x: number; y: number; width: number; height: number };
-  };
-  ipcChannel: string;
+interface DisplayOverlayProps {
+	display: Display;
+	ipcChannel: string;
 }
 
-const DisplayOverlayApp: React.FC = () => {
-  const [displayData, setDisplayData] = useState<DisplayData | null>(null);
-  const [isHighlighted, setIsHighlighted] = useState(false);
+function DisplayOverlay({ display, ipcChannel }: DisplayOverlayProps): React.ReactElement {
+	const [isHighlighted, setIsHighlighted] = useState<boolean>(false);
+	const [isHovered, setIsHovered] = useState<boolean>(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const dataString = params.get('displayData');
-    if (dataString) {
-      try {
-        const data = JSON.parse(decodeURIComponent(dataString));
-        setDisplayData(data);
-      } catch (error) {
-        console.error('Failed to parse display data:', error);
-      }
-    }
 
-    const handleHighlight = () => setIsHighlighted(true);
-    const handleUnhighlight = () => setIsHighlighted(false);
+	useEffect(() => {
+		const handleHighlight = () => setIsHighlighted(true);
+		const handleUnhighlight = () => setIsHighlighted(false);
 
-    window.addEventListener('highlight', handleHighlight);
-    window.addEventListener('unhighlight', handleUnhighlight);
+		window.addEventListener('highlight', handleHighlight);
+		window.addEventListener('unhighlight', handleUnhighlight);
 
-    return () => {
-      window.removeEventListener('highlight', handleHighlight);
-      window.removeEventListener('unhighlight', handleUnhighlight);
-    };
-  }, []);
+		return () => {
+			window.removeEventListener('highlight', handleHighlight);
+			window.removeEventListener('unhighlight', handleUnhighlight);
+		};
+	}, []);
 
-  const handleClick = () => {
-    if (displayData) {
-      window.electron.ipcRenderer.send(displayData.ipcChannel);
-    }
-  };
+	const handleClick = () => {
+		if (window.electron?.ipcRenderer) {
+			console.log(`[DisplayOverlay] Sending click event for display ${display.id} on channel ${ipcChannel}`);
+			window.electron.ipcRenderer.send(ipcChannel);
+		} else {
+			console.error('[DisplayOverlay] IPC renderer not available');
+		}
+	};
 
-  if (!displayData) {
-    return null; // Or a loading/error state
-  }
+	return (
+		<button
+			type="button"
+			className={cn(
+				'w-full h-full flex flex-col justify-center items-center',
+				'font-sans text-white cursor-pointer transition-all duration-200 ease-in-out',
+				'bg-black/30 border-none outline-none focus:outline-none',
+				isHovered && 'bg-sky-500/40',
+				isHighlighted && 'bg-sky-500/60'
+			)}
+			onClick={handleClick}
+			onMouseEnter={() => setIsHovered(true)}
+			onMouseLeave={() => setIsHovered(false)}
+		>
+			<div className="text-center pointer-events-none">
+				<div className="text-2xl font-semibold mb-2 drop-shadow-lg">
+					Click to move {APP_NAME}
+				</div>
+				<div className="text-base opacity-80 drop-shadow-md mb-0">
+					{display.label}
+				</div>
+				<div className="text-base opacity-80 drop-shadow-md">
+					{display.bounds.width} × {display.bounds.height}
+				</div>
+			</div>
+		</button>
+	);
+}
 
-  const { display } = displayData;
+export function DisplayOverlayApp(): React.ReactElement | null {
+	const [props, setProps] = useState<DisplayOverlayProps | null>(null);
+	const [error, setError] = useState<string | null>(null);
 
-  const style: React.CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    border: isHighlighted ? '4px solid #007aff' : '4px solid transparent',
-    color: 'white',
-    fontSize: '48px',
-    fontWeight: 'bold',
-    transition: 'border-color 0.2s ease-in-out',
-    boxSizing: 'border-box',
-    cursor: 'pointer',
-    WebkitAppRegion: 'no-drag',
-  };
+	useEffect(() => {
+		try {
+		  const urlParams = new URLSearchParams(window.location.search);
+		  const displayDataParam = urlParams.get('displayData');
+	
+		  if (!displayDataParam) {
+			throw new Error('No display data provided in URL parameters');
+		  }
+	
+		  const parsedData = JSON.parse(decodeURIComponent(displayDataParam)) as {
+			display: Display;
+			ipcChannel: string;
+		  };
+	
+		  if (!parsedData.display || !parsedData.ipcChannel) {
+			throw new Error('Invalid display data structure');
+		  }
+	
+		  console.log('[DisplayOverlayApp] Loaded display data:', parsedData);
+		  setProps({
+			display: parsedData.display,
+			ipcChannel: parsedData.ipcChannel,
+		  });
+		} catch (err) {
+		  console.error('Failed to parse display data:', err);
+		  setError(err instanceof Error ? err.message : 'An unknown error occurred');
+		}
+	  }, []);
 
-  return (
-    <div style={style} onClick={handleClick}>
-      <p>{display.label}</p>
-    </div>
-  );
-};
+	if (error) {
+		return (
+			<div className="w-full h-full flex items-center justify-center bg-red-500/30 text-white">
+				<div className="text-center">
+					<div className="text-xl font-semibold mb-2">Error</div>
+					<div className="text-sm opacity-70">{error}</div>
+				</div>
+			</div>
+		);
+	}
+	if (props) {
+		return <DisplayOverlay display={props.display} ipcChannel={props.ipcChannel} />;
+	}
 
-export default DisplayOverlayApp; 
+	return null;
+}

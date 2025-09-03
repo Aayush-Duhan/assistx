@@ -2,11 +2,12 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { invoke } from '@/services/electron';
 // Hooks and Utils
-import { useAppVersion, useUpdateAvailable, useUpdateInfo } from '../hooks/useAppUpdates';
+import { useAppVersion, useUpdateAvailable, useUpdateInfo } from '../../hooks/useAppUpdates';
 
 // UI Components
-import { MovableWindow } from './windows/MovableWindow';
-import { UI } from './ui';
+import MovableWindow from '../windows/MovableWindow';
+import { Button } from '../ui/Button';
+import { WindowTitle } from '../ui/WindowTitle';
 
 /**
  * A notification component that appears when a new app version is available
@@ -40,11 +41,12 @@ export const UpdateAvailableNotification: React.FC = observer(() => {
 
         return (
             <MovableWindow
-                title="Update Available"
                 width={400}
+                bounceDirection="up"
+                show={true}
             >
                 <div className="space-y-4">
-                    <UI.WindowTitle>Update Available</UI.WindowTitle>
+                    <WindowTitle>Update Available</WindowTitle>
                     <div className="text-sm text-white/80">
                         A new version ({updateInfo.version}) is available for download.
                         {appVersion && (
@@ -54,12 +56,12 @@ export const UpdateAvailableNotification: React.FC = observer(() => {
                         )}
                     </div>
                     <div className="flex gap-2">
-                        <UI.Button
+                        <Button
                             onClick={handleUpdateClick}
                             className="flex-1"
                         >
                             Download Update
-                        </UI.Button>
+                        </Button>
                     </div>
                 </div>
             </MovableWindow>

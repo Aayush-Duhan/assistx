@@ -7,6 +7,7 @@ declare global {
         send: (channel: string, ...args: any[]) => void;
         invoke: (channel: string, ...args: any[]) => Promise<any>;
         on: (channel: string, listener: (error: null, ...args: any[]) => void) => void;
+        removeListener: (channel: string, listener: (error: null, ...args: any[]) => void) => void;
       };
       process: {
         platform: string;

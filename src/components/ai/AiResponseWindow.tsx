@@ -7,10 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
 
 // UI Components
-import { MovableWindow } from '../windows/MovableWindow';
-import { UI } from '../ui';
+import { WindowTitle } from '../ui/WindowTitle';
 import { ConversationView } from './ConversationView';
 import { ManualInputView } from './ManualInputView';
+import { ResizableContainer } from '../windows/ResizableWindow';
 
 interface LoadingStateProps {
     title: string;
@@ -23,7 +23,7 @@ interface LoadingStateProps {
  */
 const LoadingState = observer(({ title, showPulseAnimation = true, onStop }: LoadingStateProps): React.ReactElement => {
     return (
-        <UI.WindowTitle>
+        <WindowTitle>
             <div className="flex items-center justify-between w-full">
                 <div className={showPulseAnimation ? "flex items-center gap-2 animate-[pulse_1.5s_ease-in-out_infinite]" : "flex items-center gap-2"}>
                     <div className="size-3.5 bg-white rounded-full -mt-[1px]" />
@@ -31,9 +31,9 @@ const LoadingState = observer(({ title, showPulseAnimation = true, onStop }: Loa
                         <motion.p
                             key={title}
                             className="min-w-fit"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                         >
                             {title}
                         </motion.p>
@@ -54,7 +54,7 @@ const LoadingState = observer(({ title, showPulseAnimation = true, onStop }: Loa
                     </motion.button>
                 )}
             </div>
-        </UI.WindowTitle>
+        </WindowTitle>
     );
 });
 
@@ -65,13 +65,13 @@ const LoadingState = observer(({ title, showPulseAnimation = true, onStop }: Loa
 export const AiResponseWindow = observer((): React.ReactElement => {
     const { aiResponsesService } = useGlobalServices();
     const { currentConversation } = aiResponsesService;
-    const [bounceDirection, setBounceDirection] = useState<'up' | 'down' | null>(null);
+    const [bounceDirection, setBounceDirection] = useState<'up' | 'down' | undefined>(undefined);
 
     const isManualInputOnly = aiResponsesService.isManualInputActive && !currentConversation;
 
     // Create a wrapper function to match the expected type for ConversationView
-    const handleSetBounceDirection = (direction: string | null) => {
-        setBounceDirection(direction as 'up' | 'down' | null);
+    const handleSetBounceDirection = (direction: 'up' | 'down' | null) => {
+        setBounceDirection(direction as 'up' | 'down' | undefined);
     };
 
     // Function to stop the current AI operation
@@ -83,25 +83,22 @@ export const AiResponseWindow = observer((): React.ReactElement => {
     };
 
     return (
-        <MovableWindow
-            width={700}
+        <ResizableContainer
             show={aiResponsesService.showMainAppAiContent}
             bounceDirection={bounceDirection}
-            opaque={!isManualInputOnly}
             contentClassName="relative"
+            initialWidth={700}
+            minWidth={400}
         >
             {aiResponsesService.isCapturingScreenshot ? (
                 <LoadingState title="Analyzing screen..." onStop={handleStopAnalysis} />
             ) : aiResponsesService.isCommittingTranscriptions ? (
                 <LoadingState title="Transcribing..." onStop={handleStopAnalysis} />
             ) : currentConversation ? (
-                <ConversationView
-                    currentConversation={currentConversation}
-                    setBounceDirection={handleSetBounceDirection}
-                />
+                <ConversationView setBounceDirection={handleSetBounceDirection} currentConversation={currentConversation} />
             ) : aiResponsesService.isManualInputActive ? (
                 <ManualInputView />
             ) : null}
-        </MovableWindow>
+        </ResizableContainer>
     );
 }); 

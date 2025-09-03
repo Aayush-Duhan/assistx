@@ -1,30 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { motion, AnimatePresence } from 'framer-motion';
-
-
-// Hooks, Services, and Stores
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
 import { useVimScrollUpShortcut, useVimScrollDownShortcut } from '../../hooks/useAiTriggers';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
-
-// UI Components
-import { UI } from '../ui';
-import { Markdown } from '../ui/Markdown';
-import { ScrollableArea } from '../ui/ScrollableArea';
-import { RiseLoader } from 'react-spinners';
+import { WindowFooter } from '../ui/WindowFooter';
+import { Markdown } from './Markdown';
+import { ScrollableContent } from '../ui/ScrollableContent';
+import { PulseLoader } from 'react-spinners';
 import { CopyButton, ResetButton } from '../ui/CopyButton';
 import { ManualInputView } from './ManualInputView';
+import { AIResponseHeader } from './AiResponseHeader';
+import { isClearingAtom, isCopyingAtom } from '@/state/atoms';
+import { useAtomValue } from 'jotai';
+import { APP_NAME } from '@/lib/constants';
+import { AiResponse } from './AiResponse';
+import { useHotkeys } from 'react-hotkeys-hook';
 
-// Type definitions
-interface AiResponse {
-    id: string;
-    state: {
-        state: 'streaming' | 'finished' | 'error';
-        text: string;
-    };
-    manualInput?: string;
-}
 
 interface AiConversation {
     responses: AiResponse[];
@@ -32,11 +24,6 @@ interface AiConversation {
     state: {
         state: 'streaming' | 'finished' | 'error';
     };
-}
-
-interface ConversationViewProps {
-    currentConversation: AiConversation;
-    setBounceDirection: (direction: string | null) => void;
 }
 
 interface ResponseContentProps {
@@ -49,13 +36,8 @@ interface ManualInputPromptProps {
     response: AiResponse;
 }
 
-// Constants
 const ANIMATION_DURATION_MS = 250;
 
-/**
- * A custom hook to manage the state and logic for navigating
- * between different responses within a single conversation.
- */
 function useConversationNavigator(conversation: AiConversation) {
     const { aiResponsesService } = useGlobalServices();
     const isManualInputActive = aiResponsesService.isManualInputActive;
@@ -64,9 +46,8 @@ function useConversationNavigator(conversation: AiConversation) {
     const [transitionDirection, setTransitionDirection] = useState('to-next');
     const [bounceDirection, setBounceDirection] = useState<string | null>(null);
 
-    // Filter out empty, non-manual "finished" responses to avoid showing blank screens.
     const filteredResponses = conversation.responses.filter(
-        (res) => !(res.state.state === 'finished' && !res.manualInput && !res.state.text)
+        (res) => !(res.state.state === 'finished' && !res.input.manualInput && !res.state.text)
     );
     const responseCount = filteredResponses.length;
 
@@ -76,7 +57,6 @@ function useConversationNavigator(conversation: AiConversation) {
             setResponseIndex(responseIndex + 1);
             setTransitionDirection('to-next');
         } else {
-            // If at the end, trigger a "bounce" effect.
             setBounceDirection(bounceDirection ?? 'up');
         }
     }, [isManualInputActive, responseIndex, responseCount, bounceDirection]);
@@ -87,12 +67,10 @@ function useConversationNavigator(conversation: AiConversation) {
             setResponseIndex(responseIndex - 1);
             setTransitionDirection('to-prev');
         } else {
-            // If at the beginning, trigger a "bounce" effect.
             setBounceDirection(bounceDirection ?? 'down');
         }
     }, [isManualInputActive, responseIndex, bounceDirection]);
 
-    // Effect to reset to the latest response when the conversation updates.
     useEffect(() => {
         if (responseCount > 0 || isManualInputActive) {
             setResponseIndex(responseCount - 1);
@@ -101,7 +79,6 @@ function useConversationNavigator(conversation: AiConversation) {
         setBounceDirection(null);
     }, [responseCount, isManualInputActive]);
 
-    // Effect to clear the bounce animation state after it plays.
     useEffect(() => {
         if (bounceDirection) {
             const timer = setTimeout(() => setBounceDirection(null), ANIMATION_DURATION_MS);
@@ -118,54 +95,39 @@ function useConversationNavigator(conversation: AiConversation) {
     };
 }
 
-/**
- * Renders the user's manual input as minimalistic text with a separator and copy button.
- */
 const ManualInputPrompt = observer(({ response }: ManualInputPromptProps): React.ReactElement | null => {
     const { aiResponsesService } = useGlobalServices();
-    
-    if (!response.manualInput) return null;
+
+    if (!response.input.manualInput) return null;
 
     const handleReset = (): void => {
         aiResponsesService.clearCurrentConversation();
     };
 
-    return React.createElement(
-        'div',
-        { 
-            className: "relative p-4 pb-4 mb-4 border-b border-white/20",
-        },
-        // Action buttons (copy and reset)
-        React.createElement(
-            'div',
-            { className: "absolute top-4 right-4 z-10 flex items-center gap-2" },
-            React.createElement(ResetButton, { 
-                onReset: handleReset,
-                size: 14,
-                className: "bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1 backdrop-blur-sm"
-            }),
-            React.createElement(CopyButton, { 
-                content: response.manualInput,
-                size: 14,
-                className: "bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1 backdrop-blur-sm"
-            })
-        ),
-        React.createElement(
-            'div',
-            { className: "flex items-start pr-20" }, // Increased right padding for buttons
-            // Question text
-            React.createElement(
-                'div',
-                { className: "text-white/90 text-base leading-relaxed" },
-                response.manualInput
-            )
-        )
-    );
+    return (
+        <div className="relative p-4 pb-4 mb-4 border-b border-white/20">
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+            <ResetButton
+              onReset={handleReset}
+              size={14}
+              className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1 backdrop-blur-sm"
+            />
+            <CopyButton
+              content={response.input.manualInput}
+              size="md"
+              className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1 backdrop-blur-sm"
+            />
+          </div>
+      
+          <div className="flex items-start pr-20">
+            <div className="text-white/90 text-base leading-relaxed">
+              {response.input.manualInput}
+            </div>
+          </div>
+        </div>
+      );      
 });
 
-/**
- * Renders the content of a single AI response in a scrollable area.
- */
 const ResponseContent = observer(({ response, toNextResponse, toPrevResponse }: ResponseContentProps): React.ReactElement => {
     const scrollUpAccelerator = useVimScrollUpShortcut();
     const scrollDownAccelerator = useVimScrollDownShortcut();
@@ -174,111 +136,118 @@ const ResponseContent = observer(({ response, toNextResponse, toPrevResponse }: 
         ? React.createElement(Markdown, null, `*Error generating response — please try again.*`)
         : React.createElement(Markdown, null, response.state.text);
 
-    const responseText = response.state.state === 'error' 
-        ? 'Error generating response — please try again.' 
+    const responseText = response.state.state === 'error'
+        ? 'Error generating response — please try again.'
         : response.state.text;
 
-    return React.createElement(
-        'div',
-        { className: "relative h-full" },
-        // Copy button for the response
-        React.createElement(
-            'div',
-            { className: "absolute top-2 right-2 z-10" },
-            React.createElement(CopyButton, { 
-                content: responseText,
-                size: 16,
-                className: "bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1.5 backdrop-blur-sm"
-            })
-        ),
-        React.createElement(
-            ScrollableArea,
-            {
-                maxHeight: 600,
-                scrollDownAccelerator,
-                scrollUpAccelerator,
-                onScrollPastBottom: toNextResponse,
-                onScrollPastTop: toPrevResponse,
-                className: "pr-14 h-full custom-scrollbar", // Increased right padding to avoid copy button overlap
-                children: content
-            }
-        )
-    );
+        return (
+            <div className="relative h-full">
+              <div className="absolute top-2 right-2 z-10">
+                <CopyButton
+                  content={responseText}
+                  size="md"
+                  className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1.5 backdrop-blur-sm"
+                />
+              </div>
+          
+              <ScrollableContent
+                maxHeight={600}
+                scrollDownAccelerator={scrollDownAccelerator}
+                scrollUpAccelerator={scrollUpAccelerator}
+                onScrollPastBottom={toNextResponse}
+                onScrollPastTop={toPrevResponse}
+                className="pr-14 h-full custom-scrollbar"
+              >
+                {content}
+              </ScrollableContent>
+            </div>
+          );
+          
 });
 
-/**
- * The main view for displaying an active AI conversation.
- * It handles the animated transitions between different responses and loading states.
- */
-export const ConversationView = observer(({ currentConversation, setBounceDirection }: ConversationViewProps): React.ReactElement => {
+export const ConversationView = observer(({ setBounceDirection, currentConversation }: { setBounceDirection: (dir: 'up' | 'down' | null) => void; currentConversation: AiConversation }) => {
     const { aiResponsesService } = useGlobalServices();
     const { curResponse, transitionDirection, bounceDirection, toNextResponse, toPrevResponse } = useConversationNavigator(currentConversation);
-
-    // Handle global shortcut for resetting chat (Ctrl+R)
+    const isClearing = useAtomValue(isClearingAtom);
+    const isCopyingConversation = useAtomValue(isCopyingAtom);
     const handleResetChat = useCallback(() => {
         aiResponsesService.clearCurrentConversation();
     }, [aiResponsesService]);
 
     useGlobalShortcut('CommandOrControl+R', handleResetChat);
 
-    // Propagate the bounce effect up to the parent window.
+    // Propagate the bounce effect up to the parent window
     useEffect(() => {
-        setBounceDirection(bounceDirection);
+        setBounceDirection(bounceDirection as 'up' | 'down' | null);
     }, [bounceDirection, setBounceDirection]);
 
-    const isStreaming = currentConversation.state.state === 'streaming';
-    const showLoadingSpinner = isStreaming && !curResponse.state.text;
+    const getTitle = () => {
+        if (isCopyingConversation) return { content: 'Copy AI Response', key: 'copy-conversation' };
+        if (isClearing) return { content: 'Clear Response', key: 'clear' };
+        if (curResponse.state.state === 'streaming') { return { content: 'Thinking...', key: 'streaming' }; }
+        if (curResponse.state.state === 'error') return { content: 'Error', key: 'error' };
+        return { content: APP_NAME, key: 'response' };
+    };
 
-    return React.createElement(
-        'div',
-        { className: "flex flex-col h-full" },
-        
-        // User's question (if any)
-        React.createElement(ManualInputPrompt, { response: curResponse }),
+    const { content: titleContent, key: titleKey } = getTitle();
+    const isStreamingWithoutText = curResponse.state.state === 'streaming' && !curResponse.state.text;
 
-        // AI Response content
-        React.createElement(
-            'div',
-            { className: "flex-1 min-h-0" }, // min-h-0 allows flex child to shrink
-            React.createElement(
-                AnimatePresence,
-                { mode: "popLayout" },
-                showLoadingSpinner ? React.createElement(
-                    motion.div,
-                    {
-                        key: "loading",
-                        initial: { opacity: 0 },
-                        animate: { opacity: 1 },
-                        exit: { opacity: 0 },
-                        layout: true,
-                        transition: { ease: "easeOut", duration: 0.15 },
-                        className: "flex items-center justify-center h-full"
-                    },
-                    React.createElement(RiseLoader
-                        , { color: 'white', size: 5 })
-                ) : React.createElement(
-                    motion.div,
-                    {
-                        key: curResponse.id,
-                        initial: { opacity: 0, y: transitionDirection === 'to-next' ? '100%' : '-100%' },
-                        animate: { opacity: 1, y: 0 },
-                        exit: { opacity: 0 },
-                        layout: true,
-                        transition: { ease: "easeOut", duration: 0.15 },
-                        className: "h-full"
-                    },
-                    React.createElement(ResponseContent, {
-                        response: curResponse,
-                        toNextResponse,
-                        toPrevResponse
-                    })
-                )
-            )
-        ),
-
-        // Footer or manual input view
-        aiResponsesService.isManualInputActive ? React.createElement(ManualInputView, {
-            className: "mt-2 border-t-1 border-white/30"
-        }) : React.createElement(UI.WindowFooter)
+    return (
+        <><AIResponseHeader
+            title={titleContent}
+            titleKey={titleKey}
+            showPulseAnimation={curResponse.state.state === 'streaming' && !isCopyingConversation && !isClearing}
+            curResponse={curResponse}
+        />
+            <AnimatePresence mode="popLayout">
+                {isStreamingWithoutText ? (
+                    <motion.div
+                        key="streaming-loader"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        layout
+                        transition={{ ease: 'easeOut', duration: 0.15 }}
+                    >
+                        <StreamingLoader toNextResponse={toNextResponse} toPrevResponse={toPrevResponse} />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key={curResponse.id}
+                        initial={{ opacity: 0, y: transitionDirection === 'to-next' ? '100%' : '-100%' }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ ease: 'easeOut', duration: 0.15 }}
+                    >
+                        <ResponseContent
+                            response={curResponse}
+                            toNextResponse={toNextResponse}
+                            toPrevResponse={toPrevResponse}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            {aiResponsesService.isManualInputActive ? (
+                <ManualInputView className="mt-2 border-t-1 border-white/30" />
+            ) : (
+                <>
+                    <WindowFooter shortcuts={<ManualInputPrompt response={curResponse} />} />
+                </>
+            )}
+        </>
     );
-}); 
+});
+
+const StreamingLoader = ({ toNextResponse, toPrevResponse }: { toNextResponse: () => void; toPrevResponse: () => void }) => {
+    const scrollDownAccelerator = "CommandOrControl+Down";
+    const scrollUpAccelerator = "CommandOrControl+Up";
+  
+    useHotkeys(scrollDownAccelerator, () => {
+      toNextResponse();
+    });
+    useHotkeys(scrollUpAccelerator, () => {
+      toPrevResponse();
+    });
+  
+    return <PulseLoader size={6} color="white" className="px-4 opacity-90" />;
+  };

@@ -3,20 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
 
 // --- UI Components ---
-import { UI } from './ui';
+import { HeadlessButton } from '../ui/HeadlessButton';
+import { Button } from '../ui/Button';
+import { Shortcut } from '../ui/Shortcut';
 import { CircleCheck, Airplay, Mic, ArrowUpRight, X } from 'lucide-react';
-import { CluelyLogo } from './CluelyLogo';
-import { isMacSync, isWindowsSync } from '../utils/platform';
+import { Logo } from './Logo';
+import { IS_MAC, IS_WINDOWS } from '@/lib/constants';
 
 // --- Constants ---
 const MACOS_REQUIRED_VERSION = 13;
 const PERMISSION_CHECK_INTERVAL = 5000; // 5 seconds
 
-const isMac = isMacSync();
-const isWindows = isWindowsSync();
+
 
 // --- Hooks ---
-import { electron } from '@/services/electron';
+import { invoke } from '@/services/electron';
 
 /**
  * Custom hook to manage and check for microphone and screen recording permissions.
@@ -28,8 +29,8 @@ function usePermissions(enabled: boolean) {
     const [canCapture, setCanCapture] = useState(false);
 
     const checkPermissions = React.useCallback(async () => {
-        const hasMicPermission = await electron.requestMediaPermission('microphone');
-        const hasScreenPermission = await electron.requestMediaPermission('screen');
+        const hasMicPermission = await invoke('request-media-permission', 'microphone');
+        const hasScreenPermission = await invoke('request-media-permission', 'screen');
         setCanListen(hasMicPermission);
         setCanCapture(hasScreenPermission);
     }, []);
@@ -63,7 +64,7 @@ export const Onboarding = observer(() => {
     useEffect(() => {
         const hideIntroTimer = setTimeout(() => {
             setShowIntro(false);
-            electron.resizeWindow({ width: 640, height: 600, duration: 1000 });
+            invoke('resize-window', { width: 640, height: 600, duration: 1000 });
         }, 1500);
 
         const showContentTimer = setTimeout(() => {
@@ -83,16 +84,16 @@ export const Onboarding = observer(() => {
 
     // Resize window based on the current page
     useEffect(() => {
-        if (page === 1) electron.resizeWindow({ width: 640, height: 600, duration: 800 });
-        if (page === 2) electron.resizeWindow({ width: 720, height: 550, duration: 450 });
-        if (page === 3) electron.resizeWindow({ width: 700, height: 500, duration: 450 });
+        if (page === 1) invoke('resize-window', { width: 640, height: 600, duration: 800 });
+        if (page === 2) invoke('resize-window', { width: 720, height: 550, duration: 450 });
+        if (page === 3) invoke('resize-window', { width: 700, height: 500, duration: 450 });
     }, [page]);
 
     // --- Content for each page ---
 
     const welcomePage = (
         <div className="flex flex-col items-center">
-            <CluelyLogo className="text-white shadow-xl shadow-blue-900 rounded-full fill-current mb-4" />
+            <Logo className="text-white shadow-xl shadow-blue-900 rounded-full fill-current mb-4" />
             <h1 className="mb-6 text-8xl tracking-tight font-semibold">AssistX</h1>
             <div className="text-stone-400 text-base font-base max-w-lg text-balance mx-auto">
                 An invisible desktop assistant that sees your screen and hears your audio. Helpful for meetings, sales calls, and more.
@@ -125,14 +126,14 @@ export const Onboarding = observer(() => {
             <div className="grid justify-center text-[10px] text-stone-400">
                 <div className="text-blue-300 text-xs font-medium text-center w-86 mx-auto">
                     AssistX may not be able to update permissions until it is quit. Please restart AssistX after granting all permissions.
-                    <UI.HeadlessButton
+                    <HeadlessButton
                         type="button"
                         className="mt-1 text-xs text-stone-300 cursor-pointer focus:outline-none"
                         style={{ appRegion: 'no-drag' } as any}
                         onClick={() => window.open("https://support.cluely.com")}
                     >
                         Having issues? Click here <ArrowUpRight className="inline -ml-0.5 -mt-1" size={14} />
-                    </UI.HeadlessButton>
+                    </HeadlessButton>
                 </div>
             </div>
         </div>
@@ -146,13 +147,13 @@ export const Onboarding = observer(() => {
             </span>
             <div className="pb-22 pt-8 grid divide-y divide-white/10 justify-center">
                 <OnboardingCommands title="Ask AI" description="Ask AI assistant for help">
-                    <UI.Shortcut large accelerator="CommandOrControl+Enter" />
+                    <Shortcut large accelerator="CommandOrControl+Enter" />
                 </OnboardingCommands>
                 <OnboardingCommands title="Hide/Show" description="Toggle visibility of AssistX">
-                    <UI.Shortcut large accelerator="CommandOrControl+\" />
+                    <Shortcut large accelerator="CommandOrControl+\" />
                 </OnboardingCommands>
                 <OnboardingCommands title="Clear" description="Reset and clear current conversation">
-                    <UI.Shortcut large accelerator="CommandOrControl+R" />
+                    <Shortcut large accelerator="CommandOrControl+R" />
                 </OnboardingCommands>
             </div>
         </div>
@@ -187,7 +188,7 @@ export const Onboarding = observer(() => {
                         animate={{ opacity: showIntro ? 1 : 0, scale: showIntro ? 1 : 0.8 }}
                         transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1], scale: { type: 'spring', damping: 10, stiffness: 100 } }}
                     >
-                        <CluelyLogo className="fill-white shadow-xl shadow-blue-900 rounded-full" />
+                        <Logo className="fill-white shadow-xl shadow-blue-900 rounded-full" />
                     </motion.div>
                 </motion.div>
             )}
@@ -210,11 +211,11 @@ function OnboardingLayout({ data, children }: {
     const handleNext = async () => {
         if (page < 3) {
             // On Windows, skip the permissions page (page 2)
-            setPage(isWindows && page === 1 ? 3 : page + 1);
+            setPage(IS_WINDOWS && page === 1 ? 3 : page + 1);
         } else {
             try {
                 // Main process will handle setting onboarded to true and relaunching the app
-                electron.setHasOnboardedTrue();
+                invoke('finish-onboarding', null);
             } catch (error) {
                 console.error('Failed to complete onboarding:', error);
             }
@@ -223,13 +224,13 @@ function OnboardingLayout({ data, children }: {
 
     const handleBack = () => {
         if (page > 1) {
-            setPage(isWindows && page === 3 ? 1 : page - 1);
+            setPage(IS_WINDOWS && page === 3 ? 1 : page - 1);
         }
     };
 
     // Check for macOS version support on mount
     useEffect(() => {
-        if (isMac) {
+        if (IS_MAC) {
             // For now, assume macOS is supported since we don't have the vne function
             setIsMacSupported(true);
         }
@@ -253,13 +254,13 @@ function OnboardingLayout({ data, children }: {
                             transition={{ duration: 0.3 }}
                             className="absolute right-2 top-2"
                         >
-                            <UI.HeadlessButton
+                            <HeadlessButton
                                 style={{ appRegion: 'no-drag' } as any}
                                 className="p-2 relative z-[500] rounded-xl hover:bg-white/8 transition hover:text-red-400"
-                                onClick={() => electron.quitApp()}
+                                onClick={() => invoke('quit-app', null)}
                             >
                                 <X size={20} />
-                            </UI.HeadlessButton>
+                            </HeadlessButton>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -277,7 +278,7 @@ function OnboardingLayout({ data, children }: {
                         </motion.div>
                     )}
                 </AnimatePresence>
-                {isMac && isMacSupported !== null && !isMacSupported ? (
+                {IS_MAC && isMacSupported !== null && !isMacSupported ? (
                     <div className="text-red-400 font-medium text-center -mt-16 pb-4">
                         AssistX requires macOS {MACOS_REQUIRED_VERSION}.0 or later. Please update your operating system.
                     </div>
@@ -294,12 +295,12 @@ function OnboardingLayout({ data, children }: {
                                 style={{ appRegion: 'no-drag' } as any}
                             >
                                 {page === 2 && canListen && canCapture ? (
-                                    <UI.Button color="dark" onClick={handleNext}>
+                                    <Button color="dark" onClick={handleNext}>
                                         Next
-                                        <UI.Shortcut shouldHover={false} onTrigger={handleNext} accelerator="CommandOrControl+Enter" />
-                                    </UI.Button>
+                                        <Shortcut shouldHover={false} onTrigger={handleNext} accelerator="CommandOrControl+Enter" />
+                                    </Button>
                                 ) : (
-                                    <UI.Button
+                                    <Button
                                         disabled={page === 2}
                                         className="disabled:cursor-default"
                                         color={page === 3 ? "blue" : "dark"}
@@ -308,8 +309,8 @@ function OnboardingLayout({ data, children }: {
                                         {page === 1 && "Get Started"}
                                         {page === 2 && "Next"}
                                         {page === 3 && "Welcome to AssistX"}
-                                        <UI.Shortcut shouldHover={false} onTrigger={page === 2 ? undefined : handleNext} accelerator="CommandOrControl+Enter" />
-                                    </UI.Button>
+                                        <Shortcut shouldHover={false} onTrigger={page === 2 ? undefined : handleNext} accelerator="CommandOrControl+Enter" />
+                                    </Button>
                                 )}
                             </motion.div>
                         )}
@@ -317,7 +318,7 @@ function OnboardingLayout({ data, children }: {
                 )}
                 {page > 1 && (
                     <div className="absolute bottom-4 left-4" style={{ appRegion: 'no-drag' } as any}>
-                        <UI.Button outline onClick={handleBack}>Back</UI.Button>
+                        <Button level="standard" onClick={handleBack}>Back</Button>
                     </div>
                 )}
             </motion.div>
@@ -341,24 +342,24 @@ function PermissionRequest({ providerList, icon: Icon, title, children }: {
             return canListen ? (
                 <CircleCheck size={30} className="stroke-sky-500" />
             ) : (
-                <UI.Button outline style={{ appRegion: 'no-drag' } as any} onClick={() => {
-                    window.electron.ipcRenderer.send('mac-open-system-settings', { section: "privacy > microphone" });
+                <Button level="standard" style={{ appRegion: 'no-drag' } as any} onClick={() => {
+                    invoke('mac-open-system-settings', { section: "privacy > microphone" });
                     checkPermissions();
                 }}>
                     Request...
-                </UI.Button>
+                </Button>
             );
         }
         if (title === "Screen Recording") {
             return canCapture ? (
                 <CircleCheck size={30} className="stroke-sky-500" />
             ) : (
-                <UI.Button outline style={{ appRegion: 'no-drag' } as any} onClick={() => {
-                    window.electron.ipcRenderer.send('mac-open-system-settings', { section: "privacy > screen-recording" });
+                <Button level="standard" style={{ appRegion: 'no-drag' } as any} onClick={() => {
+                    invoke('mac-open-system-settings', { section: "privacy > screen-recording" });
                     checkPermissions();
                 }}>
                     Request...
-                </UI.Button>
+                </Button>
             );
         }
     };

@@ -1,5 +1,4 @@
 import { makeObservable, observable, action } from 'mobx';
-
 export interface PredefinedContext {
     value: string;
     label: string;

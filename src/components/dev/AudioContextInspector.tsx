@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
-import { UI } from '../ui';
+import { ScrollableContent } from '../ui/ScrollableContent';
 import { AudioCaptureService } from '../../services/AudioCaptureService';
 
 // Type definitions
@@ -62,11 +62,12 @@ export const AudioContextInspector = observer((): React.ReactElement => {
     const { contextService, micAudioCaptureService, systemAudioCaptureService } = useGlobalServices();
 
     return React.createElement(
-        UI.ScrollableArea,
+        ScrollableContent,
         {
             maxHeight: 800,
             scrollUpAccelerator: "CommandOrControl+[",
             scrollDownAccelerator: "CommandOrControl+]",
+            enableSnapToBottom: true,
             className: "space-y-2",
             children: React.createElement(
                 React.Fragment,

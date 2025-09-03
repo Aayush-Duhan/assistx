@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const IpcMainEventSchema = {
     'quit-app' : z.null(),
+    'restart-window' : z.null(),
     'check-for-update' : z.null(),
     'install-update' : z.null(),
     'get-update-status' : z.null(),
@@ -25,6 +26,7 @@ export const IpcMainEventSchema = {
     }),
     'focus-window' : z.null(),
     'unfocus-window' : z.null(),
+    'toggle-visibility' : z.null(),
     // Display management events
     'get-available-displays' : z.null(),
     'get-invisible' : z.null(),
@@ -75,6 +77,12 @@ export const ipcMainHandlerEventsSchema = {
         response: z.object({
             isSupported: z.boolean(),
         })
+    },
+    'request-window-visibility' : {
+        payload: z.null(),
+        response: z.object({
+            visible: z.boolean(),
+        }),
     },
 };
 

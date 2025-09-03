@@ -6,11 +6,11 @@ export interface Display {
     primary: boolean;
     current: boolean; // Custom flag to indicate if it's the window's current display
 }
-export type AudioSource = 'mic' | 'system';
+export type AudioDataSource = 'mic' | 'system';
 
 export interface AudioTranscription {
     createdAt: Date;
-    source: AudioSource;
+    source: AudioDataSource;
     text: string;
     contextAsText: string;
 }
@@ -26,7 +26,7 @@ export interface BufferState {
 // Common interface for transcription services
 export interface ITranscriptionService {
     state: any; // State type varies between implementations
-    source: AudioSource;
+    source: AudioDataSource;
     
     // Methods
     dispose(): void;
@@ -43,10 +43,10 @@ export interface ITranscriptionService {
  */
 export class Transcription implements AudioTranscription {
     createdAt = new Date();
-    source: AudioSource;
+    source: AudioDataSource;
     text: string;
 
-    constructor({ source, text }: { source: AudioSource; text: string }) {
+    constructor({ source, text }: { source: AudioDataSource; text: string }) {
         this.source = source;
         this.text = text;
     }

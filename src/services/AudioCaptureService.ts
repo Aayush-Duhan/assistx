@@ -1,6 +1,6 @@
 import { makeObservable, observable, action } from 'mobx';
 import { DeepgramTranscriptionService } from './DeepGramTranscriptionService';
-import { AudioSource, AudioData, ITranscriptionService } from '../types';
+import { AudioDataSource, AudioData, ITranscriptionService } from '../types';
 
 // --- Constants and Helper Classes ---
 
@@ -98,10 +98,10 @@ function bufferToBase64(buffer: ArrayBuffer): string {
  */
 export class AudioCaptureService extends Subscribable {
     state: AudioCaptureState = { state: 'not-running' };
-    source: AudioSource;
+    source: AudioDataSource;
     dataListeners = new Set<DataListener>();
 
-    constructor(source: AudioSource) {
+    constructor(source: AudioDataSource) {
         super();
         this.source = source;
         makeObservable(this, {
@@ -225,7 +225,8 @@ export class AudioCaptureService extends Subscribable {
                 });
             }
 
-            const platform = await window.electron.ipcRenderer.invoke('get-platform') as Platform;
+            const platform = (window.electron?.process?.platform as Platform) ||
+                (navigator.platform.startsWith('Mac') ? 'darwin' : (navigator.userAgent.includes('Windows') ? 'win32' : 'linux'));
 
             if (platform === 'darwin') {
                 // On macOS, system audio is captured natively by the main process.
@@ -277,25 +278,35 @@ export class AudioCaptureService extends Subscribable {
         console.log(`AudioCaptureService (${this.source}): Creating DeepgramTranscriptionService`);
         const transcriptionService = new DeepgramTranscriptionService(this, this.source);
 
-        const platform = await window.electron.ipcRenderer.invoke('get-platform') as Platform;
+        const platform = (window.electron?.process?.platform as Platform) ||
+            (navigator.platform.startsWith('Mac') ? 'darwin' : (navigator.userAgent.includes('Windows') ? 'win32' : 'linux'));
 
         if (platform === 'darwin' && this.source === 'system') {
-            // For macOS system audio, listen to IPC events from the native recorder.
+            // For macOS system audio, start the native recorder and listen for IPC events.
             console.log(`AudioCaptureService (${this.source}): Setting up macOS native recorder`);
-            const macRecorderHandler = (_event: any, { base64Data }: { base64Data: string }) => {
+            if (window.electron?.ipcRenderer) {
+                window.electron.ipcRenderer.send('mac-set-native-recorder-enabled', { enabled: true });
+            }
+
+            const macRecorderHandler = (_event: any, payload: any) => {
                 if (signal.aborted) return;
+                const { source, base64Chunks, base64Data } = payload || {};
+                if (source !== this.source) return;
+                const pcm16Base64: string = base64Chunks ?? base64Data;
+                if (!pcm16Base64) return;
                 for (const listener of this.dataListeners) {
-                    listener({ pcm16Base64: base64Data });
+                    listener({ pcm16Base64 });
                 }
             };
-            
-            if (window.electron.ipcRenderer) {
+
+            if (window.electron?.ipcRenderer) {
                 window.electron.ipcRenderer.on('mac-native-recorder-data', macRecorderHandler);
             }
-            
+
             const cleanUpNativeMacRecorder = () => {
-                if (window.electron.ipcRenderer) {
+                if (window.electron?.ipcRenderer) {
                     window.electron.ipcRenderer.removeListener('mac-native-recorder-data', macRecorderHandler);
+                    window.electron.ipcRenderer.send('mac-set-native-recorder-enabled', { enabled: false });
                 }
             };
             return { transcriptionService, cleanUpNativeMacRecorder };

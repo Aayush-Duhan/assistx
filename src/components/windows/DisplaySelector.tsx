@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { send, on } from "../../services/electron"
 import { Display } from "../../types"
-import { useIsCommandBarVisible } from "@/state/visibility";
+import { useInvisibility } from "@/hooks/useInvisibility";
 import { useMovableWindowApi } from "@/hooks/useMovableWindow";
 import { InlineWindow } from "./InlineWindow";
 import { WindowTitle } from "../ui/WindowTitle";
 import { Monitor } from "lucide-react";
-import { Shortcut, UI, WindowFooter } from "../ui";
+import { Shortcut } from "../ui/Shortcut";
+import { WindowFooter } from "../ui/WindowFooter";
 import { cn } from "@/lib/utils";
 
 class DisplayService {
@@ -23,8 +24,8 @@ class DisplayService {
     if (this.isInitialized) return;
     this.isInitialized = true;
 
-    on('available-displays', ({ display }) => {
-      this.displays = display;
+    on('available-displays', ({ displays }) => {
+      this.displays = displays;
       this.listeners.forEach(listener => listener(this.displays));
     });
 
@@ -56,7 +57,7 @@ class DisplayService {
 
 const displayService = new DisplayService();
 
-function useDisplayCount() {
+export function useDisplayCount() {
   const [count, setCount] = useState(() => displayService.getDisplayCount() || 1);
   useEffect(() => {
     const unsubscribe = displayService.subscribe((displays) => {
@@ -70,7 +71,7 @@ function useDisplayCount() {
 export function DisplaySelector({ onClose }: { onClose: () => void }) {
   const [displays, setDisplays] = useState<Display[]>([]);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
-  const isCommandBarVisible = useIsCommandBarVisible();
+  const { isInvisible } = useInvisibility();
   const { setX } = useMovableWindowApi();
 
   useEffect(() => {
@@ -92,10 +93,10 @@ export function DisplaySelector({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (isCommandBarVisible) {
+    if (!isInvisible) {
       onClose();
     }
-  }, [isCommandBarVisible, onClose]);
+  }, [isInvisible, onClose]);
 
   on('display-changed', () => {
     setX(0);

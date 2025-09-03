@@ -2,46 +2,34 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { useGlobalShortcut } from '@/hooks/useGlobalShortcut';
 import { HeadlessButton } from './HeadlessButton';
-import {
-  Command,
-  ArrowBigUp,
-  CornerDownLeft,
-  ArrowLeft,
-  ArrowRight,
-  ArrowDown,
-  ArrowUp,
-
-} from 'lucide-react';
+import { Command, ArrowBigUp, CornerDownLeft, ArrowLeft, ArrowRight, ArrowDown, ArrowUp } from 'lucide-react';
 
 type Accelerator = string;
 type TriggerEvent = { fromClick: boolean };
 
 interface ShortcutProps {
   label?: React.ReactNode;
-  accelerator: Accelerator;
+  accelerator?: Accelerator;
   onTrigger?: (event: TriggerEvent) => void;
-  enable?: boolean | 'onlyWhenVisible';
+  enable?: 'onlyWhenVisible' | 'always' | boolean;
   large?: boolean;
-  fullWidth?: boolean;
   shouldHover?: boolean;
-  commandBarHideShortcut?: boolean; // Special prop for unique styling
+  className?: string;
+  fullBorderRadius?: boolean;
+  showAccelerator?: boolean;
 }
 
-/**
- * A component that displays a label and a keyboard shortcut, and optionally
- * triggers an action when the shortcut is pressed or the component is clicked.
- */
 export function Shortcut({
   label,
   accelerator,
   onTrigger,
   enable = 'onlyWhenVisible',
   large = false,
-  fullWidth = false,
   shouldHover = true,
-  commandBarHideShortcut = false,
+  showAccelerator = true,
+  className,
+  fullBorderRadius = false,
 }: ShortcutProps) {
-  // Register the global shortcut to fire the onTrigger callback.
   useGlobalShortcut(accelerator, () => onTrigger?.({ fromClick: false }), {
     enable: onTrigger ? enable : false,
   });
@@ -49,21 +37,13 @@ export function Shortcut({
   const keyParts = accelerator ? parseAccelerator(accelerator) : null;
 
   const content = (
-    <div
-      className={cn(
-        'relative flex items-center gap-2 pointer-events-none',
-        fullWidth && 'justify-between'
-      )}
-    >
-      {label && (
-        <p
-          className="text-white/90 text-[11px]"
-          style={{ color: commandBarHideShortcut ? 'var(--color-zinc-400)' : undefined }}
-        >
-          {label}
-        </p>
-      )}
-      {keyParts && !commandBarHideShortcut && (
+    <div className={cn(
+      "flex items-center gap-2 text-xs text-white/70",
+      large && "text-sm",
+      !label && "justify-center"
+    )}>
+      {label && <span className="flex-shrink-0">{label}</span>}
+      {keyParts && showAccelerator && (
         <div className="flex gap-1">
           {keyParts.map((part, index) => (
             <div
@@ -82,35 +62,48 @@ export function Shortcut({
       )}
     </div>
   );
-
-  if (!onTrigger) {
-    return <div className="relative">{content}</div>;
-  }
-
-  return (
-    <div className="relative">
+  if (onTrigger) {
+    return (
+      <div className="relative">
       {shouldHover && (
         <HeadlessButton
-          className="absolute -inset-x-2 -inset-y-1 rounded hover:bg-white/10 focus:bg-white/20 transition"
+          className={cn("absolute -inset-x-1.5 -inset-y-1.5 rounded hover:bg-white/10 focus:bg-white/20 transition", fullBorderRadius ? "rounded-full" : "rounded-md")}
           onClick={() => onTrigger({ fromClick: true })}
         />
       )}
       {content}
     </div>
+    );
+  }
+  return (
+    <div className={cn(className)}>
+      {content}
+    </div>
   );
 }
 
-/**
- * A smaller, inline version of the shortcut display, without a label.
- */
-export function InlineShortcut({ accelerator }: { accelerator: Accelerator }) {
-  const keyParts = parseAccelerator(accelerator);
+  
+interface InlineShortcutProps {
+  accelerator: string;
+  onTrigger?: () => void;
+  enable?: "always" | 'onlyWhenVisible' | boolean;
+  size?: 'sm' | 'md';
+}
+
+export function InlineShortcut({ accelerator, onTrigger, enable = 'onlyWhenVisible', size = 'md' }: InlineShortcutProps) {
+  useGlobalShortcut(accelerator, onTrigger, { enable });
+  const keyParts = accelerator ? parseAccelerator(accelerator) : null;
+  if (!keyParts) return null;
   return (
     <div className="relative flex items-center pointer-events-none">
       {keyParts.map((part, index) => (
         <div
           key={index}
-          className="rounded-md text-white flex items-center justify-center text-[11px] px-1 min-w-5 h-5"
+          className={cn(
+            'rounded-md text-white flex items-center justify-center text-[11px]',
+            size === 'sm' && 'px-0.5 min-w-3 h-3',
+            size === 'md' && 'px-1 min-w-5 h-5'
+          )}
         >
           {part}
         </div>
@@ -119,19 +112,12 @@ export function InlineShortcut({ accelerator }: { accelerator: Accelerator }) {
   );
 }
 
-/**
- * Parses an accelerator string (e.g., "CommandOrControl+Enter") into an array
- * of React nodes for rendering. It handles platform-specific modifier keys.
- * @param accelerator The accelerator string to parse.
- * @returns An array of strings or JSX elements representing the keys.
- */
 function parseAccelerator(accelerator: Accelerator): (string | JSX.Element)[] {
   return accelerator.split('+').map(part => renderKey(part));
 }
 
 function renderKey(key: string): string | JSX.Element {
   const isMac = window.electron.process.platform === 'darwin';
-
   switch (key) {
     case 'CommandOrControl':
       return isMac ? <Command size={12} /> : 'Ctrl';

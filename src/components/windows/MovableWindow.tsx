@@ -40,15 +40,19 @@ const MovableWindow = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ 
+                duration: 0.15,
+                ease: 'easeOut'
+              }}
             >
               <motion.div
                 animate={{ y }}
                 transition={{ 
-                  ease: 'easeInOut', 
-                  duration: 25 / 1000 
+                  ease: 'easeOut', 
+                  duration: 0.15
                 }}
               >
-                <InlineWindow layoutTransition {...props} />
+                <InlineWindow {...props} />
               </motion.div>
             </motion.div>
           )}

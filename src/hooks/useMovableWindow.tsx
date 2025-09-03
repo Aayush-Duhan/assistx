@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { useMotionValue } from 'framer-motion';
+import { useMotionValue, useSpring } from 'framer-motion';
 import { useGlobalShortcut } from './useGlobalShortcut';
 import { FeatureFlag } from '../types';
 import { SHORTCUTS } from '../lib/constants';
@@ -38,7 +38,7 @@ export function MovableWindowsProvider({ children }: {
 }) {
     const useVimBindings = useFeatureFlag(FeatureFlag.VIM_MODE_KEY_BINDINGS);
     const x = useMotionValue(0);
-    const xSpring = useMotionValue(0);
+    const xSpring = useSpring(x, { stiffness: 300, damping: 30 });
     useEffect(() => {
         const unsubscribe = x.on('change', (latest) => {
             xSpring.set(latest);
@@ -66,7 +66,7 @@ export function MovableWindowsProvider({ children }: {
     const [isBouncing, setIsBouncing] = useState(false);
     useEffect(() => {
         if (isBouncing) {
-            const timeout = setTimeout(() => setIsBouncing(false), 500);
+            const timeout = setTimeout(() => setIsBouncing(false), 300);
             return () => clearTimeout(timeout);
         }
     }, [isBouncing]);
@@ -116,6 +116,7 @@ export function MovableWindowsProvider({ children }: {
     return (
         <MovableWindowContext.Provider value={contextValue}>
         {children({ x: xSpring, vOrientation })}
+        <div className="w-0 h-full mx-auto border-l-2 border-dashed border-black/20 transition"/>
         </MovableWindowContext.Provider>
     );
 }

@@ -5,7 +5,7 @@ import { makeObservable, observable } from 'mobx';
 // --- Imports ---
 import { getDeepgramClient } from './DeepGramClient';
 import { AudioCaptureService } from './AudioCaptureService';
-import { AudioSource, AudioTranscription, Transcription, ITranscriptionService, BufferState } from '../types';
+import { AudioDataSource, AudioTranscription, Transcription, ITranscriptionService, BufferState } from '../types';
 
 type ServiceState =
   | { state: 'loading'; abortController: AbortController }
@@ -29,7 +29,7 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
 
   constructor(
     private audioCaptureService: AudioCaptureService,
-    public readonly source: AudioSource
+    public readonly source: AudioDataSource
   ) {
     makeObservable(this, {
       state: observable,

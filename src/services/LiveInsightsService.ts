@@ -1,7 +1,7 @@
 import { makeObservable, observable, computed, runInAction, reaction } from 'mobx';
 import { aiApiService } from './AiApiService';
 import { ContextService } from './ContextService';
-import { LiveInsights, LiveInsightsSummary, LiveInsightsAction, AudioTranscription } from '../types';
+import { LiveInsights, AudioTranscription } from '../types';
 
 /**
  * Service for generating live insights from transcriptions using AI
@@ -91,7 +91,14 @@ export class LiveInsightsService {
                 this.error = null;
             });
 
-            const insights = await this.callAiForInsights(transcriptions);
+            const audioTranscriptions: AudioTranscription[] = transcriptions.map(t => ({
+                createdAt: t.createdAt,
+                source: t.role,
+                text: t.text,
+                contextAsText: `[${t.role === 'mic' ? 'Me' : 'Them'}]\nTranscription: ${t.text}`,
+            }));
+
+            const insights = await this.callAiForInsights(audioTranscriptions);
             
             runInAction(() => {
                 this.insights = insights;

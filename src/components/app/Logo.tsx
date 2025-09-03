@@ -1,18 +1,18 @@
 import React from 'react';
-import logoSvg from '../assets/logo.svg';
+import logoSvg from '../../assets/logo.svg';
 
-interface CluelyLogoProps {
+interface LogoProps {
   className?: string;
 }
 
-export const CluelyLogo: React.FC<CluelyLogoProps> = ({ className = '' }) => {
+export const Logo: React.FC<LogoProps> = ({ className = '' }) => {
   return (
-    <div className={`inline-block ${className}`}>
+    <div className={`inline-flex items-center justify-center leading-none overflow-hidden ${className}`}>
       <div className="relative group">
         {/* Main logo with hover animations */}
         <img 
           src={logoSvg} 
-          className="w-32 h-32 transition-all duration-300 ease-in-out
+          className="block w-32 h-32 transition-all duration-300 ease-in-out
                      group-hover:scale-110 group-hover:rotate-6
                      drop-shadow-lg group-hover:drop-shadow-xl
                      filter group-hover:brightness-110"

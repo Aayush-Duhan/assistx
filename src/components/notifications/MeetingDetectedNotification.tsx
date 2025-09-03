@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
-// --- Custom Hooks & Stores ---
-import { useGlobalServices } from '../services/GlobalServicesContextProvider';
-import { isMac } from '../utils/platform';
+import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
+import { IS_MAC } from '@/lib/constants';
 
-// --- UI Components ---
-import { MovableNotification } from './MovableNotification';
+import { NotificationWindow } from '../windows/Notification';
 
 const micUsedListeners = new Set<(payload: { app: string }) => void>();
 const micOffListeners = new Set<(payload: { app: string }) => void>();
 
-// Track if listeners are already set up
 let listenersSetup = false;
 
-// Function to set up event listeners
 function setupEventListeners() {
   if (listenersSetup || !window.electron.ipcRenderer) return;
   
@@ -32,10 +28,6 @@ function setupEventListeners() {
   listenersSetup = true;
 }
 
-/**
- * A custom hook to subscribe to microphone usage events from the Electron main process.
- * This is how the app knows when another application (like Zoom) starts using the mic.
- */
 function useMicUsageListener({
   handleMicUsed,
   handleMicOff,
@@ -43,18 +35,14 @@ function useMicUsageListener({
   handleMicUsed: (payload: { app: string }) => void;
   handleMicOff: (payload: { app: string }) => void;
 }) {
-  // Set up event listeners when the hook is first used
   useEffect(() => {
     setupEventListeners();
   }, []);
 
-  // On macOS, we need to explicitly enable the native module that monitors the mic.
   useEffect(() => {
-    isMac().then((isMacOS) => {
-      if (isMacOS) {
+    if (IS_MAC) {
         window.electron.ipcRenderer?.send('mac-set-mic-monitor-enabled', { enabled: true });
       }
-    });
   }, []);
 
   useEffect(() => {
@@ -68,31 +56,21 @@ function useMicUsageListener({
   }, [handleMicUsed, handleMicOff]);
 }
 
-// --- Constants ---
-const NOTIFICATION_TIMEOUT_MS = 10000; // 10 seconds
+const NOTIFICATION_TIMEOUT_MS = 10000;
 
-// --- Main Component ---
-
-/**
- * Displays a notification when it detects that the user has joined a meeting
- * in another application, prompting them to start a recording session.
- */
 export const MeetingDetectedNotification = React.memo(function MeetingDetectedNotification() {
   const { micAudioCaptureService, systemAudioCaptureService } = useGlobalServices();
   const [notifiedApp, setNotifiedApp] = useState<string | null>(null);
   const [appName, setAppName] = useState('Yolo');
 
-  // Get app name from main process
   useEffect(() => {
     window.electron.ipcRenderer.invoke('get-app-name').then(setAppName).catch(() => {
       setAppName('Yolo');
     });
   }, []);
 
-  // Subscribe to microphone usage events
   useMicUsageListener({
     handleMicUsed: (payload) => {
-      // Only show the notification if our own app is not already recording
       if (
         micAudioCaptureService.state.state === 'not-running' &&
         systemAudioCaptureService.state.state === 'not-running'
@@ -105,7 +83,6 @@ export const MeetingDetectedNotification = React.memo(function MeetingDetectedNo
     },
   });
 
-  // Automatically dismiss the notification after a timeout
   useEffect(() => {
     if (notifiedApp !== null) {
       const timeoutId = setTimeout(() => {
@@ -117,7 +94,7 @@ export const MeetingDetectedNotification = React.memo(function MeetingDetectedNo
   }, [notifiedApp]);
 
   return (
-    <MovableNotification
+    <NotificationWindow
       show={notifiedApp !== null}
       title="Meeting Detected"
       message={`We detected you are using ${notifiedApp} for a meeting.`}

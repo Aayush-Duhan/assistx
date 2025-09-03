@@ -4,6 +4,7 @@ import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import dotenv from 'dotenv'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // Load environment variables
 dotenv.config({ path: '.env.local' })
@@ -15,13 +16,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@/hooks': path.resolve(__dirname, './src/hooks'),
       '@/services': path.resolve(__dirname, './src/services'),
-      '@/utils': path.resolve(__dirname, './src/utils'),
-      // Add polyfills for Node.js modules
-      'buffer': 'buffer',
-      'events': 'events',
-      'stream': 'stream-browserify',
-      'util': 'util',
-      'process/browser': 'process/browser'
+      '@/utils': path.resolve(__dirname, './src/utils')
     }
   },
   define: {
@@ -40,9 +35,13 @@ export default defineConfig({
       }
     }
   },
+  ssr: {
+    noExternal: ['streamdown'],
+  },
   plugins: [
     react(),
     tailwindcss(),
+    nodePolyfills(),
     electron({
       main: {
         // Shortcut of `build.lib.entry`.

@@ -27,7 +27,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
             width = 'fit-content',
             fullBorderRadius = false,
             opaque = false,
-            captureMouseEvents = false,
+            captureMouseEvents = true,
             fastAnimations = false,
             onMouseEnter,
             onMouseLeave,
@@ -41,7 +41,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
         return (
             <div
                 className={cn('relative', positionClassName)}
-                style={{ width}}
+                style={{ width ,fontFamily: 'Inter'}}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
             >
@@ -54,7 +54,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
                         )}
                         style={{
                             borderRadius: fullBorderRadius ? 999 : 8,
-                            backgroundColor: undefined
+                            backgroundColor: void 0
                         }}
                         transition={{ duration, ease }}
                         layout={layoutTransition}
@@ -66,6 +66,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
                         transition={{ duration, ease }}
                         layout={layoutTransition ? 'position' : false}
                         layoutDependency={children}
+                        style={{borderRadius: fullBorderRadius ? 999 : 8}}
                     >
                         {children}
                     </motion.div>

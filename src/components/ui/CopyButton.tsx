@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useCopyToClipboard } from 'usehooks-ts';
 import { cn } from '@/lib/utils';
 import { Check, Copy, RotateCcw } from 'lucide-react';
-import { MouseEventsCapture } from '../Portal';
 import { HeadlessButton } from './HeadlessButton';
 import { Tooltip } from './Tooltip';
+import { AnimatePresence } from 'framer-motion';
 
-// Type definitions
 interface CopyButtonProps {
-    content: string;
+    content: string | (() => string);
     className?: string;
     showText?: boolean;
-    size?: number;
+    size?: 'sm' | 'md' | 'lg';
+    onMouseOver?: () => void;
+    onMouseOut?: () => void;
 }
 
 interface ResetButtonProps {
@@ -20,80 +22,73 @@ interface ResetButtonProps {
     shortcut?: string;
 }
 
-/**
- * A button that copies a given string to the clipboard when clicked.
- * It shows a "Copied" state temporarily after a successful copy.
- */
-export function CopyButton({ content, className, showText = false, size = 16 }: CopyButtonProps): React.ReactElement {
-    const [isCopied, setIsCopied] = useState(false);
+
+export function CopyButton({ content, className, showText = false, size = 'md', onMouseOver, onMouseOut }: CopyButtonProps): React.ReactElement {
+    const [, copy] = useCopyToClipboard();
+    const [justCopied, setJustCopied] = useState(false);
 
     const handleCopy = (): void => {
-        navigator.clipboard.writeText(content);
-        setIsCopied(true);
+        const textToCopy = typeof content === 'function' ? content() : content;
+        copy(textToCopy);
+        setJustCopied(true);
+        setTimeout(() => setJustCopied(false), 2000); // Reset after 2 seconds
     };
 
-    // Reset the "Copied" state after 2 seconds.
-    useEffect(() => {
-        if (isCopied) {
-            const timer = setTimeout(() => {
-                setIsCopied(false);
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [isCopied]);
-
     return (
-        <MouseEventsCapture>
+        <AnimatePresence>
             <HeadlessButton
                 type="button"
                 className={cn(
                     "text-white/50 hover:text-white cursor-pointer flex gap-x-2 items-center",
-                    className
+                    className,
+                    size === 'sm' && 'p-1',
+                    size === 'md' && 'p-2',
+                    size === 'lg' && 'p-1'
                 )}
                 onClick={handleCopy}
+                onMouseOver={onMouseOver}
+                onMouseOut={onMouseOut}
             >
-                {isCopied ? <Check size={size} /> : <Copy size={size} />}
-                {showText && <span className="font-sans">{isCopied ? "Copied" : "Copy"}</span>}
+                {justCopied ? (
+                    <Check size={size === 'lg' ? 14 : 12} />
+                ) : (
+                    <Copy size={size === 'lg' ? 14 : 12} />
+                )}
+                {showText && <span className="font-sans">{justCopied ? "Copied" : "Copy"}</span>}
             </HeadlessButton>
-        </MouseEventsCapture>
+        </AnimatePresence>
     );
 }
 
-/**
- * A button that resets the chat conversation when clicked.
- * Shows a tooltip with the keyboard shortcut when hovered.
- */
+
 export function ResetButton({ onReset, className, size = 16, shortcut = "Ctrl+R" }: ResetButtonProps): React.ReactElement {
     const [isResetting, setIsResetting] = useState(false);
 
     const handleReset = (): void => {
         setIsResetting(true);
         onReset();
-        // Reset the visual state after a short delay
         setTimeout(() => setIsResetting(false), 300);
     };
 
     return (
-        <MouseEventsCapture>
-            <Tooltip tooltipContent={`Reset Chat (${shortcut})`} position="bottom">
-                <HeadlessButton
-                    type="button"
+        <Tooltip tooltipContent={`Reset Chat (${shortcut})`} position="bottom">
+            <HeadlessButton
+                type="button"
+                className={cn(
+                    "text-white/50 hover:text-white cursor-pointer flex gap-x-2 items-center transition-all duration-200",
+                    isResetting && "text-white scale-95",
+                    className
+                )}
+                onClick={handleReset}
+            >
+                <RotateCcw
+                    size={size}
                     className={cn(
-                        "text-white/50 hover:text-white cursor-pointer flex gap-x-2 items-center transition-all duration-200",
-                        isResetting && "text-white scale-95",
-                        className
+                        "transition-transform duration-200",
+                        isResetting && "rotate-180"
                     )}
-                    onClick={handleReset}
-                >
-                    <RotateCcw 
-                        size={size} 
-                        className={cn(
-                            "transition-transform duration-200",
-                            isResetting && "rotate-180"
-                        )}
-                    />
-                </HeadlessButton>
-            </Tooltip>
-        </MouseEventsCapture>
+                />
+            </HeadlessButton>
+        </Tooltip>
     );
 } 

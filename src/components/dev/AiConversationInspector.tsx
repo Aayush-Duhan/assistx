@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
-import { UI } from '../ui';
+import { ScrollableContent } from '../ui/ScrollableContent';
 
 // Type definitions
 interface Message {
@@ -51,12 +51,12 @@ export const AiConversationInspector = observer((): React.ReactElement => {
     }
 
     return React.createElement(
-        UI.ScrollableArea,
+        ScrollableContent,
         {
             maxHeight: 800,
             scrollUpAccelerator: "CommandOrControl+[",
             scrollDownAccelerator: "CommandOrControl+]",
-            scrollToBottomKey: allMessages.length,
+            enableSnapToBottom: true,
             children: React.createElement(
                 'div',
                 { className: "space-y-2" },

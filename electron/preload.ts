@@ -6,6 +6,7 @@ interface ElectronAPI {
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
     on: (channel: string, listener: (...args: any[]) => void) => void;
+    removeListener: (channel: string, listener: (...args: any[]) => void) => void;
   };
   process:{
     platform: NodeJS.Platform;
@@ -20,6 +21,7 @@ const electronAPI: ElectronAPI = {
     send: (channel, ...args) => ipcRenderer.send(channel, ...args),
     invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
     on: (channel, listener) => ipcRenderer.on(channel, listener),
+    removeListener: (channel, listener) => ipcRenderer.removeListener(channel, listener),
   },
   process: {
     platform: process.platform,

@@ -7,6 +7,11 @@ import { atomWithStorage } from 'jotai/utils';
 export const isCopyHoveredAtom = atom(false);
 
 /**
+ * Jotai atom to track if copying is in progress.
+ */
+export const isCopyingAtom = atom(false);
+
+/**
  * Jotai atom to track if the "Copy AI Response" tooltip should be shown.
  */
 export const showCopyConversationTooltipAtom = atom(false);
@@ -33,8 +38,15 @@ export const hasMovableWindowsAtom = atom((get) => get(movableWindowCountAtom) >
 export const windowsAutoFocusAtom = atomWithStorage('windowsAutoFocusWindow', true,
   undefined, { getOnInit: true });
 
-
 /**
  * Jotai atom to track if the "Done" button in the audio session is being hovered.
  */
-export const isDoneButtonHoveredAtom = atom(false);
+export const isClearingAtom = atom(false);
+
+export const activeAppAtom = atom<'app' | 'login' | 'activity' | 'personalize' | 'settings.profile' | 'settings.security' | 'settings.integrations'>('app');
+
+export const settingsWindowVisibleAtom = atom(false);
+
+export const manualInputAtom = atom('');
+
+export const isThinkingAtom = atom(false);

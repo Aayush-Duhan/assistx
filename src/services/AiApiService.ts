@@ -11,7 +11,6 @@ export interface AiStreamOptions {
     useSearchGrounding?: boolean;
 }
 
-// Legacy interface for backwards compatibility
 export interface AiStreamOptionsLegacy {
     userMessage: string;
     screenshot?: {
@@ -37,9 +36,6 @@ export interface AiStreamResult {
     }>;
 }
 
-/**
- * Service for handling AI API calls using Vercel AI SDK with Google Gemini
- */
 export class AiApiService {
     private providerConfigs: Record<AIProviderKey, { apiKey: string; envKey: string }>;
 
@@ -54,28 +50,21 @@ export class AiApiService {
         };
     }
 
-    /**
-     * Get the appropriate provider instance based on the selected provider
-     */
     private getProviderInstance(provider: AIProviderKey, model: string, useSearchGrounding: boolean = false) {
         switch (provider) {
             case 'google':
                 return google(model, {
-                    useSearchGrounding, // 🔍 Conditionally enables Google Search
+                    useSearchGrounding,
                 });
             default:
                 throw new Error(`Unsupported provider: ${provider}`);
         }
     }
 
-    /**
-     * Stream AI response using full message array (new method)
-     */
     async streamResponse(options: AiStreamOptions): Promise<AiStreamResult> {
         const { messages, abortSignal, useSearchGrounding = false } = options;
 
         try {
-            // Get the provider instance based on current settings
             const modelInstance = this.getProviderInstance(
                 settingsStore.selectedProvider,
                 settingsStore.selectedModel,
@@ -86,7 +75,7 @@ export class AiApiService {
                 model: modelInstance,
                 messages,
                 maxTokens: 4000,
-                temperature: 0.1, // Lower temperature for more focused responses
+                temperature: 0.1,
                 abortSignal,
             });
 
@@ -115,17 +104,12 @@ export class AiApiService {
         }
     }
 
-    /**
-     * Stream AI response using legacy interface (for backwards compatibility)
-     */
     async streamResponseLegacy(options: AiStreamOptionsLegacy): Promise<AiStreamResult> {
         const { userMessage, screenshot, abortSignal, useSearchGrounding = false } = options;
 
-        // Get user context and inject it into the system prompt
         const userContext = userContextStore.getUserContext() || "No additional context provided.";
         const finalSystemPrompt = replaceContextPlaceholder(AI_SCREENSHOT_SYSTEM_PROMPT, userContext);
         
-        // Prepare messages
         const messages: any[] = [
             {
                 role: 'system',
@@ -147,9 +131,6 @@ export class AiApiService {
         return this.streamResponse({ messages, abortSignal, useSearchGrounding });
     }
 
-    /**
-     * Check if the AI service is properly configured for the current provider
-     */
     isConfigured(): boolean {
         const currentProvider = settingsStore.selectedProvider;
         const config = this.providerConfigs[currentProvider];
@@ -162,9 +143,6 @@ export class AiApiService {
         return true;
     }
 
-    /**
-     * Get configuration status for all providers
-     */
     getProviderConfigStatus(): Record<AIProviderKey, boolean> {
         return Object.fromEntries(
             Object.entries(this.providerConfigs).map(([provider, config]) => [
@@ -175,5 +153,4 @@ export class AiApiService {
     }
 }
 
-// Create and export singleton instance
 export const aiApiService = new AiApiService(); 

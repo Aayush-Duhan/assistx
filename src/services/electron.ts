@@ -2,13 +2,16 @@ import { Display } from "../types";
 
 type IpcChannels = {
     'reset-global-shortcuts': [null, void];
-    'global-shortcut-triggered': [{ accelerator: string }, void];
-    'register-global-shortcuts': [{ accelerator: string }, void];
+    'global-shortcut-triggered': [string, void];
+    'register-global-shortcut': [{ accelerator: string }, void];
     'unregister-global-shortcut': [{ accelerator: string }, void];
     'set-ignore-mouse-events': [{ ignore: boolean }, void];
     'unhide-window': [null, void];
     'focus-window': [null, void];
+    'toggle-visibility': [null, void];
     'unfocus-window': [null, void];
+    'window-shown': [null, void];
+    'window-hidden': [null, void];
     'check-for-update': [null, void];
     'install-update': [null, void];
     'updater-state': [{ state: 'available' | 'downloaded' | 'error' }, void];
@@ -21,7 +24,7 @@ type IpcChannels = {
     'mac-native-recorder-data': [{ source: 'mic' | 'system'; base64Data: string }, void];
     'mic-used': [{ app: string }, void];
     'mic-off': [{ app: string }, void];
-    'available-displays': [{ display: Display[] }, void];
+    'available-displays': [{ displays: Display[] }, void];
     'get-available-displays': [null, void];
     'show-display-overlays': [null, void];
     'hide-display-overlays': [null, void];
@@ -41,6 +44,8 @@ type IpcChannels = {
     'request-media-permission': ['microphone' | 'screen', boolean];
     'mac-check-macos-version': [null, { isSupported: boolean }];
     'open-external-url': [{ url: string }, void];
+    'request-window-visibility': [null, { visible: boolean }];
+    'restart-window': [null, void];
 }
 
 type Channel = keyof IpcChannels;
@@ -65,3 +70,10 @@ export async function invoke<C extends Channel>(
 ): Promise<Response<C>> {
     return window.electron.ipcRenderer.invoke(channel, payload);
 }    
+
+export function off<C extends Channel>(
+    channel: C,
+    callback: (payload: Payload<C>) => void
+): void {
+    window.electron.ipcRenderer.removeListener(channel as string, callback as any);
+}

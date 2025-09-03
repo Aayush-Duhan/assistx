@@ -6,9 +6,11 @@ import { observer } from 'mobx-react-lite';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 
 // UI Components
-import { Portal } from '../Portal';
-import { MovableWindow } from '../windows/MovableWindow';
-import { UI } from '../ui';
+import { NotificationWindow } from '../windows/Notification';
+import MovableWindow from '../windows/MovableWindow';
+import { WindowTitle } from '../ui/WindowTitle';
+import { WindowFooter } from '../ui/WindowFooter';
+import { Shortcut } from '../ui/Shortcut';
 import { AiConversationInspector } from './AiConversationInspector';
 import { AudioContextInspector } from './AudioContextInspector';
 
@@ -47,7 +49,7 @@ export const DevInspectWindow = observer((): React.ReactElement | null => {
 
     const inspectionContent = (
         <MovableWindow show={isVisible} width={400}>
-            <UI.WindowTitle>Dev Inspect Context</UI.WindowTitle>
+            <WindowTitle>Dev Inspect Context</WindowTitle>
             
             {/* Conditionally render the content based on the active tab */}
             {activeTab === 'inspect-conversation' 
@@ -55,32 +57,32 @@ export const DevInspectWindow = observer((): React.ReactElement | null => {
                 : <AudioContextInspector />
             }
 
-            <UI.WindowFooter>
+            <WindowFooter>
                 <div className="flex gap-4">
                     {/* Shortcuts to switch between tabs */}
                     {activeTab !== 'inspect-conversation' && (
-                        <UI.Shortcut
+                        <Shortcut
                             label="Inspect Conversation"
                             accelerator="CommandOrControl+Shift+C"
                             onTrigger={() => setActiveTab('inspect-conversation')}
                         />
                     )}
                     {activeTab !== 'inspect-context' && (
-                        <UI.Shortcut
+                        <Shortcut
                             label="Inspect Context"
                             accelerator="CommandOrControl+Shift+X"
                             onTrigger={() => setActiveTab('inspect-context')}
                         />
                     )}
                 </div>
-            </UI.WindowFooter>
+            </WindowFooter>
         </MovableWindow>
     );
 
     // Render the window inside the notifications portal to place it in the bottom-right.
     return (
-        <Portal.Notification>
+        <NotificationWindow show={true} title="Dev Inspect Context" message="Dev Inspect Context">
             {inspectionContent}
-        </Portal.Notification>
+        </NotificationWindow>
     );
 }); 

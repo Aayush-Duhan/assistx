@@ -2,20 +2,23 @@ import { makeObservable, observable, action } from 'mobx';
 import { FullContext } from '../../services/ContextService';
 import { aiApiService, AiStreamResult } from '../../services/AiApiService';
 
-// Type definitions
-interface Message {
-    role: 'system' | 'user' | 'assistant';
-    content: string;
-    experimental_attachments?: Array<Record<string, unknown>>;
-}
+export type AIResponseState = { state: "streaming"; text: string; abortController: AbortController }
+    | { state: "finished"; text: string; timeToFirstTokenMs: number; timeToFinishMs: number }
+    | { state: "error" };
 
-interface ResponseState {
-    state: 'streaming' | 'finished' | 'error';
-    text: string;
-    abortController?: AbortController;
-    timeToFirstTokenMs?: number;
-    timeToFinishMs?: number;
-}
+
+export type AIResponseInput = {
+    messages: any[];
+    fullContext: FullContext;
+    contextLengthUsed: number;
+    manualInput: string | null;
+    displayInput: string | null;
+    systemPromptVariant: "audio" | "screen";
+    useWebSearch?: boolean;
+    useReasoning?: boolean;
+    metadata: any;
+};
+
 
 interface AudioSession {
     state: {
@@ -25,41 +28,21 @@ interface AudioSession {
     };
 }
 
-// Use the actual FullContext class
-type ContextData = FullContext;
-
-/**
- * Manages a single, streaming response from the AI model.
- * It handles the API call, state transitions (streaming, finished, error),
- * and tracks performance metrics.
- */
 export class AiResponse {
     createdAtMs = Date.now();
-    provider = 'google'; // Default to Google Gemini
-    model = 'gemini-2.5-flash'; // Default model
+    provider = 'google';
+    model = 'gemini-2.5-flash';
     id = crypto.randomUUID();
-    state: ResponseState = {
+    state: AIResponseState = {
         state: 'streaming',
         text: '',
         abortController: new AbortController(),
     };
 
-    // --- Injected Dependencies ---
-    messages: Message[];
-    fullContext: ContextData;
-    manualInput?: string;
-    attachments: Array<Record<string, unknown>>;
-    session: AudioSession;
-    useSearchGrounding?: boolean;
-
-    constructor(messages: Message[], fullContext: ContextData, manualInput?: string, attachments: Array<Record<string, unknown>> = [], session?: AudioSession, useSearchGrounding: boolean = false) {
-        this.messages = messages;
-        this.fullContext = fullContext;
-        this.manualInput = manualInput;
-        this.attachments = attachments;
-        this.session = session || { state: { state: 'created' } };
-        this.useSearchGrounding = useSearchGrounding;
-
+    constructor(
+        public readonly input: AIResponseInput,
+        private readonly session: AudioSession,
+    ) {
         makeObservable(this, {
             state: observable,
             setState: action,
@@ -69,85 +52,63 @@ export class AiResponse {
         this.streamResponse();
     }
 
-    /**
-     * Aborts the streaming request if it's in progress.
-     */
-    dispose(): void {
-        if (this.state.state === 'streaming' && this.state.abortController) {
+    dispose() {
+        if (this.state.state === 'streaming') {
             this.state.abortController.abort("Dispose");
         }
     }
 
-    /**
-     * Updates the state of the AI response.
-     * @param newState - The new state object.
-     */
-    setState = (newState: ResponseState): void => {
-        // If we are transitioning away from the streaming state, abort the request.
-        if (this.state.state === 'streaming' && this.state.abortController) {
+    setState(newState: AIResponseState) {
+        if (this.state.state === 'streaming') {
             this.state.abortController.abort("State change");
         }
         this.state = newState;
     };
 
-    /**
-     * Appends text to the current response text while streaming.
-     * @param newText - The chunk of text to append.
-     */
-    setText = (newText: string): void => {
+    setText(newText: string) {
         if (this.state.state === 'streaming') {
             this.state.text = newText;
         }
     };
 
-    /**
-     * The main async method that initiates and handles the streaming API call.
-     * Now uses Vercel AI SDK for real AI streaming.
-     */
-    async streamResponse(): Promise<void> {
+    async streamResponse() {
         if (this.state.state !== 'streaming') return;
         const { abortController } = this.state;
 
         try {
-            // Ensure the backend session is ready before making the call.
-            if (this.session.state.state === 'creating' && this.session.state.creationPromise) {
+            if (this.session.state.state === 'creating') {
                 await this.session.state.creationPromise;
             }
             if (this.session.state.state !== 'created') {
                 throw new Error("Session not created");
             }
 
-            // Check if AI service is configured
             if (!aiApiService.isConfigured()) {
                 throw new Error("AI service not configured. Please set GOOGLE_GENERATIVE_AI_API_KEY in environment variables.");
             }
 
-            // Stream response using the full message array (preserves conversation history)
             const streamResult: AiStreamResult = await aiApiService.streamResponse({
-                messages: this.messages,
+                messages: this.input.messages,
                 abortSignal: abortController?.signal,
-                useSearchGrounding: this.useSearchGrounding,
+                useSearchGrounding: this.input.useWebSearch,
             });
 
-            if (abortController?.signal.aborted) return;
+            if (abortController.signal.aborted) return;
 
             let timeToFirstTokenMs: number | undefined;
             let accumulatedText = '';
 
-            // Process the text stream
             for await (const textChunk of streamResult.textStream) {
                 if (abortController?.signal.aborted) return;
 
                 accumulatedText += textChunk;
                 this.setText(accumulatedText);
 
-                // Record the time to the first token for performance monitoring.
                 if (timeToFirstTokenMs == null) {
                     timeToFirstTokenMs = Date.now() - this.createdAtMs;
                 }
             }
 
-            // Wait for the stream to finish and get final metadata
             await streamResult.finishPromise;
             const timeToFinishMs = Date.now() - this.createdAtMs;
 
@@ -159,14 +120,11 @@ export class AiResponse {
             });
 
         } catch (error) {
-            if (abortController?.signal.aborted) return;
+            if (abortController.signal.aborted) return;
             console.error("Error while streaming response:", error);
-            this.setState({ 
+            this.setState({
                 state: 'error',
-                text: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
             });
         }
     }
-
-
 }

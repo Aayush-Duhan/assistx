@@ -22,7 +22,9 @@ export function initializeIpcHandlers(): void {
   on('quit-app', () => {
     app.quit();
   });
-
+  on('restart-window', () => {
+    windowManager.createOrRecreateWindow();
+  });
   // Auto-updater
   on('check-for-update', () => {
     checkForUpdate();
@@ -66,7 +68,9 @@ export function initializeIpcHandlers(): void {
   on('reset-global-shortcuts', () => {
     resetGlobalShortcuts(); 
   });
-
+  on('toggle-visibility', () => {
+    currentWindow.toggleVisibility();
+  });
   // Window management
   on('set-ignore-mouse-events', (_event, { ignore }) => {
     currentWindow.setIgnoreMouseEvents(ignore);
@@ -80,6 +84,7 @@ export function initializeIpcHandlers(): void {
   on('unfocus-window', () => {
     currentWindow.blur();
   });
+  handle('request-window-visibility', async () => ({ visible: currentWindow.isVisible() }));
 
   // Screenshot
   handle('capture-screenshot', async () => {
