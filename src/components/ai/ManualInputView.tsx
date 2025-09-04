@@ -19,8 +19,6 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { isWaitingForTab, windowsAutoFocusWindow, setWindowsAutoFocusWindow, handleClick } = useWindowFocus(inputRef);
   const isWindows = IS_WINDOWS;
-  console.log('isWindows', isWindows);
-  console.log(window.electron.process.platform);
   const handleCancel = useCallback(() => {
     aiResponsesService.setIsManualInputActive(false);
   }, [aiResponsesService]);

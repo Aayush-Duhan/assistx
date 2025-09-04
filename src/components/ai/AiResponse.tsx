@@ -4,7 +4,7 @@ import { aiApiService, AiStreamResult } from '../../services/AiApiService';
 
 export type AIResponseState = { state: "streaming"; text: string; abortController: AbortController }
     | { state: "finished"; text: string; timeToFirstTokenMs: number; timeToFinishMs: number }
-    | { state: "error" };
+    | { state: "error"; reason?: string };
 
 
 export type AIResponseInput = {
@@ -122,8 +122,18 @@ export class AiResponse {
         } catch (error) {
             if (abortController.signal.aborted) return;
             console.error("Error while streaming response:", error);
+
+            // Determine error reason based on error type
+            let reason = 'unknown';
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                reason = 'network';
+            } else if (error instanceof Error && error.message.includes('network')) {
+                reason = 'network';
+            }
+
             this.setState({
                 state: 'error',
+                reason,
             });
         }
     }

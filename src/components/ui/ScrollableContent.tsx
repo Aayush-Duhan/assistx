@@ -1,37 +1,19 @@
-import { Shortcut } from "./Shortcut";
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, RefObject, createContext } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useGlobalShortcut } from "../../hooks/useGlobalShortcut";
 
 const SCROLL_DEAD_ZONE = 5;
 const SCROLL_AMOUNT = 300;
-const SCROLL_HINT_DELAY = 1500;
-
-function useShowHint(hasScrollableContent: boolean) {
-  const [showHint, setShowHint] = useState(false);
-  useEffect(() => {
-    if (hasScrollableContent) {
-      const timeout = setTimeout(() => {
-        setShowHint(true);
-      }, SCROLL_HINT_DELAY);
-      return () => clearTimeout(timeout);
-    }
-  }, [hasScrollableContent]);
-  return showHint;
-}
+const ScrollNotificationContext = createContext<() => void>(() => {});
 
 function useScrollPosition(ref: React.RefObject<HTMLDivElement>) {
   const [isNearTop, setIsNearTop] = useState(true);
   const [isNearBottom, setIsNearBottom] = useState(true);
-  const [hasScrolled, setHasScrolled] = useState(false);
-  const hasScrollableContent = !isNearTop || !isNearBottom;
 
-  const updateScrollPosition = useCallback((el: HTMLDivElement) => {
-    setIsNearTop(el.scrollTop <= SCROLL_DEAD_ZONE);
-    setIsNearBottom(
-      el.scrollTop + el.clientHeight >= el.scrollHeight - SCROLL_DEAD_ZONE
-    );
+  const updateScrollPosition = useCallback((element: HTMLDivElement) => {
+    setIsNearTop(element.scrollTop <= SCROLL_DEAD_ZONE);
+    setIsNearBottom(element.scrollTop + element.clientHeight >= element.scrollHeight - SCROLL_DEAD_ZONE);
   }, []);
 
   useEffect(() => {
@@ -40,18 +22,27 @@ function useScrollPosition(ref: React.RefObject<HTMLDivElement>) {
     }
   }, [ref, updateScrollPosition]);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handleScroll = () => {
-      updateScrollPosition(el);
-      setHasScrolled(true);
-    };
-    el.addEventListener("scroll", handleScroll);
-    return () => el.removeEventListener("scroll", handleScroll);
+  const notifyContentUpdated = useCallback(() => {
+    if (ref.current) {
+      updateScrollPosition(ref.current);
+    }
   }, [ref, updateScrollPosition]);
 
-  return { isNearTop, isNearBottom, hasScrolled, hasScrollableContent };
+  useEffect(() => {
+    notifyContentUpdated();
+  }, [notifyContentUpdated]);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const handleScroll = () => {
+      updateScrollPosition(element);
+    };
+    element.addEventListener("scroll", handleScroll);
+    return () => element.removeEventListener("scroll", handleScroll);
+  }, [ref, updateScrollPosition]);
+
+  return { isNearTop, isNearBottom, notifyContentUpdated };
 }
 export function ScrollableContent({
   className,
@@ -59,48 +50,53 @@ export function ScrollableContent({
   scrollDownAccelerator,
   scrollUpAccelerator,
   enableSnapToBottom = false,
+  showBottomActions = true,
   showAsTruncated = false,
-  showScrollDownShortcutHint = false,
+  snapToBottomKey,
   onScrollPastBottom,
   onScrollPastTop,
   children,
+  bottomActions
 }: {
   className?: string;
   maxHeight: number;
   scrollDownAccelerator?: string;
   scrollUpAccelerator?: string;
   enableSnapToBottom?: boolean;
+  showBottomActions?: boolean;
   showAsTruncated?: boolean;
-  showScrollDownShortcutHint?: boolean;
+  snapToBottomKey?: any;
   onScrollPastBottom?: () => void;
   onScrollPastTop?: () => void;
   children: React.ReactNode;
+  bottomActions?: React.ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { isNearTop, isNearBottom, hasScrolled, hasScrollableContent } =
+  const { isNearTop, isNearBottom, notifyContentUpdated } =
     useScrollPosition(scrollRef);
-  const { isSnappedToBottom, snapToBottom } = useSnapToBottom(
-    scrollRef,
-    enableSnapToBottom,
-    isNearBottom
-  );
-  const showScrollHint = useShowHint(hasScrollableContent);
+  const {
+    isSnappedToBottom,
+    snapToBottom,
+    cancelSnapToBottom
+  } = useSnapToBottom(scrollRef, enableSnapToBottom, isNearBottom, snapToBottomKey);
 
   useGlobalShortcut(scrollDownAccelerator ?? 'CommandOrControl+Down', () => {
-    if (isNearBottom) {
-      onScrollPastBottom?.();
+    if (isNearBottom && onScrollPastBottom) {
+      onScrollPastBottom();
     }
     scrollRef.current?.scrollBy({ top: SCROLL_AMOUNT, behavior: "smooth" });
   });
 
   useGlobalShortcut(scrollUpAccelerator ?? 'CommandOrControl+Up', () => {
-    if (isNearTop) {
-      onScrollPastTop?.();
+    cancelSnapToBottom();
+    if (isNearTop && onScrollPastTop) {
+      onScrollPastTop();
     }
     scrollRef.current?.scrollBy({ top: -SCROLL_AMOUNT, behavior: "smooth" });
   });
 
   return (
+    <ScrollNotificationContext.Provider value={notifyContentUpdated}>
     <div className="relative">
       <motion.div
         animate={{
@@ -131,86 +127,131 @@ export function ScrollableContent({
           </div>
         </motion.div>
       </motion.div>
-      {showScrollDownShortcutHint && (
-        <ScrollHint
-          show={!hasScrolled && showScrollHint}
-          scrollDownAccelerator={scrollDownAccelerator ?? 'CommandOrControl+Down'}
-        />
-      )}
-      {enableSnapToBottom && (
-        <SnapToBottomButton show={!isSnappedToBottom} onTrigger={snapToBottom} />
-      )}
+      <BottomActions
+        showViewLatest={enableSnapToBottom && !isNearBottom && !isSnappedToBottom}
+        showBottomActions={showBottomActions}
+        bottomActions={bottomActions}
+        onViewLatest={snapToBottom}
+      />
+    </div>
+    </ScrollNotificationContext.Provider>
+  );
+}
+
+interface BottomActionsProps {
+  showViewLatest: boolean;
+  showBottomActions: boolean;
+  bottomActions?: React.ReactNode;
+  onViewLatest: () => void;
+}
+
+function BottomActions({ showViewLatest, showBottomActions, bottomActions, onViewLatest }: BottomActionsProps) {
+  return (
+    <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
+      <motion.div>
+        {showViewLatest ? (
+          <motion.div key="view-latest">
+            <button
+              onClick={onViewLatest}
+              className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors"
+            >
+              View Latest
+            </button>
+          </motion.div>
+        ) : showBottomActions ? (
+          <motion.div key="bottom-actions">
+            {bottomActions}
+          </motion.div>
+        ) : null}
+      </motion.div>
     </div>
   );
 }
 
-const ScrollHint = ({ show, scrollDownAccelerator }: { show: boolean, scrollDownAccelerator: string }) => (
-  <Hint show={show} label="More Content" accelerator={scrollDownAccelerator} onTrigger={() => {}} />
-);
-
-const Hint = ({ show, label, accelerator, onTrigger }: { show: boolean, label: string, accelerator?: string, onTrigger: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: show ? 1 : 0, y: show ? 0 : 10 }}
-    transition={{ duration: 0.3 }}
-    className={cn(
-      "absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-white/70",
-      !onTrigger && 'pointer-events-none',
-      !show && 'pointer-events-none'
-    )}
-  >
-    <Shortcut label={label} accelerator={accelerator} onTrigger={onTrigger} />
-  </motion.div>
-);
-
-const SnapToBottomButton = ({ show, onTrigger }: { show: boolean, onTrigger: () => void }) => (
-  <Hint show={show} label="View Latest" onTrigger={onTrigger} />
-);
-
-function useSnapToBottom(scrollRef: React.RefObject<HTMLDivElement>, enabled: boolean, isNearBottom: boolean) {
+function useSnapToBottom(
+  scrollRef: RefObject<HTMLDivElement>,
+  enabled: boolean,
+  isNearBottom: boolean,
+  snapTriggerKey: string
+) {
   const [isSnapped, setIsSnapped] = useState(false);
-  if (enabled && isNearBottom && !isSnapped) {
-    setIsSnapped(true);
-  }
+  const [hasUserScrolled, setHasUserScrolled] = useState(false);
 
+  const cancelSnapToBottom = useCallback(() => {
+    setIsSnapped(false);
+    setHasUserScrolled(true);
+  }, []);
+
+  // Auto-snap logic
+  useEffect(() => {
+    if (enabled && isNearBottom && !isSnapped && !hasUserScrolled) {
+      setIsSnapped(true);
+    }
+  }, [enabled, isNearBottom, isSnapped, hasUserScrolled]);
+
+  // Force snap when trigger key changes
+  useEffect(() => {
+    if (enabled && snapTriggerKey != null) {
+      setIsSnapped(true);
+    }
+  }, [enabled, snapTriggerKey]);
+
+  // Scroll detection
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let lastScrollTop = el.scrollTop;
     const handleScroll = () => {
       if (el.scrollTop < lastScrollTop) {
-        setIsSnapped(false);
+        cancelSnapToBottom();
       }
       lastScrollTop = el.scrollTop;
     };
     el.addEventListener('scroll', handleScroll);
     return () => el.removeEventListener('scroll', handleScroll);
-  }, [scrollRef]);
+  }, [scrollRef, cancelSnapToBottom]);
 
-  const [isSnapping, setIsSnapping] = useState(false);
+  const [isInitialSnapInProgress, setIsInitialSnapInProgress] = useState(false);
+
+  // Smooth scroll to bottom
   useEffect(() => {
     if (isSnapped) {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [isSnapped, scrollRef]);
 
+  // Instant scroll to bottom
   useEffect(() => {
-    if (isSnapped && !isSnapping) {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'instant' });
+    if (isSnapped && !isInitialSnapInProgress) {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'instant' as ScrollBehavior });
+      setIsInitialSnapInProgress(true);
     }
-  });
+  }, [isSnapped, isInitialSnapInProgress, scrollRef]);
 
+  // Reset initial snap flag
   useEffect(() => {
-    if (isSnapping) {
-      const timeout = setTimeout(() => setIsSnapping(false), 300);
+    if (isInitialSnapInProgress) {
+      const timeout = setTimeout(() => setIsInitialSnapInProgress(false), 300);
       return () => clearTimeout(timeout);
     }
-  }, [isSnapping]);
+  }, [isInitialSnapInProgress]);
+
+  // Reset user scrolled flag
+  useEffect(() => {
+    if (hasUserScrolled) {
+      const timeout = setTimeout(() => setHasUserScrolled(false), 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [hasUserScrolled]);
 
   const snapToBottom = useCallback(() => {
     setIsSnapped(true);
-    setIsSnapping(true);
+    setIsInitialSnapInProgress(true);
   }, []);
 
-  return { isSnappedToBottom: isSnapped, snapToBottom };
+  return {
+    isSnappedToBottom: isSnapped,
+    snapToBottom,
+    cancelSnapToBottom
+  };
 }

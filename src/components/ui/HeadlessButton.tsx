@@ -1,23 +1,31 @@
 import { cn } from "@/lib/utils";
-import { forwardRef } from "react";
 
-export const HeadlessButton = forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
->(({ className, onClick, ...props }, ref) => {
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.blur();
-    onClick?.(e);
-  };
+interface HeadlessButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  className?: string;
+  onMouseUp?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onMouseLeave?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}
 
+export function HeadlessButton({ 
+  className, 
+  onMouseUp, 
+  onMouseLeave, 
+  ...props 
+}: HeadlessButtonProps) {
   return (
     <button
-      ref={ref}
       type="button"
       tabIndex={-1}
-      className={cn('focus:outline-none', className)}
-      onClick={handleClick}
+      className={cn("focus:outline-none", className)}
+      onMouseUp={(event) => {
+        event.currentTarget.blur();
+        onMouseUp?.(event);
+      }}
+      onMouseLeave={(event) => {
+        event.currentTarget.blur();
+        onMouseLeave?.(event);
+      }}
       {...props}
     />
   );
-});
+}

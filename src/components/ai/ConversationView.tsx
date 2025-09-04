@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Fragment } from 'react';
 import { observer } from 'mobx-react-lite';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGlobalServices } from '../../services/GlobalServicesContextProvider';
-import { useVimScrollUpShortcut, useVimScrollDownShortcut } from '../../hooks/useAiTriggers';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import { WindowFooter } from '../ui/WindowFooter';
-import { Markdown } from './Markdown';
 import { ScrollableContent } from '../ui/ScrollableContent';
-import { PulseLoader } from 'react-spinners';
-import { CopyButton, ResetButton } from '../ui/CopyButton';
+
 import { ManualInputView } from './ManualInputView';
 import { AIResponseHeader } from './AiResponseHeader';
 import { isClearingAtom, isCopyingAtom } from '@/state/atoms';
 import { useAtomValue } from 'jotai';
-import { APP_NAME } from '@/lib/constants';
 import { AiResponse } from './AiResponse';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { HeadlessButton } from '../ui/HeadlessButton';
+import { Tooltip } from '../ui/Tooltip';
+import { Check, Copy } from 'lucide-react';
+import { PulseLoader } from 'react-spinners';
+import { Markdown } from './Markdown';
 
 
 interface AiConversation {
@@ -24,16 +24,6 @@ interface AiConversation {
     state: {
         state: 'streaming' | 'finished' | 'error';
     };
-}
-
-interface ResponseContentProps {
-    response: AiResponse;
-    toNextResponse: () => void;
-    toPrevResponse: () => void;
-}
-
-interface ManualInputPromptProps {
-    response: AiResponse;
 }
 
 const ANIMATION_DURATION_MS = 250;
@@ -95,79 +85,9 @@ function useConversationNavigator(conversation: AiConversation) {
     };
 }
 
-const ManualInputPrompt = observer(({ response }: ManualInputPromptProps): React.ReactElement | null => {
-    const { aiResponsesService } = useGlobalServices();
-
-    if (!response.input.manualInput) return null;
-
-    const handleReset = (): void => {
-        aiResponsesService.clearCurrentConversation();
-    };
-
-    return (
-        <div className="relative p-4 pb-4 mb-4 border-b border-white/20">
-          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-            <ResetButton
-              onReset={handleReset}
-              size={14}
-              className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1 backdrop-blur-sm"
-            />
-            <CopyButton
-              content={response.input.manualInput}
-              size="md"
-              className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1 backdrop-blur-sm"
-            />
-          </div>
-      
-          <div className="flex items-start pr-20">
-            <div className="text-white/90 text-base leading-relaxed">
-              {response.input.manualInput}
-            </div>
-          </div>
-        </div>
-      );      
-});
-
-const ResponseContent = observer(({ response, toNextResponse, toPrevResponse }: ResponseContentProps): React.ReactElement => {
-    const scrollUpAccelerator = useVimScrollUpShortcut();
-    const scrollDownAccelerator = useVimScrollDownShortcut();
-
-    const content = response.state.state === 'error'
-        ? React.createElement(Markdown, null, `*Error generating response — please try again.*`)
-        : React.createElement(Markdown, null, response.state.text);
-
-    const responseText = response.state.state === 'error'
-        ? 'Error generating response — please try again.'
-        : response.state.text;
-
-        return (
-            <div className="relative h-full">
-              <div className="absolute top-2 right-2 z-10">
-                <CopyButton
-                  content={responseText}
-                  size="md"
-                  className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white rounded p-1.5 backdrop-blur-sm"
-                />
-              </div>
-          
-              <ScrollableContent
-                maxHeight={600}
-                scrollDownAccelerator={scrollDownAccelerator}
-                scrollUpAccelerator={scrollUpAccelerator}
-                onScrollPastBottom={toNextResponse}
-                onScrollPastTop={toPrevResponse}
-                className="pr-14 h-full custom-scrollbar"
-              >
-                {content}
-              </ScrollableContent>
-            </div>
-          );
-          
-});
-
 export const ConversationView = observer(({ setBounceDirection, currentConversation }: { setBounceDirection: (dir: 'up' | 'down' | null) => void; currentConversation: AiConversation }) => {
     const { aiResponsesService } = useGlobalServices();
-    const { curResponse, transitionDirection, bounceDirection, toNextResponse, toPrevResponse } = useConversationNavigator(currentConversation);
+    const { curResponse, bounceDirection } = useConversationNavigator(currentConversation);
     const isClearing = useAtomValue(isClearingAtom);
     const isCopyingConversation = useAtomValue(isCopyingAtom);
     const handleResetChat = useCallback(() => {
@@ -180,26 +100,60 @@ export const ConversationView = observer(({ setBounceDirection, currentConversat
     useEffect(() => {
         setBounceDirection(bounceDirection as 'up' | 'down' | null);
     }, [bounceDirection, setBounceDirection]);
+    const allResponses = currentConversation?.responses ?? [];
+    const { content: titleContent, key: titleKey } = useConversationTitle(currentConversation);
+    
 
-    const getTitle = () => {
-        if (isCopyingConversation) return { content: 'Copy AI Response', key: 'copy-conversation' };
-        if (isClearing) return { content: 'Clear Response', key: 'clear' };
-        if (curResponse.state.state === 'streaming') { return { content: 'Thinking...', key: 'streaming' }; }
-        if (curResponse.state.state === 'error') return { content: 'Error', key: 'error' };
-        return { content: APP_NAME, key: 'response' };
-    };
-
-    const { content: titleContent, key: titleKey } = getTitle();
-    const isStreamingWithoutText = curResponse.state.state === 'streaming' && !curResponse.state.text;
-
+    const handleTellMeMoreClick = () => {
+        aiResponsesService.triggerAi({
+            shouldCaptureScreenshot: false,
+            displayInput: "Tell me more",
+            manualInput: currentConversation?.latestResponse?.input?.manualInput
+                ? `Tell me more about this: ${currentConversation.latestResponse.input.manualInput}`
+                : undefined,
+            metadata: { doSmartMode: true },
+        });
+    }
     return (
-        <><AIResponseHeader
-            title={titleContent}
-            titleKey={titleKey}
-            showPulseAnimation={curResponse.state.state === 'streaming' && !isCopyingConversation && !isClearing}
-            curResponse={curResponse}
-        />
-            <AnimatePresence mode="popLayout">
+        <>
+            <AIResponseHeader
+                title={titleContent}
+                titleKey={titleKey}
+                showPulseAnimation={curResponse.state.state === 'streaming' && !isCopyingConversation && !isClearing}
+            />
+            {curResponse &&
+                <ScrollableContent
+                    maxHeight={400}
+                    enableSnapToBottom={true}
+                    snapToBottomKey={allResponses.length}
+                    scrollDownAccelerator={"CommandOrControl+Down"}
+                    scrollUpAccelerator={"CommandOrControl+Up"}
+                    className="px-5 space-y-2 -mt-6"
+                    bottomActions={
+                        <div className="flex items-center gap-2">
+                            <TellMeMoreButton onClick={handleTellMeMoreClick}>
+                                Tell me more
+                            </TellMeMoreButton>
+
+                            {/* Response actions component */}
+                            <CopyResponseButton response={currentConversation.latestResponse} />
+                        </div>
+                    }
+                >
+                    {allResponses.map((response) => (
+                        <Fragment key={response.id}>
+                            {/* User message */}
+                            <UserMessage response={response} />
+
+                            {/* AI response with pro upgrade option */}
+                            <AiResponseMessage
+                                response={response}
+                            />
+                        </Fragment>
+                    ))}
+                </ScrollableContent>
+            }
+            {/* <AnimatePresence mode="popLayout">
                 {isStreamingWithoutText ? (
                     <motion.div
                         key="streaming-loader"
@@ -226,28 +180,161 @@ export const ConversationView = observer(({ setBounceDirection, currentConversat
                         />
                     </motion.div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence> */}
             {aiResponsesService.isManualInputActive ? (
                 <ManualInputView className="mt-2 border-t-1 border-white/30" />
             ) : (
-                <>
-                    <WindowFooter shortcuts={<ManualInputPrompt response={curResponse} />} />
-                </>
+                <WindowFooter />
             )}
         </>
     );
 });
 
-const StreamingLoader = ({ toNextResponse, toPrevResponse }: { toNextResponse: () => void; toPrevResponse: () => void }) => {
-    const scrollDownAccelerator = "CommandOrControl+Down";
-    const scrollUpAccelerator = "CommandOrControl+Up";
-  
-    useHotkeys(scrollDownAccelerator, () => {
-      toNextResponse();
-    });
-    useHotkeys(scrollUpAccelerator, () => {
-      toPrevResponse();
-    });
-  
-    return <PulseLoader size={6} color="white" className="px-4 opacity-90" />;
-  };
+function AiResponseMessage({ response }: { response: AiResponse }) {
+    const { state } = response;
+
+    // Handle error state with different messages based on error type
+    if (state.state === 'error') {
+        return (
+            <motion.div
+                className="w-fit max-w-96 ml-auto px-3 py-2 rounded-2xl bg-red-400/60 text-white text-[13px] whitespace-pre-wrap break-words"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
+                <Markdown hideCopyButton>
+                    {state.reason === "network"
+                        ? "Connection failed. If the problem persists, please check your internet connection or VPN."
+                        : "Response generation failed. Please try again momentarily. If the problem persists, please contact support."
+                    }
+                </Markdown>
+            </motion.div>
+        );
+    }
+
+    // Handle streaming state
+    if (state.state === 'streaming' && !state.text) {
+        return (
+            <>
+                <PulseLoader size={6} color="white" className="opacity-90" />
+            </>
+        );
+    }
+
+    // Handle finished state
+    return (
+        <>
+            <div>
+                <Markdown onBulletClick={() => {}}>
+                    {state.text}
+                </Markdown>
+                <div className='h-10'></div>
+            </div>
+        </>
+    );
+}
+
+function useConversationTitle(
+    conversation: AiConversation | null
+): {
+    content: string;
+    key: string;
+    pulse?: boolean;
+} {
+    const { aiResponsesService } = useGlobalServices();
+    if (aiResponsesService.isCapturingScreenshot) {
+        return {
+            content: "Analyzing screen...",
+            key: "analyzing"
+        };
+    }
+    if (aiResponsesService.isCommittingTranscriptions) {
+        return {
+            content: "Transcribing...",
+            key: "transcribing"
+        };
+    }
+    if (conversation?.state.state === "error") {
+        return {
+            content: "Error",
+            key: "error"
+        };
+    }
+    let streamingTitle = "Thinking...";
+    let finishedTitle = "AI Response";
+
+    if (conversation?.state.state === "streaming") {
+        return {
+            content: streamingTitle,
+            key: "streaming",
+            pulse: true
+        };
+    }
+
+    return {
+        content: finishedTitle,
+        key: "finished"
+    };
+}
+
+function UserMessage({ response }: { response: AiResponse }) {
+    // Get the display text, with fallback for empty inputs
+    const displayText = response.input.displayInput || "💡 Give me assistance";
+
+    return (
+        <motion.div
+            className="w-fit max-w-96 ml-auto px-3 py-1 rounded-2xl bg-sky-400/60 text-white text-[13px] whitespace-pre-wrap break-words"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        >
+            {displayText}
+        </motion.div>
+    );
+}
+
+function TellMeMoreButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+    return (
+        <HeadlessButton
+            className="text-[11px] text-white/90 block px-3 h-8 rounded-lg bg-black/45 hover:bg-black/30 active:bg-black/20 transition"
+            onClick={onClick}
+        >
+            {children}
+        </HeadlessButton>
+    );
+}
+
+function CopyResponseButton({ response }: { response: AiResponse }) {
+    const [showSuccessIndicator, setShowSuccessIndicator] = useState(false);
+    useEffect(() => {
+        if (showSuccessIndicator) {
+            const timeoutId = setTimeout(() => {
+                setShowSuccessIndicator(false);
+            }, 2000);
+
+            // Cleanup timeout on unmount or when showSuccessIndicator changes
+            return () => clearTimeout(timeoutId);
+        }
+    }, [showSuccessIndicator]);
+    if (response.state.state === "error") {
+        return null;
+    }
+    const responseText = response.state.text;
+    const handleCopyToClipboard = () => {
+        navigator.clipboard.writeText(responseText);
+        setShowSuccessIndicator(true);
+    };
+    return (
+        <Tooltip tooltipContent="Copy Conversation" position="right">
+            <HeadlessButton
+                onClick={handleCopyToClipboard}
+            >
+                {showSuccessIndicator ? (
+                    <Check size={14} />
+                ) : (
+                    <Copy size={14} />
+                )}
+            </HeadlessButton>
+        </Tooltip>
+    );
+}

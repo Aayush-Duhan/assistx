@@ -24,10 +24,14 @@ export function HoverableContent({
   children,
   content,
   tag,
+  onClick,
+  className,
 }: {
   children: React.ReactNode;
   content: string;
   tag?: keyof JSX.IntrinsicElements;
+  onClick?: () => void;
+  className?: string;
 }) {
   const { hoveredRef, setHoveredRef, setContainerY, setHoveredContent, containerRef } = useContext(HoverableContentContext);
   const elementRef = useRef<HTMLElement>(null);
@@ -57,6 +61,8 @@ export function HoverableContent({
       ref: elementRef,
       onMouseEnter: handleMouseEnter,
       onMouseMove: handleMouseMove,
+      onClick,
+      className,
       style: {
         fontFamily: isBold ? 'var(--font-family-bold)' : undefined,
         color: isBold ? 'var(--color-accent)' : undefined,

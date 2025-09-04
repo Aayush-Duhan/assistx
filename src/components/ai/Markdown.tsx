@@ -48,7 +48,12 @@ const markdownComponents: any = {
   li({ children }: MarkdownComponentProps) {
     const onBulletClick = useContext(BulletClickContext);
     return (
-      <li className="relative">
+      <HoverableContent
+        tag="li"
+        content={getInnerText(children)}
+        onClick={onBulletClick ? () => onBulletClick(getInnerText(children)) : undefined}
+        className="relative"
+      >
         {onBulletClick && (
           <HeadlessButton
             className="absolute -left-6 right-0 -inset-y-0.5 rounded border border-transparent hover:bg-white/10 hover:border-white/20 active:bg-white/20 transition duration-30"
@@ -56,7 +61,7 @@ const markdownComponents: any = {
           />
         )}
         {children}
-      </li>
+      </HoverableContent>
     );
   },
   ...NON_PARAGRAPH_BOLD_TAGS.reduce((acc, tag) => {
@@ -96,10 +101,10 @@ export function Markdown({ hideCopyButton = false, onBulletClick, children }: Ma
     <HoverableContentContext.Provider value={{ hoveredRef, setHoveredRef, containerY, setContainerY, hoveredContent, setHoveredContent, containerRef }}>
       <BulletClickContext.Provider value={onBulletClick}>
         <div className="relative">
-          <div ref={containerRef} className="prose prose-sm prose-light pl-4 max-w-none relative [&_*]:select-text">
+          <div ref={containerRef} className="prose prose-xs prose-light pl-4 max-w-none relative [&_*]:select-text text-[14px]">
             <Streamdown
               components={markdownComponents}
-              remarkPlugins={[remarkGfm, remarkMath]}
+              remarkPlugins={[[remarkMath, { singleDollarTextMath: true }], remarkGfm]}
               rehypePlugins={[[rehypeKatex, {
                 strict: false,
                 throwOnError: false,
@@ -133,7 +138,7 @@ export function Markdown({ hideCopyButton = false, onBulletClick, children }: Ma
               </div>
               {isHoveringCopy && (
                 <div
-                  className="absolute top-0 left-0 right-0 z-1 pointer-events-none transition-transform duration-100 bg-blue-500/10 rounded-md"
+                  className="absolute top-0 left-0 right-0 z-1 pointer-events-none transition-transform duration-100 bg-slate-700/10 rounded-md"
                   style={{
                     transform: `translateY(${containerY || 0}px)`,
                     height: hoveredRef?.current?.offsetHeight || 'auto',
