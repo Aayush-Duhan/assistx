@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, createElement } from 'react';
+import React, { createContext, useContext, useRef, createElement, useLayoutEffect } from 'react';
 
 export const HoverableContentContext = createContext<{
   hoveredRef: React.RefObject<HTMLElement> | null;
@@ -10,11 +10,11 @@ export const HoverableContentContext = createContext<{
   containerRef: React.RefObject<HTMLDivElement> | null;
 }>({
   hoveredRef: null,
-  setHoveredRef: () => {},
+  setHoveredRef: () => { },
   containerY: null,
-  setContainerY: () => {},
+  setContainerY: () => { },
   hoveredContent: '',
-  setHoveredContent: () => {},
+  setHoveredContent: () => { },
   containerRef: null,
 });
 
@@ -35,23 +35,74 @@ export function HoverableContent({
 }) {
   const { hoveredRef, setHoveredRef, setContainerY, setHoveredContent, containerRef } = useContext(HoverableContentContext);
   const elementRef = useRef<HTMLElement>(null);
-  const isCurrentlyHovered = hoveredRef === elementRef;
+  const isHovered = hoveredRef === elementRef;
 
-  const handleMouseEnter = () => {
-    setHoveredRef(elementRef);
-    setHoveredContent(content);
+  const recalcOffset = () => {
     const containerTop = containerRef?.current?.getBoundingClientRect().top || 0;
     const elementTop = elementRef?.current?.getBoundingClientRect().top || 0;
     setContainerY(elementTop - containerTop);
   };
-
-  const handleMouseMove = () => {
-    if (isCurrentlyHovered) {
-      const containerTop = containerRef?.current?.getBoundingClientRect().top || 0;
-      const elementTop = elementRef?.current?.getBoundingClientRect().top || 0;
-      setContainerY(elementTop - containerTop);
-    }
+  
+  const handleMouseEnter = () => {
+    setHoveredRef(elementRef);
+    setHoveredContent(content);
+    recalcOffset();
   };
+
+  useLayoutEffect(() => {
+    if (!isHovered || !elementRef.current) return;
+
+    const element = elementRef.current;
+    const container = containerRef?.current;
+
+    recalcOffset();
+
+    const observer = new ResizeObserver(recalcOffset);
+    observer.observe(element);
+    if (container) observer.observe(container);
+
+    // Recalculate on scroll/resize while hovered
+    let ticking = false;
+    const scheduleRecalc = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        recalcOffset();
+      });
+    };
+
+    const scrollTargets = new Set<EventTarget>();
+    const addScrollAncestors = (start: Element | null) => {
+      let node: Element | null = start;
+      while (node && node !== document.body) {
+        const style = window.getComputedStyle(node);
+        const overflowY = style.overflowY;
+        const overflowX = style.overflowX;
+        if (/(auto|scroll|overlay)/.test(overflowY) || /(auto|scroll|overlay)/.test(overflowX)) {
+          scrollTargets.add(node);
+        }
+        node = node.parentElement;
+      }
+    };
+
+    addScrollAncestors(element);
+    addScrollAncestors(container || null);
+    scrollTargets.add(window);
+
+    for (const target of scrollTargets) {
+      target.addEventListener('scroll', scheduleRecalc, { passive: true });
+    }
+    window.addEventListener('resize', scheduleRecalc);
+
+    return () => {
+      observer.disconnect();
+      for (const target of scrollTargets) {
+        target.removeEventListener('scroll', scheduleRecalc);
+      }
+      window.removeEventListener('resize', scheduleRecalc);
+    };
+  }, [isHovered, containerRef]);
 
   const isBold = BOLD_TAGS.includes(tag ?? 'div');
 
@@ -60,7 +111,6 @@ export function HoverableContent({
     {
       ref: elementRef,
       onMouseEnter: handleMouseEnter,
-      onMouseMove: handleMouseMove,
       onClick,
       className,
       style: {
