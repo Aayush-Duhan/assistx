@@ -17,13 +17,13 @@ import { useSetAtom } from 'jotai';
 import { isClearingAtom } from '@/state/atoms';
 
 function Waveform({ isStatic }: { isStatic: boolean }) {
-  const staticScales = [6, 10, 8];
+  const staticScales = [4, 10, 8];
   return (
     <div className="w-4 h-[12px] flex items-center justify-center gap-[2px]">
       {['waveform-1', 'waveform-2', 'waveform-3'].map((key, index) => (
         <motion.div
           key={key}
-          className={cn('w-[2px] h-full rounded-full origin-center', isStatic ? 'bg-white/70' : 'bg-white/60')}
+          className={cn('w-[2px] h-full rounded-full origin-center', isStatic ? 'bg-white' : 'bg-white/60')}
           initial={isStatic ? false : { scaleY: 0.333 }}
           animate={
             isStatic
@@ -49,11 +49,11 @@ const ListenButton = observer(({ isLoading, onClick }: { isLoading: boolean; onC
   return (
     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
       <HeadlessButton
-        className="w-18 h-6.5 rounded-full bg-blue-600/90 shadow-sm flex items-center justify-center gap-1 hover:bg-blue-600 transition"
+        className="focus:outline-none px-2.5 h-7 rounded-full bg-[#072452] border border-[#196ACC] text-white hover:bg-[#0F2B57] shadow-sm flex items-center justify-center gap-1 transition"
         onClick={onClick}
       >
         {isLoading ? <PuffLoader color="white" size={16} /> : <Waveform isStatic />}
-        <p className="text-white text-[11px]">Listen</p>
+        <p className="text-white font-medium text-[11px]">Listen</p>
       </HeadlessButton>
     </motion.div>
   );

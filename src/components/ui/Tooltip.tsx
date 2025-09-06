@@ -62,7 +62,7 @@ export const Tooltip = ({
           >
             <div
               className={cn(
-                "px-2 py-2 bg-black/80 text-white text-xs font-medium rounded-md shadow-lg whitespace-nowrap",
+                "px-2 py-2 bg-black text-white text-xs font-medium rounded-md shadow-lg whitespace-nowrap",
                 tooltipClassName
               )}
             >

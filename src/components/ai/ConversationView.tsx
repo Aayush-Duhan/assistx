@@ -102,7 +102,7 @@ export const ConversationView = observer(({ setBounceDirection, currentConversat
     }, [bounceDirection, setBounceDirection]);
     const allResponses = currentConversation?.responses ?? [];
     const { content: titleContent, key: titleKey } = useConversationTitle(currentConversation);
-    
+    const isFinished = !!currentConversation && currentConversation.state.state !== "streaming";
 
     const handleTellMeMoreClick = () => {
         aiResponsesService.triggerAi({
@@ -129,6 +129,7 @@ export const ConversationView = observer(({ setBounceDirection, currentConversat
                     scrollDownAccelerator={"CommandOrControl+Down"}
                     scrollUpAccelerator={"CommandOrControl+Up"}
                     className="px-5 space-y-2 -mt-6"
+                    showBottomActions={isFinished}
                     bottomActions={
                         <div className="flex items-center gap-2">
                             <TellMeMoreButton onClick={handleTellMeMoreClick}>
@@ -225,7 +226,7 @@ function AiResponseMessage({ response }: { response: AiResponse }) {
     return (
         <>
             <div>
-                <Markdown onBulletClick={() => {}}>
+                <Markdown onBulletClick={() => { }}>
                     {state.text}
                 </Markdown>
                 <div className='h-10'></div>

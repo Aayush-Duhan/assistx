@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useMotionValue, useSpring } from 'framer-motion';
 import { useGlobalShortcut } from './useGlobalShortcut';
-import { FeatureFlag } from '../types';
 import { SHORTCUTS } from '../lib/constants';
-import { useFeatureFlag } from '../stores/featureStore';
 
 const HORIZONTAL_MOVE_AMOUNT = 100;
 const VERTICAL_SNAP_THRESHOLD = 0.33;
@@ -36,7 +34,6 @@ export function MovableWindowsProvider({ children }: {
         vOrientation: 'top' | 'bottom'
     }) => React.ReactNode
 }) {
-    const useVimBindings = useFeatureFlag(FeatureFlag.VIM_MODE_KEY_BINDINGS);
     const x = useMotionValue(0);
     const xSpring = useSpring(x, { stiffness: 300, damping: 30 });
     useEffect(() => {
@@ -92,12 +89,12 @@ export function MovableWindowsProvider({ children }: {
     }, [x, setX]);
     const snapTop = useCallback(() => setVOrientation('top'), []);
     const snapBottom = useCallback(() => setVOrientation('bottom'), []);
-    useGlobalShortcut(useVimBindings ? SHORTCUTS.VIM_MOVE_LEFT : SHORTCUTS.MOVE_LEFT,
+    useGlobalShortcut(SHORTCUTS.MOVE_LEFT,
         moveLeft);
-    useGlobalShortcut(useVimBindings ? SHORTCUTS.VIM_MOVE_RIGHT : SHORTCUTS.MOVE_RIGHT,
+    useGlobalShortcut(SHORTCUTS.MOVE_RIGHT,
         moveRight);
-    useGlobalShortcut(useVimBindings ? SHORTCUTS.VIM_MOVE_UP : undefined, snapTop);
-    useGlobalShortcut(useVimBindings ? SHORTCUTS.VIM_MOVE_DOWN : undefined, snapBottom);
+    useGlobalShortcut(undefined, snapTop);
+    useGlobalShortcut(undefined, snapBottom);
     const contextValue = useMemo(
         () => ({
             getX,
