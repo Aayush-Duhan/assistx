@@ -11,6 +11,7 @@ import { isMac } from "../utils/platform";
 import { startMicMonitor, stopMicMonitor } from "../features/mac/micMonitor";
 import { checkMacOsVersion } from "../features/mac/utils";
 import { startMacNativeRecorder, stopMacNativeRecorder } from "../features/mac/nativeRecorder";
+import { clearTokens, getStatus, sendGmailEmail, setOAuthClient, startOAuthFlow } from "../features/gmailOAuth";
 
 export function initializeIpcHandlers(): void {
   let currentWindow = windowManager.getCurrentWindow();
@@ -90,6 +91,34 @@ export function initializeIpcHandlers(): void {
   handle('capture-screenshot', async () => {
     const { contentType, data } = await captureScreenshot();
     return { contentType, data };
+  });
+
+  // External URL opener
+  handle('open-external-url', async (_event, { url }) => {
+    await shell.openExternal(url);
+  });
+
+  // Gmail integration handlers
+  handle('gmail-set-oauth-client', async (_event, payload) => {
+    setOAuthClient(payload);
+  });
+  handle('gmail-get-status', async () => {
+    return getStatus();
+  });
+  handle('gmail-login', async () => {
+    try {
+      await startOAuthFlow();
+      return { success: true };
+    } catch (e) {
+      return { success: false };
+    }
+  });
+  handle('gmail-logout', async () => {
+    clearTokens();
+  });
+  handle('gmail-send', async (_event, payload) => {
+    await sendGmailEmail(payload);
+    return { success: true };
   });
   // Display management
   on('get-available-displays', () => {

@@ -6,6 +6,7 @@ import { useAtom } from 'jotai';
 import { activeAppAtom, settingsWindowVisibleAtom } from '@/state/atoms';
 import { SettingPage } from './SettingPage';
 import { PersonalizePage } from './PersonalizePage';
+import { IntegrationsPage } from './IntegrationsPage';
 import { observer } from 'mobx-react-lite';
  
 
@@ -37,6 +38,9 @@ export const Settings = observer(() => {
                     )}
                     {activeApp === 'personalize' && (
                         <PersonalizePage />
+                    )}
+                    {activeApp === 'settings.integrations' && (
+                        <IntegrationsPage />
                     )}
                 </div>
             </div>

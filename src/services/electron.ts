@@ -44,6 +44,12 @@ type IpcChannels = {
     'request-media-permission': ['microphone' | 'screen', boolean];
     'mac-check-macos-version': [null, { isSupported: boolean }];
     'open-external-url': [{ url: string }, void];
+    // Gmail
+    'gmail-set-oauth-client': [{ clientId: string; clientSecret: string }, void];
+    'gmail-get-status': [null, { configured: boolean; authenticated: boolean }];
+    'gmail-login': [null, { success: boolean }];
+    'gmail-logout': [null, void];
+    'gmail-send': [{ to: string; subject: string; body: string }, { success: boolean }];
     'request-window-visibility': [null, { visible: boolean }];
     'restart-window': [null, void];
 }

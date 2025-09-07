@@ -55,6 +55,31 @@ export const IpcMainEventSchema = {
 };
 
 export const ipcMainHandlerEventsSchema = {
+    'open-external-url' : {
+        payload: z.object({ url: z.string().url() }),
+        response: z.void(),
+    },
+    // Gmail integration
+    'gmail-set-oauth-client' : {
+        payload: z.object({ clientId: z.string(), clientSecret: z.string() }),
+        response: z.void(),
+    },
+    'gmail-get-status' : {
+        payload: z.null(),
+        response: z.object({ configured: z.boolean(), authenticated: z.boolean() }),
+    },
+    'gmail-login' : {
+        payload: z.null(),
+        response: z.object({ success: z.boolean() }),
+    },
+    'gmail-logout' : {
+        payload: z.null(),
+        response: z.void(),
+    },
+    'gmail-send' : {
+        payload: z.object({ to: z.string(), subject: z.string(), body: z.string() }),
+        response: z.object({ success: z.boolean() }),
+    },
     'request-has-onboarded' : {
         payload: z.null(),
         response: z.object({

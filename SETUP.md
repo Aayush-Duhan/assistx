@@ -4,6 +4,7 @@
 
 1. **Node.js** 16+ installed
 2. **Google AI API Key** from [Google AI Studio](https://makersuite.google.com/app/apikey)
+3. (Optional) For Gmail: Create Google OAuth 2.0 Client (Desktop App)
 
 ## Setup Steps
 
@@ -20,6 +21,22 @@ cp .env.example .env.local
 # Edit .env.local and add your Google AI API key
 GOOGLE_GENERATIVE_AI_API_KEY=your-actual-google-ai-key-here
 ```
+
+### 3. Gmail Integration (User-Provided Credentials)
+
+We do not ship server-side secrets. To enable sending email via Gmail, create your own OAuth credentials:
+
+1. Go to Google Cloud Console → APIs & Services → Credentials.
+2. Create Project if needed. Enable "Gmail API" under Library.
+3. Create Credentials → OAuth client ID → Application type: Desktop app.
+4. Copy the Client ID and Client Secret.
+5. In AssistX → Settings → Integrations → Gmail: paste Client ID/Secret and Save.
+6. Click Login to open the consent screen and authorize.
+
+Notes:
+- Scope requested: `https://www.googleapis.com/auth/gmail.send` (send only).
+- Tokens are stored locally in your user data folder and auto-refreshed.
+- You can Logout anytime to clear tokens.
 
 ### 3. Build and Run
 ```bash
