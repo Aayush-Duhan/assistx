@@ -5,6 +5,24 @@ export interface PredefinedContext {
     context: string;
 }
 
+export interface ContextItem {
+    id: string;
+    title: string;
+    content: string;
+    isPredefined: boolean;
+}
+
+export interface UserDefinedContext {
+    id: string;
+    title: string;
+    content: string;
+}
+
+export interface PredefinedOverride {
+    title?: string;
+    content?: string;
+}
+
 // Predefined user contexts for different roles/domains
 export const PREDEFINED_CONTEXTS: PredefinedContext[] = [
     {
@@ -55,26 +73,41 @@ export const PREDEFINED_CONTEXTS: PredefinedContext[] = [
  */
 export class UserContextStore {
     userContext: string = '';
-    selectedContextType: string = 'custom'; // Default to custom
-    customContext: string = '';
+    selectedContextId: string = 'custom';
+    activeContextId: string = 'custom';
+    userDefinedContexts: UserDefinedContext[] = [];
+    predefinedOverrides: Record<string, PredefinedOverride> = {};
+    favoriteContextIds: string[] = [];
 
     constructor() {
         makeObservable(this, {
             userContext: observable,
-            selectedContextType: observable,
-            customContext: observable,
+            selectedContextId: observable,
+            activeContextId: observable,
+            userDefinedContexts: observable,
+            predefinedOverrides: observable,
+            favoriteContextIds: observable,
             setUserContext: action,
-            setSelectedContextType: action,
-            setCustomContext: action,
+            setSelectedContext: action,
+            setActiveContext: action,
+            updateSelectedContextTitle: action,
+            updateSelectedContextContent: action,
+            addContext: action,
+            deleteSelectedContext: action,
+            resetSelectedPredefined: action,
+            toggleFavorite: action,
+            setFavorite: action,
+            removeFavorite: action,
+            deleteContextById: action,
+            resetPredefinedById: action,
         });
-        
-        // Load from localStorage on initialization
+
         this.loadFromStorage();
-        this.updateUserContext();
+        this.updateUserContextFromActive();
     }
 
     /**
-     * Sets the user context and saves it to localStorage
+     * Sets the raw userContext string (used by AI service)
      */
     setUserContext = (context: string): void => {
         this.userContext = context;
@@ -82,101 +115,293 @@ export class UserContextStore {
     };
 
     /**
-     * Sets the selected context type and updates the user context
+     * Return a merged list of predefined + user-defined contexts
      */
-    setSelectedContextType = (contextType: string): void => {
-        this.selectedContextType = contextType;
-        this.updateUserContext();
-        this.saveToStorage();
-    };
+    getAllContexts(): ContextItem[] {
+        const predefined: ContextItem[] = PREDEFINED_CONTEXTS.map((ctx) => {
+            const override = this.predefinedOverrides[ctx.value] || {};
+            return {
+                id: ctx.value,
+                title: override.title ?? ctx.label,
+                content: override.content ?? ctx.context,
+                isPredefined: true,
+            };
+        });
 
-    /**
-     * Sets the custom context and updates user context if custom is selected
-     */
-    setCustomContext = (context: string): void => {
-        this.customContext = context;
-        if (this.selectedContextType === 'custom') {
-            this.userContext = context;
-        }
-        this.saveToStorage();
-    };
-
-    /**
-     * Updates the user context based on the selected context type
-     */
-    private updateUserContext = (): void => {
-        if (this.selectedContextType === 'custom') {
-            this.userContext = this.customContext;
-        } else {
-            const predefinedContext = PREDEFINED_CONTEXTS.find(
-                ctx => ctx.value === this.selectedContextType
-            );
-            this.userContext = predefinedContext?.context || '';
-        }
-    };
-
-    /**
-     * Gets the current user context
-     */
-    getUserContext(): string {
-        return this.userContext;
-    }
-
-    /**
-     * Gets whether custom context is selected
-     */
-    isCustomContextSelected(): boolean {
-        return this.selectedContextType === 'custom';
-    }
-
-    /**
-     * Gets the available context options for the select dropdown
-     */
-    getContextOptions() {
-        return PREDEFINED_CONTEXTS.map(ctx => ({
-            value: ctx.value,
-            label: ctx.label
+        const userDefined: ContextItem[] = this.userDefinedContexts.map((c) => ({
+            id: c.id,
+            title: c.title,
+            content: c.content,
+            isPredefined: false,
         }));
+
+        return [...predefined, ...userDefined];
     }
 
     /**
-     * Saves the user context to localStorage
+     * Get available contexts as select options
      */
+    getContextOptions(): Array<{ value: string; label: string }> {
+        return this.getAllContexts().map((c) => ({ value: c.id, label: c.title }));
+    }
+
+    /**
+     * Get selected context object
+     */
+    getSelectedContext(): ContextItem | null {
+        return this.getAllContexts().find((c) => c.id === this.selectedContextId) ?? null;
+    }
+
+    /**
+     * Select a context by id
+     */
+    setSelectedContext = (id: string): void => {
+        this.selectedContextId = id;
+        this.saveToStorage();
+    };
+
+    /** Wrapper for backwards compatibility */
+    setSelectedContextType = (contextType: string): void => {
+        this.setSelectedContext(contextType);
+    };
+
+    /** Updates the selected context's title */
+    updateSelectedContextTitle = (title: string): void => {
+        const selected = this.getSelectedContext();
+        if (!selected) return;
+        if (selected.isPredefined) {
+            const prev = this.predefinedOverrides[selected.id] || {};
+            this.predefinedOverrides[selected.id] = { ...prev, title };
+        } else {
+            const index = this.userDefinedContexts.findIndex((c) => c.id === selected.id);
+            if (index >= 0) this.userDefinedContexts[index].title = title;
+        }
+        this.saveToStorage();
+    };
+
+    /** Updates the selected context's content */
+    updateSelectedContextContent = (content: string): void => {
+        const selected = this.getSelectedContext();
+        if (!selected) return;
+        if (selected.isPredefined) {
+            const prev = this.predefinedOverrides[selected.id] || {};
+            this.predefinedOverrides[selected.id] = { ...prev, content };
+        } else {
+            const index = this.userDefinedContexts.findIndex((c) => c.id === selected.id);
+            if (index >= 0) this.userDefinedContexts[index].content = content;
+        }
+        if (selected.id === this.activeContextId) {
+            this.userContext = content;
+        }
+        this.saveToStorage();
+    };
+
+    /** Create a new user-defined context and select it */
+    addContext = (): string => {
+        const id = `user-${Date.now()}`;
+        const title = this.generateUniqueTitle('New Context');
+        const newCtx: UserDefinedContext = { id, title, content: '' };
+        this.userDefinedContexts.push(newCtx);
+        this.selectedContextId = id;
+        this.userContext = '';
+        this.saveToStorage();
+        return id;
+    };
+
+    /** Delete the selected context if it is user-defined */
+    deleteSelectedContext = (): void => {
+        const selected = this.getSelectedContext();
+        if (!selected || selected.isPredefined) return;
+        const index = this.userDefinedContexts.findIndex((c) => c.id === selected.id);
+        if (index >= 0) this.userDefinedContexts.splice(index, 1);
+        this.selectedContextId = 'custom';
+        if (this.activeContextId === selected.id) {
+            this.activeContextId = 'custom';
+            this.updateUserContextFromActive();
+        }
+        // Remove from favorites if present
+        this.favoriteContextIds = this.favoriteContextIds.filter((fid) => fid !== selected.id);
+        this.saveToStorage();
+    };
+
+    /** Delete a context by id if it is user-defined */
+    deleteContextById = (id: string): void => {
+        const ctx = this.getAllContexts().find((c) => c.id === id);
+        if (!ctx || ctx.isPredefined) return;
+        const index = this.userDefinedContexts.findIndex((c) => c.id === id);
+        if (index >= 0) this.userDefinedContexts.splice(index, 1);
+        if (this.selectedContextId === id) {
+            this.selectedContextId = 'custom';
+        }
+        if (this.activeContextId === id) {
+            this.activeContextId = 'custom';
+            this.updateUserContextFromActive();
+        }
+        this.favoriteContextIds = this.favoriteContextIds.filter((fid) => fid !== id);
+        this.saveToStorage();
+    };
+
+    /** Reset overrides for selected predefined context */
+    resetSelectedPredefined = (): void => {
+        const selected = this.getSelectedContext();
+        if (!selected || !selected.isPredefined) return;
+        if (this.predefinedOverrides[selected.id]) {
+            delete this.predefinedOverrides[selected.id];
+            if (this.activeContextId === selected.id) {
+                this.updateUserContextFromActive();
+            }
+            this.saveToStorage();
+        }
+    };
+
+    /** Reset overrides for a predefined context by id */
+    resetPredefinedById = (id: string): void => {
+        const isPredefined = PREDEFINED_CONTEXTS.some((p) => p.value === id);
+        if (!isPredefined) return;
+        if (this.predefinedOverrides[id]) {
+            delete this.predefinedOverrides[id];
+            if (this.activeContextId === id) {
+                this.updateUserContextFromActive();
+            }
+            this.saveToStorage();
+        }
+    };
+
+    /** Quick checks for UI */
+    isSelectedPredefined(): boolean {
+        return PREDEFINED_CONTEXTS.some((p) => p.value === this.selectedContextId);
+    }
+
+    hasOverrideForSelected(): boolean {
+        return !!this.predefinedOverrides[this.selectedContextId];
+    }
+
+    hasOverride(id: string): boolean {
+        return !!this.predefinedOverrides[id];
+    }
+
+    /** Get the displayable user context string for AI */
+    getUserContext(): string {
+        return this.getActiveContext()?.content || '';
+    }
+
+    /**
+     * Generate a unique title by appending an incrementing number
+     */
+    private generateUniqueTitle(base: string): string {
+        let title = base;
+        let n = 1;
+        const titles = new Set(this.getAllContexts().map((c) => c.title.toLowerCase()));
+        while (titles.has(title.toLowerCase())) {
+            title = `${base} ${n++}`;
+        }
+        return title;
+    }
+
+    /**
+     * Update userContext based on selected context
+     */
+    private updateUserContextFromActive(): void {
+        const active = this.getActiveContext();
+        this.userContext = active?.content || '';
+    }
+
+    /** Active context helpers */
+    getActiveContext(): ContextItem | null {
+        return this.getAllContexts().find((c) => c.id === this.activeContextId) ?? null;
+    }
+
+    isContextActive(id: string): boolean {
+        return this.activeContextId === id;
+    }
+
+    setActiveContext = (id: string): void => {
+        this.activeContextId = id;
+        this.updateUserContextFromActive();
+        this.saveToStorage();
+    };
+
+    /** Favorites APIs */
+    isFavorite(id: string): boolean {
+        return this.favoriteContextIds.includes(id);
+    }
+
+    setFavorite = (id: string): void => {
+        if (!this.favoriteContextIds.includes(id)) {
+            this.favoriteContextIds.push(id);
+            this.saveToStorage();
+        }
+    };
+
+    removeFavorite = (id: string): void => {
+        const next = this.favoriteContextIds.filter((fid) => fid !== id);
+        if (next.length !== this.favoriteContextIds.length) {
+            this.favoriteContextIds = next;
+            this.saveToStorage();
+        }
+    };
+
+    toggleFavorite = (id: string): void => {
+        if (this.isFavorite(id)) {
+            this.removeFavorite(id);
+        } else {
+            this.setFavorite(id);
+        }
+    };
+
+    /** Persist to localStorage */
     private saveToStorage(): void {
         try {
             const data = {
-                selectedContextType: this.selectedContextType,
-                customContext: this.customContext,
-                userContext: this.userContext
+                selectedContextId: this.selectedContextId,
+                activeContextId: this.activeContextId,
+                userDefinedContexts: this.userDefinedContexts,
+                predefinedOverrides: this.predefinedOverrides,
+                userContext: this.userContext,
+                favoriteContextIds: this.favoriteContextIds,
             };
-            localStorage.setItem('userContextData', JSON.stringify(data));
+            localStorage.setItem('userContextDataV2', JSON.stringify(data));
         } catch (error) {
             console.warn('Failed to save user context to localStorage:', error);
         }
     }
 
-    /**
-     * Loads the user context from localStorage
-     */
+    /** Load from localStorage with backward compatibility */
     private loadFromStorage(): void {
         try {
-            // Try to load new format first
-            const storedData = localStorage.getItem('userContextData');
-            if (storedData) {
-                const data = JSON.parse(storedData);
-                this.selectedContextType = data.selectedContextType || 'custom';
-                this.customContext = data.customContext || '';
+            const storedV2 = localStorage.getItem('userContextDataV2');
+            if (storedV2) {
+                const data = JSON.parse(storedV2);
+                this.selectedContextId = data.selectedContextId || 'custom';
+                this.activeContextId = data.activeContextId || this.selectedContextId || 'custom';
+                this.userDefinedContexts = Array.isArray(data.userDefinedContexts) ? data.userDefinedContexts : [];
+                this.predefinedOverrides = data.predefinedOverrides || {};
                 this.userContext = data.userContext || '';
+                this.favoriteContextIds = Array.isArray(data.favoriteContextIds) ? data.favoriteContextIds : [];
                 return;
             }
 
-            // Fallback to old format for backward compatibility
+            // Legacy v1 load and migrate
+            const storedV1 = localStorage.getItem('userContextData');
+            if (storedV1) {
+                const data = JSON.parse(storedV1);
+                this.selectedContextId = data.selectedContextType || 'custom';
+                this.activeContextId = this.selectedContextId;
+                if (typeof data.customContext === 'string') {
+                    this.predefinedOverrides['custom'] = { content: data.customContext };
+                }
+                this.updateUserContextFromActive();
+                this.saveToStorage();
+                return;
+            }
+
+            // Very old key
             const oldContext = localStorage.getItem('userContext');
             if (oldContext !== null) {
-                this.customContext = oldContext;
-                this.selectedContextType = 'custom';
+                this.predefinedOverrides['custom'] = { content: oldContext };
+                this.selectedContextId = 'custom';
+                this.activeContextId = 'custom';
                 this.userContext = oldContext;
-                // Migrate to new format
                 this.saveToStorage();
                 localStorage.removeItem('userContext');
             }

@@ -5,6 +5,7 @@ import { SettingSideBar } from './SettingSideBar';
 import { useAtom } from 'jotai';
 import { activeAppAtom, settingsWindowVisibleAtom } from '@/state/atoms';
 import { SettingPage } from './SettingPage';
+import { PersonalizePage } from './PersonalizePage';
 import { observer } from 'mobx-react-lite';
  
 
@@ -33,6 +34,9 @@ export const Settings = observer(() => {
                 <div key={pageKey} className={cn('relative h-full overflow-hidden bg-black')}>                    
                     {activeApp === 'app' && (
                         <SettingPage />
+                    )}
+                    {activeApp === 'personalize' && (
+                        <PersonalizePage />
                     )}
                 </div>
             </div>

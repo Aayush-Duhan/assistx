@@ -191,7 +191,7 @@ export const ConversationView = observer(({ setBounceDirection, currentConversat
     );
 });
 
-function AiResponseMessage({ response }: { response: AiResponse }) {
+const AiResponseMessage = observer(({ response }: { response: AiResponse }) => {
     const { state } = response;
 
     // Handle error state with different messages based on error type
@@ -233,7 +233,7 @@ function AiResponseMessage({ response }: { response: AiResponse }) {
             </div>
         </>
     );
-}
+});
 
 function useConversationTitle(
     conversation: AiConversation | null
