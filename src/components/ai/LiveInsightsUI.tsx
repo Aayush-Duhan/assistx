@@ -5,9 +5,6 @@ import { WindowMessage } from "../ui/WindowMessage";
 import { HeadlessButton } from "../ui/HeadlessButton";
 import { cn } from "@/lib/utils";
 import { Markdown } from "./Markdown";
-import { useState } from 'react';
-import { DraftEmailModal } from './DraftEmailModal';
-import { gmailService } from '@/services/GmailService';
 
 const ACTION_ITEM_LIMIT = 4;
 
@@ -168,15 +165,17 @@ const ActionsSection = observer(() => {
 })
 
 const FollowUpsSection = observer(() => {
-    const { aiResponsesService, contextService } = useGlobalServices();
-    const [showDraft, setShowDraft] = useState(false);
-    const meetingSummary = contextService.liveInsights.summary.lines.map((l: any) => l.text).join('\n');
+    const { aiResponsesService } = useGlobalServices();
     return (
       <div>
         <SectionTitle>Follow-Ups</SectionTitle>
         <ActionItem
           onClick={() => {
-            setShowDraft(true);
+            aiResponsesService.triggerAi({
+              shouldCaptureScreenshot: true,
+              manualInput: followUpActions.draftFollowUpEmail.input,
+              displayInput: followUpActions.draftFollowUpEmail.display,
+            });
           }}
         >
           {followUpActions.draftFollowUpEmail.display}
@@ -203,12 +202,6 @@ const FollowUpsSection = observer(() => {
         >
           {followUpActions.generateExecutiveSummary.display}
         </ActionItem>
-        <DraftEmailModal
-          show={showDraft}
-          onClose={() => setShowDraft(false)}
-          meetingSummary={meetingSummary}
-          userRequest={'Send a follow-up email'}
-        />
       </div>
     );
   });

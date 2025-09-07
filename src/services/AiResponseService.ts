@@ -41,6 +41,12 @@ export class AiResponsesService {
         });
     }
 
+    private draftEmailHandler: ((draft?: { to: string; subject: string; body: string }) => void) | null = null;
+
+    public registerDraftEmailHandler(handler: (draft?: { to: string; subject: string; body: string }) => void) {
+        this.draftEmailHandler = handler;
+    }
+
     dispose(): void {
         this.triggerAiState?.abortController.abort();
         this.currentConversation?.dispose();
@@ -106,13 +112,21 @@ export class AiResponsesService {
 
             if (abortController.signal.aborted) return;
 
+            const requestedEmailDraft = !!(manualInput && /\b(email|mail)\b/i.test(manualInput) && /\b(send|draft)\b/i.test(manualInput));
+
             this.createNewResponse({
                 fullContext: this.contextService.fullContext,
                 screenshot,
                 manualInput: manualInput ?? null,
                 displayInput: displayInput ?? null,
                 useWebSearch,
-                metadata,
+                metadata: {
+                    ...metadata,
+                    openDraftEmail: (draft: { to: string; subject: string; body: string }) => {
+                        this.draftEmailHandler?.(draft);
+                    },
+                    requestedEmailDraft,
+                },
             });
 
         } catch (error) {

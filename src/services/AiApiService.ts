@@ -1,5 +1,6 @@
 import { google } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { streamText, tool } from 'ai';
+import { z } from 'zod';
 import { AI_SCREENSHOT_SYSTEM_PROMPT, replaceContextPlaceholder } from '../utils/prompts';
 import { userContextStore } from '../stores/userContextStore';
 import { settingsStore, AIProviderKey } from '../stores/settingsStore';
@@ -9,6 +10,9 @@ export interface AiStreamOptions {
     messages: any[];
     abortSignal?: AbortSignal;
     useSearchGrounding?: boolean;
+    toolCallbacks?: {
+        openDraftEmail?: (draft: { to: string; subject: string; body: string }) => Promise<void> | void;
+    };
 }
 
 export interface AiStreamOptionsLegacy {
@@ -62,7 +66,7 @@ export class AiApiService {
     }
 
     async streamResponse(options: AiStreamOptions): Promise<AiStreamResult> {
-        const { messages, abortSignal, useSearchGrounding = false } = options;
+        const { messages, abortSignal, useSearchGrounding = false, toolCallbacks } = options;
 
         try {
             const modelInstance = this.getProviderInstance(
@@ -71,12 +75,32 @@ export class AiApiService {
                 useSearchGrounding
             );
 
+            const tools = toolCallbacks?.openDraftEmail ? {
+                gmail_draft: tool({
+                    description: 'Draft an email to be sent with Gmail. Always include to, subject, and body. Use when the user asks to email someone.',
+                    parameters: z.object({
+                        to: z.string().describe('Recipient email address'),
+                        subject: z.string().describe('Email subject'),
+                        body: z.string().describe('Email body in plain text'),
+                    }),
+                    execute: async ({ to, subject, body }) => {
+                        try {
+                            await toolCallbacks.openDraftEmail?.({ to, subject, body });
+                            return 'Opened a draft email for user review.';
+                        } catch (e: any) {
+                            return `Failed to open draft: ${e?.message || 'unknown error'}`;
+                        }
+                    },
+                })
+            } : undefined;
+
             const result = streamText({
                 model: modelInstance,
                 messages,
                 maxTokens: 4000,
                 temperature: 0.1,
                 abortSignal,
+                ...(tools ? { tools } : {}),
             });
 
             return {

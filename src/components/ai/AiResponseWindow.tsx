@@ -11,6 +11,8 @@ import { WindowTitle } from '../ui/WindowTitle';
 import { ConversationView } from './ConversationView';
 import { ManualInputView } from './ManualInputView';
 import { ResizableContainer } from '../windows/ResizableWindow';
+import { useEffect } from 'react';
+import { DraftEmailModal } from './DraftEmailModal';
 
 interface LoadingStateProps {
     title: string;
@@ -66,8 +68,17 @@ export const AiResponseWindow = observer((): React.ReactElement => {
     const { aiResponsesService } = useGlobalServices();
     const { currentConversation } = aiResponsesService;
     const [bounceDirection, setBounceDirection] = useState<'up' | 'down' | undefined>(undefined);
+    const [draft, setDraft] = useState<{ to: string; subject: string; body: string } | null>(null);
+    const [showDraft, setShowDraft] = useState(false);
 
-    const isManualInputOnly = aiResponsesService.isManualInputActive && !currentConversation;
+    useEffect(() => {
+        aiResponsesService.registerDraftEmailHandler((d) => {
+            if (d) setDraft(d);
+            setShowDraft(true);
+        });
+    }, [aiResponsesService]);
+
+    // const isManualInputOnly = aiResponsesService.isManualInputActive && !currentConversation;
 
     // Create a wrapper function to match the expected type for ConversationView
     const handleSetBounceDirection = (direction: 'up' | 'down' | null) => {
@@ -99,6 +110,13 @@ export const AiResponseWindow = observer((): React.ReactElement => {
             ) : aiResponsesService.isManualInputActive ? (
                 <ManualInputView />
             ) : null}
+            <DraftEmailModal
+                show={showDraft}
+                onClose={() => setShowDraft(false)}
+                meetingSummary={''}
+                userRequest={'Draft email'}
+                initialDraft={draft || undefined}
+            />
         </ResizableContainer>
     );
 }); 

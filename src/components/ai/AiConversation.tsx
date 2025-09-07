@@ -121,7 +121,7 @@ export class AiConversation {
         }
         if (options.manualInput) {
             contentParts.push(
-                `User's message (you should **always** respond to this message (since there is a user message, you MUST NEVER say you're not sure what to do / you MUST NEVER enter passive mode); **only** if applicable, use the image/transcript/other context provided to help, if technical respond with technical depth (/math if mathematically deep), if not then deliver simple / brief answer):\\n\\n${options.manualInput}`
+                `User's message (always respond; if asked to send or draft an email, use the gmail_draft tool to create a draft for user approval. Otherwise answer normally. Do not send emails without an explicit tool call.):\\n\\n${options.manualInput}`
             );
         }
 

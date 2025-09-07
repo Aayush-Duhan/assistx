@@ -1,6 +1,7 @@
 import { makeObservable, observable, action } from 'mobx';
 import { FullContext } from '../../services/ContextService';
 import { aiApiService, AiStreamResult } from '../../services/AiApiService';
+import { gmailService } from '../../services/GmailService';
 
 export type AIResponseState = { state: "streaming"; text: string; abortController: AbortController }
     | { state: "finished"; text: string; timeToFirstTokenMs: number; timeToFinishMs: number }
@@ -74,6 +75,7 @@ export class AiResponse {
     async streamResponse() {
         if (this.state.state !== 'streaming') return;
         const { abortController } = this.state;
+        let openedDraft = false;
 
         try {
             if (this.session.state.state === 'creating') {
@@ -91,6 +93,30 @@ export class AiResponse {
                 messages: this.input.messages,
                 abortSignal: abortController?.signal,
                 useSearchGrounding: this.input.useWebSearch,
+                toolCallbacks: {
+                    openDraftEmail: async ({ to, subject, body }) => {
+                        // Open draft modal via metadata handler if provided
+                        const handler = (this.input.metadata && this.input.metadata.openDraftEmail) as undefined | ((d: { to: string; subject: string; body: string }) => void);
+                        if (handler) {
+                            openedDraft = true;
+                            handler({ to, subject, body });
+                            return;
+                        }
+                        // Fallback: if Gmail is ready, send directly only if user explicitly asked to send without review
+                        const userText = (this.input.manualInput || '').toLowerCase();
+                        const shouldSendDirect = userText.includes('send email') && userText.includes('without review');
+                        if (shouldSendDirect && gmailService.isReady) {
+                            openedDraft = true;
+                            await gmailService.sendEmail({ to, subject, body });
+                            return;
+                        }
+                        // If nothing else, still surface a draft modal request with empty values
+                        const fallback = (this.input.metadata && this.input.metadata.openDraftEmail) as undefined | ((d: { to: string; subject: string; body: string }) => void);
+                        openedDraft = true;
+                        fallback?.({ to, subject, body });
+                        return;
+                    }
+                }
             });
 
             if (abortController.signal.aborted) return;
@@ -118,6 +144,14 @@ export class AiResponse {
                 timeToFirstTokenMs: timeToFirstTokenMs ?? timeToFinishMs,
                 timeToFinishMs,
             });
+
+            // Fallback: if user asked for email draft but the model didn't call the tool, open an empty draft modal
+            try {
+                if (!openedDraft && this.input?.metadata?.requestedEmailDraft) {
+                    const handler = (this.input.metadata && this.input.metadata.openDraftEmail) as undefined | ((d?: { to: string; subject: string; body: string }) => void);
+                    handler?.();
+                }
+            } catch {}
 
         } catch (error) {
             if (abortController.signal.aborted) return;
