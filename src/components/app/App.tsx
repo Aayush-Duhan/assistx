@@ -84,7 +84,7 @@ export const App: FC = observer(() => {
                                                         <Shortcut
                                                             fullBorderRadius
                                                             label={<House size={16} className="text-white/90" />}
-                                                            onTrigger={() => setSettingsWindowVisible(prev => !prev)}
+                                                            onTrigger={() => setSettingsWindowVisible((prev: boolean) => !prev)}
                                                             showAccelerator={false}
                                                         />
                                                     </MovableTooltip>

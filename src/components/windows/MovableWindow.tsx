@@ -25,9 +25,9 @@ const MovableWindow = ({
   
     useEffect(() => {
       if (show) {
-        setMovableWindowCount((count) => count + 1);
+        setMovableWindowCount((count: number) => count + 1);
         return () => {
-          setMovableWindowCount((count) => count - 1);
+          setMovableWindowCount((count: number) => count - 1);
         };
       }
     }, [show, setMovableWindowCount]);

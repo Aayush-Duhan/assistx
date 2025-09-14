@@ -7,7 +7,7 @@ import { Logo } from "../app/Logo";
 import { useAtom, useSetAtom } from "jotai";
 import { activeAppAtom, settingsWindowVisibleAtom } from "@/state/atoms";
 import { Tooltip } from "../ui/Tooltip";
-import { Activity, BookOpen, ChevronRight, CircleUser, Eye, EyeOff, LaptopMinimal, Settings, Waypoints } from "lucide-react";
+import { Activity, BookOpen, ChevronRight, Eye, EyeOff, LaptopMinimal, Settings, Waypoints, Wrench } from "lucide-react";
 import { useInvisibility } from "@/hooks/useInvisibility";
 
 interface SidebarItemProps {
@@ -61,7 +61,7 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
     const setWindowVisible = useSetAtom(settingsWindowVisibleAtom);
     const { isInvisible } = useInvisibility();
 
-    const handleNav = (app: 'app' | 'activity' | 'personalize' | 'settings.profile' | 'settings.security' | 'settings.integrations') => {
+    const handleNav = (app: 'app' | 'activity' | 'personalize' | 'settings.tools' | 'settings.security' | 'settings.integrations') => {
         if (activeApp === app) {
             onNavToSamePage();
         } else {
@@ -69,7 +69,7 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
         }
     };
 
-    const isSettingsActive = ['app', 'settings.profile', 'settings.security', 'settings.integrations'].includes(activeApp);
+    const isSettingsActive = ['app', 'settings.tools', 'settings.security', 'settings.integrations'].includes(activeApp);
     const [isSettingsExpanded, setIsSettingsExpanded] = useState<boolean>(isSettingsActive);
     useEffect(() => {
         setIsSettingsExpanded(isSettingsActive);
@@ -135,9 +135,9 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
                                     <LaptopMinimal size={14} />
                                     App
                                 </SidebarItem>
-                                <SidebarItem isNested isActive={activeApp === 'settings.profile'} onClick={() => handleNav('settings.profile')}>
-                                    <CircleUser size={14} />
-                                    Profile
+                                <SidebarItem isNested isActive={activeApp === 'settings.tools'} onClick={() => handleNav('settings.tools')}>
+                                    <Wrench size={14} />
+                                    Tools
                                 </SidebarItem>
                                 <SidebarItem isNested isActive={activeApp === 'settings.integrations'} onClick={() => handleNav('settings.integrations')}>
                                     <Waypoints size={14} />

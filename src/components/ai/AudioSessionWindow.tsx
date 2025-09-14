@@ -42,7 +42,7 @@ export const AudioSessionWindow = observer(() => {
               captureMouseEvents
             >
               {mode === 'live-insights' ? (
-                <LiveInsightsView mode={mode} setMode={setMode} />
+                <LiveInsightsView setMode={setMode} />
               ) : (
                 <TranscriptionView setMode={setMode} />
               )}

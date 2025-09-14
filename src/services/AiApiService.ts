@@ -54,12 +54,10 @@ export class AiApiService {
         };
     }
 
-    private getProviderInstance(provider: AIProviderKey, model: string, useSearchGrounding: boolean = false) {
+    private getProviderInstance(provider: AIProviderKey, model: string) {
         switch (provider) {
             case 'google':
-                return google(model, {
-                    useSearchGrounding,
-                });
+                return google(model);
             default:
                 throw new Error(`Unsupported provider: ${provider}`);
         }
@@ -71,8 +69,7 @@ export class AiApiService {
         try {
             const modelInstance = this.getProviderInstance(
                 settingsStore.selectedProvider,
-                settingsStore.selectedModel,
-                useSearchGrounding
+                settingsStore.selectedModel
             );
 
             const tools = toolCallbacks?.openDraftEmail ? {
@@ -83,7 +80,7 @@ export class AiApiService {
                         subject: z.string().describe('Email subject'),
                         body: z.string().describe('Email body in plain text'),
                     }),
-                    execute: async ({ to, subject, body }) => {
+                    execute: async ({ to, subject, body }: { to: string; subject: string; body: string }) => {
                         try {
                             await toolCallbacks.openDraftEmail?.({ to, subject, body });
                             return 'Opened a draft email for user review.';
@@ -97,7 +94,7 @@ export class AiApiService {
             const result = streamText({
                 model: modelInstance,
                 messages,
-                maxTokens: 4000,
+                maxOutputTokens: 4000,
                 temperature: 0.1,
                 abortSignal,
                 ...(tools ? { tools } : {}),

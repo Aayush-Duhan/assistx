@@ -29,7 +29,7 @@ export const movableWindowCountAtom = atom(0);
 /**
  * A derived Jotai atom that is true if there are any active movable windows.
  */
-export const hasMovableWindowsAtom = atom((get) => get(movableWindowCountAtom) > 0);
+export const hasMovableWindowsAtom = atom((get: any) => get(movableWindowCountAtom) > 0);
 
 /**
  * Jotai atom to manage whether the main app window should auto-focus.
@@ -43,7 +43,7 @@ export const windowsAutoFocusAtom = atomWithStorage('windowsAutoFocusWindow', tr
  */
 export const isClearingAtom = atom(false);
 
-export const activeAppAtom = atom<'app' | 'login' | 'activity' | 'personalize' | 'settings.profile' | 'settings.security' | 'settings.integrations'>('app');
+export const activeAppAtom = atom('app' as 'app' | 'login' | 'activity' | 'personalize' | 'settings.tools' | 'settings.security' | 'settings.integrations');
 
 export const settingsWindowVisibleAtom = atom(false);
 

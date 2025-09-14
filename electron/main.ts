@@ -1,16 +1,17 @@
-import { app, desktopCapturer, Menu, MenuItemConstructorOptions, screen, session } from 'electron';
+import { app, desktopCapturer, Menu, MenuItemConstructorOptions, protocol, screen, session } from 'electron';
 import { electronApp } from '@electron-toolkit/utils';
 import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
-import { isMac, isWindows } from './utils/platform';
+import { isDev, isMac, isWindows } from './utils/platform';
 import { windowManager } from './windows/WindowManager';
 import { initializeIpcHandlers } from './ipc/ipcHandlers';
 import { applyGlobalShortcuts } from './features/shortcuts';
 import { initializeUpdater } from './features/autoUpdater';
 import { getAvailableDisplays } from './windows/OverlayManager';
+import { setupMainProtocolHandlers } from './protocol-handler';
 
-const APP_ID = 'AssistX';
+const APP_ID = 'assistx';
 
 if (isMac) {
   app.dock.hide();
@@ -21,11 +22,19 @@ if (isWindows) {
     app.quit();
     process.exit(0);
   }
+}
 
-  app.on('second-instance', () => {
-    const currentWindow = windowManager.getCurrentWindow();
-    currentWindow.sendToWebContents("unhide-window", null);
-  });
+if (!isDev) {
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: 'app',
+      privileges: {
+        standard: true,
+        secure: true,
+        supportFetchAPI: true,
+      },
+    },
+  ]);
 }
 
 app.on('activate', () => {
@@ -58,7 +67,22 @@ function setupDisplayMediaHandler(): void {
       desktopCapturer
         .getSources({ types: ['screen'] })
         .then((sources) => {
-          // TODO: This currently just picks the first screen. It should be smarter.
+          const displays = screen.getAllDisplays();
+          for (const display of displays) {
+            if (display.internal) {
+              const source = sources.find((s) => s.display_id === String(display.id));
+              if (source) {
+                callback({ video: source, audio: 'loopback' });
+                return;
+              }
+            }
+          }
+          const i = screen.getPrimaryDisplay();
+          const source = sources.find((s) => s.display_id === String(i.id));
+          if (source) {
+            callback({ video: source, audio: 'loopback' });
+            return;
+          }
           callback({ video: sources[0], audio: 'loopback' });
         })
         .catch(() => {
@@ -69,8 +93,10 @@ function setupDisplayMediaHandler(): void {
 }
 
 async function main(): Promise<void> {
+  if (isWindows) {
+    app.disableHardwareAcceleration();
+  }
   await app.whenReady();
-
   electronApp.setAppUserModelId(`com.${APP_ID}`);
 
   setupAppMenu();
@@ -82,6 +108,7 @@ async function main(): Promise<void> {
   initializeIpcHandlers();
   initializeDisplayListeners();
   applyGlobalShortcuts();
+  setupMainProtocolHandlers();
 }
 
 main();

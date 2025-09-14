@@ -46,6 +46,14 @@ export default defineConfig({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
+        vite: {
+          build: {
+            rollupOptions: {
+              // Externalize native module so Rollup doesn't try to bundle/parse .node binaries
+              external: ['electron-app-universal-protocol-client'],
+            },
+          },
+        },
       },
       preload: {
         // Shortcut of `build.rollupOptions.input`.

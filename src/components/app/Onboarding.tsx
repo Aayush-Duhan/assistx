@@ -17,7 +17,7 @@ const PERMISSION_CHECK_INTERVAL = 5000; // 5 seconds
 
 
 // --- Hooks ---
-import { invoke } from '@/services/electron';
+import { invoke, send } from '@/services/electron';
 
 /**
  * Custom hook to manage and check for microphone and screen recording permissions.
@@ -64,7 +64,7 @@ export const Onboarding = observer(() => {
     useEffect(() => {
         const hideIntroTimer = setTimeout(() => {
             setShowIntro(false);
-            invoke('resize-window', { width: 640, height: 600, duration: 1000 });
+            send('resize-window', { width: 640, height: 600, duration: 1000 });
         }, 1500);
 
         const showContentTimer = setTimeout(() => {
@@ -84,9 +84,9 @@ export const Onboarding = observer(() => {
 
     // Resize window based on the current page
     useEffect(() => {
-        if (page === 1) invoke('resize-window', { width: 640, height: 600, duration: 800 });
-        if (page === 2) invoke('resize-window', { width: 720, height: 550, duration: 450 });
-        if (page === 3) invoke('resize-window', { width: 700, height: 500, duration: 450 });
+        if (page === 1) send('resize-window', { width: 640, height: 600, duration: 800 });
+        if (page === 2) send('resize-window', { width: 720, height: 550, duration: 450 });
+        if (page === 3) send('resize-window', { width: 700, height: 500, duration: 450 });
     }, [page]);
 
     // --- Content for each page ---
@@ -215,7 +215,7 @@ function OnboardingLayout({ data, children }: {
         } else {
             try {
                 // Main process will handle setting onboarded to true and relaunching the app
-                invoke('finish-onboarding', null);
+                send('finish-onboarding', null);
             } catch (error) {
                 console.error('Failed to complete onboarding:', error);
             }
@@ -257,7 +257,7 @@ function OnboardingLayout({ data, children }: {
                             <HeadlessButton
                                 style={{ appRegion: 'no-drag' } as any}
                                 className="p-2 relative z-[500] rounded-xl hover:bg-white/8 transition hover:text-red-400"
-                                onClick={() => invoke('quit-app', null)}
+                                onClick={() => send('quit-app', null)}
                             >
                                 <X size={20} />
                             </HeadlessButton>
@@ -343,7 +343,7 @@ function PermissionRequest({ providerList, icon: Icon, title, children }: {
                 <CircleCheck size={30} className="stroke-sky-500" />
             ) : (
                 <Button level="standard" style={{ appRegion: 'no-drag' } as any} onClick={() => {
-                    invoke('mac-open-system-settings', { section: "privacy > microphone" });
+                    send('mac-open-system-settings', { section: "privacy > microphone" });
                     checkPermissions();
                 }}>
                     Request...
@@ -355,7 +355,7 @@ function PermissionRequest({ providerList, icon: Icon, title, children }: {
                 <CircleCheck size={30} className="stroke-sky-500" />
             ) : (
                 <Button level="standard" style={{ appRegion: 'no-drag' } as any} onClick={() => {
-                    invoke('mac-open-system-settings', { section: "privacy > screen-recording" });
+                    send('mac-open-system-settings', { section: "privacy > screen-recording" });
                     checkPermissions();
                 }}>
                     Request...

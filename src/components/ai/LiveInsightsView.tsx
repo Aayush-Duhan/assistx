@@ -11,12 +11,12 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { isCopyingAtom } from '@/state/atoms';
 import { APP_NAME } from '@/lib/constants';
 
-interface LiveInsightsViewProps {
-  mode: 'live-insights' | 'transcription';
-  setMode: (mode: 'live-insights' | 'transcription') => void;
-}
+// interface LiveInsightsViewProps {
+//   mode: 'live-insights' | 'transcription';
+//   setMode: (mode: 'live-insights' | 'transcription') => void;
+// }
 
-export const LiveInsightsView = observer(({ mode, setMode }: LiveInsightsViewProps) => {
+export const LiveInsightsView = observer(({ setMode }: { setMode: (mode: 'live-insights' | 'transcription') => void }) => {
   const { contextService } = useGlobalServices();
   const { audioSession, isInAudioSessionAndAudioIsPaused } = contextService;
   const setIsCopying = useSetAtom(isCopyingAtom);
