@@ -10,12 +10,17 @@ import { Shortcut } from '../ui/Shortcut';
 import { IS_WINDOWS } from '@/lib/constants';
 import { useGlobalShortcut } from '@/hooks/useGlobalShortcut';
 
+import { SelectModel } from '../ui/select-model';
+import { useAtomValue } from 'jotai';
+import { chatModelAtom } from '@/stores/modelStore';
+
 const SUBMIT_SHORTCUT = 'CommandOrControl+Enter';
 const CANCEL_SHORTCUT = 'Escape';
 
 export const ManualInputView = observer(({ className }: { className?: string }) => {
   const { aiResponsesService } = useGlobalServices();
   const [manualInput, setManualInput] = useAtom(manualInputAtom);
+  const selectedModel = useAtomValue(chatModelAtom);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { isWaitingForTab, windowsAutoFocusWindow, setWindowsAutoFocusWindow, handleClick } = useWindowFocus(inputRef);
   const isWindows = IS_WINDOWS;
@@ -52,7 +57,7 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
       <div className="relative">
         <Input
           ref={inputRef}
-          className={`pr-44 ${className}`}
+          className={`pr-64 ${className}`}
           placeholder={placeholder}
           multiLine
           value={manualInput}
@@ -66,7 +71,12 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
             }
           }}
         />
-        <div className="absolute right-3.5 bottom-2.5 flex items-center gap-4 pointer-events-none">
+        <div className="absolute right-3.5 top-1/2 transform -translate-y-1/2 flex items-center gap-4">
+          <div className="pointer-events-auto">
+            <SelectModel 
+              onSelect={() => {}} // We're using the global state, so no need for a specific onSelect handler
+            />
+          </div>
           {isWindows && <AutoFocusToggle show={!manualInput} checked={windowsAutoFocusWindow} onChange={setWindowsAutoFocusWindow} />}
           <div className="pointer-events-auto">
             <Shortcut accelerator="Enter" label="Submit" onTrigger={handleSubmit} />

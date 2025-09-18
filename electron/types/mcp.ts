@@ -6,7 +6,7 @@ import {
 } from "@modelcontextprotocol/sdk/shared/auth.js";
 import { Tool } from "ai";
 import { tag } from "../lib/tag";
-import { z } from "zod";
+import { z } from 'zod/v3';
 
 export const MCPRemoteConfigZodSchema = z.object({
   url: z.string().url().describe("The URL of the SSE endpoint"),

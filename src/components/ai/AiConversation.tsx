@@ -50,7 +50,7 @@ export class AiConversation {
             createNewResponse: true,
             state: true,
             responses: true,
-          });
+        });
     }
 
     public dispose(): void {
@@ -97,7 +97,7 @@ export class AiConversation {
         return [...this.prevResponses, this.latestResponse];
     }
 
-    private  createResponseFromContext(options: {
+    private createResponseFromContext(options: {
         fullContext: FullContext;
         newContext: FullContext;
         screenshot: any | null;
@@ -125,11 +125,17 @@ export class AiConversation {
             );
         }
 
-        const attachments = options.screenshot ? [options.screenshot] : [];
+        const content = [
+            { type: 'text', text: contentParts.join('\\n\\n') },
+            ...(options.screenshot ? [{
+                type: 'image',
+                image: options.screenshot.url
+            }] : [])
+        ];
+
         messages.push({
             role: 'user',
-            content: contentParts.join('\n\n'),
-            experimental_attachments: attachments,
+            content,
         });
 
         messages = this.pruneMessages(messages, hasAudioContext);
@@ -160,11 +166,18 @@ export class AiConversation {
         }
 
         let attachmentCount = 0;
-        
+
         for (const msg of [...newMessages].reverse()) {
-            attachmentCount += msg.experimental_attachments?.length ?? 0;
+            // Count image attachments in the parts array
+            const imageParts = Array.isArray(msg.content)
+                ? msg.content.filter((part: any) => part.type === 'image').length
+                : 0;
+            attachmentCount += imageParts;
             if (attachmentCount > maxAttachments) {
-                msg.experimental_attachments = undefined;
+                // Remove image attachments from the parts array
+                if (Array.isArray(msg.content)) {
+                    msg.content = msg.content.filter((part: any) => part.type !== 'image');
+                }
             }
         }
 

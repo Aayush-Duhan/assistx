@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod/v3';
 import { mcpClientsManager } from "./mcp-manager";
 import { jsonMcpOAuthRepository as mcpOAuthRepository } from "../../db/json/mcp-oauth-repository.json";
 import type { McpServerInsert } from "../../../types/mcp";

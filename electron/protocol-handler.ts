@@ -70,7 +70,6 @@ export function setupMainProtocolHandlers(): void {
 	});
 
 	electronAppUniversalProtocolClient.on('request', (url) => {
-		console.log(`Received protocol request: ${url}`);
 		windowManager.handleDockIcon();
 		const currentWindow = windowManager.getCurrentWindow();
 		if (currentWindow?.show) currentWindow.show();

@@ -1,8 +1,6 @@
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { useMovableWindowApi } from '@/hooks/useMovableWindow';
-import { useHover } from '@react-aria/interactions';
 
 interface TooltipProps {
   tooltipContent?: ReactNode;
@@ -12,13 +10,6 @@ interface TooltipProps {
   gap?: number;
   tooltipClassName?: string;
 }
-
-const animationVariants = {
-  top: { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: 4 } },
-  bottom: { initial: { opacity: 0, y: -4 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -4 } },
-  left: { initial: { opacity: 0, x: 4 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 4 } },
-  right: { initial: { opacity: 0, x: -4 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -4 } },
-};
 
 const positionClasses = {
   top: 'bottom-full left-1/2 -translate-x-1/2',
@@ -35,42 +26,35 @@ export const Tooltip = ({
   gap = 8,
   tooltipClassName,
 }: TooltipProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const { hoverProps } = useHover({
-    onHoverStart: () => setIsHovered(true),
-    onHoverEnd: () => setIsHovered(false),
-  });
-  const shouldShow = show === 'always' || (show === 'hover' && isHovered);
+  if (!tooltipContent) {
+    return <>{children}</>;
+  }
+  const isVertical = position === 'top' || position === 'bottom';
   return (
-    <div className="relative inline-flex" {...hoverProps}>
-      {children}
-      <AnimatePresence>
-        {shouldShow && (
-          <motion.div
-            {...animationVariants[position]}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className={cn(
-              "absolute z-50 pointer-events-none",
-              positionClasses[position]
-            )}
-            style={{
-              ...(position === 'top' && { marginBottom: `${gap}px`}),
-              ...(position === 'bottom' && { marginTop: `${gap}px`}),
-              ...(position === 'left' && { marginRight: `${gap}px`}),
-              ...(position === 'right' && { marginLeft: `${gap}px`}),
-            }}
-          >
-            <div
-              className={cn(
-                "px-2 py-2 bg-black text-white text-xs font-medium rounded-md shadow-lg whitespace-nowrap",
-                tooltipClassName
-              )}
-            >
-              {tooltipContent}
-            </div>
-          </motion.div>
+    <div className="relative">
+      <div className="peer inline-block">
+        {children}
+      </div>
+      <div
+        className={cn(
+          'absolute z-50 px-3 py-2 shadow-lg bg-zinc-950/95 rounded-lg whitespace-nowrap pointer-events-none opacity-0 transition-opacity text-[11px] text-white/90',
+          positionClasses[position],
+          {
+            'peer-hover:opacity-100': show === 'hover',
+            'opacity-100': show === 'always',
+            'opacity-0': show === 'never',
+          },
+          tooltipClassName,
         )}
-      </AnimatePresence>
+        style={{
+          marginTop: isVertical ? gap : undefined,
+          marginBottom: isVertical ? gap : undefined,
+          marginLeft: !isVertical ? gap : undefined,
+          marginRight: !isVertical ? gap : undefined,
+        }}
+      >
+        {tooltipContent}
+      </div>
     </div>
   );
 };

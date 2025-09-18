@@ -93,9 +93,6 @@ function setupDisplayMediaHandler(): void {
 }
 
 async function main(): Promise<void> {
-  if (isWindows) {
-    app.disableHardwareAcceleration();
-  }
   await app.whenReady();
   electronApp.setAppUserModelId(`com.${APP_ID}`);
 

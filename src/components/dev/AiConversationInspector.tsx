@@ -6,8 +6,7 @@ import { ScrollableContent } from '../ui/ScrollableContent';
 // Type definitions
 interface Message {
     role: 'system' | 'user' | 'assistant';
-    content: string;
-    experimental_attachments?: any[];
+    content: string | Array<{type: string; text?: string; image?: string;}>;
 }
 
 interface AiResponse {
@@ -49,7 +48,6 @@ export const AiConversationInspector = observer((): React.ReactElement => {
             content: currentConversation.latestResponse.state.text,
         });
     }
-
     return React.createElement(
         ScrollableContent,
         {
@@ -84,14 +82,14 @@ export const AiConversationInspector = observer((): React.ReactElement => {
                             { className: "font-semibold px-0 text-white/90 text-sm" },
                             `Role: ${message.role}`
                         ),
-                        message.experimental_attachments?.length ? React.createElement(
+                        Array.isArray(message.content) && message.content.some((part: any) => part.type === 'image') ? React.createElement(
                             'div',
                             { className: "px-0" },
                             React.createElement(
                                 'pre',
                                 { className: "text-[10px] leading-tight text-wrap text-white/70" },
                                 React.createElement('b', null, 'ATTACHMENTS'),
-                                `: ${message.experimental_attachments.length}`
+                                `: ${message.content.filter((part: any) => part.type === 'image').length}`
                             )
                         ) : null,
                         React.createElement(
@@ -100,7 +98,9 @@ export const AiConversationInspector = observer((): React.ReactElement => {
                             React.createElement(
                                 'pre',
                                 { className: "text-[10px] leading-tight text-wrap text-white/70" },
-                                message.content
+                                Array.isArray(message.content) 
+                                    ? message.content.filter((part: any) => part.type === 'text').map((part: any) => part.text).join('\n')
+                                    : message.content
                             )
                         )
                     )
