@@ -5,6 +5,12 @@ import { xai } from "@ai-sdk/xai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { LanguageModel } from "ai";
 import { ChatModel } from "@/types/chat";
+import { createGroq } from "@ai-sdk/groq";
+
+const groq = createGroq({
+    baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
+    apiKey: process.env.GROQ_API_KEY,
+});
 
 const staticModels: Record<string, Record<string, LanguageModel>> = {
     openai: {
@@ -31,14 +37,16 @@ const staticModels: Record<string, Record<string, LanguageModel>> = {
         "grok-3": xai("grok-3"),
         "grok-3-mini": xai("grok-3-mini"),
     },
+    groq: {
+        "kimi-k2-instruct": groq("moonshotai/kimi-k2-instruct"),
+        "llama-4-scout-17b": groq("meta-llama/llama-4-scout-17b-16e-instruct"),
+        "gpt-oss-20b": groq("openai/gpt-oss-20b"),
+        "gpt-oss-120b": groq("openai/gpt-oss-120b"),
+        "qwen3-32b": groq("qwen/qwen3-32b"),
+    },
     openRouter: {
-        "gpt-oss-20b:free": openrouter("openai/gpt-oss-20b:free"),
-        "qwen3-8b:free": openrouter("qwen/qwen3-8b:free"),
-        "qwen3-14b:free": openrouter("qwen/qwen3-14b:free"),
         "qwen3-coder:free": openrouter("qwen/qwen3-coder:free"),
-        "deepseek-r1:free": openrouter("deepseek/deepseek-r1-0528:free"),
         "deepseek-v3:free": openrouter("deepseek/deepseek-chat-v3-0324:free"),
-        "gemini-2.0-flash-exp:free": openrouter("google/gemini-2.0-flash-exp:free"),
     },
 };
 
@@ -51,9 +59,37 @@ export const customModelProvider = {
         models: Object.entries(models).map(([name]) => ({
             name,
         })),
+        hasAPIKey: checkProviderAPIKey(provider as keyof typeof staticModels)
     })),
     getModel: (model?: ChatModel): LanguageModel => {
         if (!model) return fallbackModel;
         return staticModels[model.provider]?.[model.model] || fallbackModel;
     },
+}
+
+function checkProviderAPIKey(provider: keyof typeof staticModels) {
+    let key: string | undefined;
+    switch (provider) {
+        case "openai":
+            key = process.env.OPENAI_API_KEY;
+            break;
+        case "google":
+            key = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+            break;
+        case "anthropic":
+            key = process.env.ANTHROPIC_API_KEY;
+            break;
+        case "xai":
+            key = process.env.XAI_API_KEY;
+            break;
+        case "groq":
+            key = process.env.GROQ_API_KEY;
+            break;
+        case "openRouter":
+            key = process.env.OPENROUTER_API_KEY;
+            break;
+        default:
+            return true; // assume the provider has an API key
+    }
+    return !!key && key != "****";
 }

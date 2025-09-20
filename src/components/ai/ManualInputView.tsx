@@ -1,29 +1,22 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useAtom } from 'jotai';
-import { AnimatePresence, motion } from 'framer-motion';
 import { manualInputAtom } from '@/state/atoms';
-import { useWindowFocus } from '@/hooks/useWindowFocus';
 import { useGlobalServices } from '@/services/GlobalServicesContextProvider';
 import { Input } from '../ui/Input';
 import { Shortcut } from '../ui/Shortcut';
-import { IS_WINDOWS } from '@/lib/constants';
 import { useGlobalShortcut } from '@/hooks/useGlobalShortcut';
 
 import { SelectModel } from '../ui/select-model';
-import { useAtomValue } from 'jotai';
-import { chatModelAtom } from '@/stores/modelStore';
 
 const SUBMIT_SHORTCUT = 'CommandOrControl+Enter';
 const CANCEL_SHORTCUT = 'Escape';
+const SCREENSHOT_SHORTCUT = 'CommandOrControl+Shift+Enter';
 
 export const ManualInputView = observer(({ className }: { className?: string }) => {
   const { aiResponsesService } = useGlobalServices();
   const [manualInput, setManualInput] = useAtom(manualInputAtom);
-  const selectedModel = useAtomValue(chatModelAtom);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { isWaitingForTab, windowsAutoFocusWindow, setWindowsAutoFocusWindow, handleClick } = useWindowFocus(inputRef);
-  const isWindows = IS_WINDOWS;
   const handleCancel = useCallback(() => {
     aiResponsesService.setIsManualInputActive(false);
   }, [aiResponsesService]);
@@ -36,13 +29,21 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
     });
     setManualInput('');
   };
+
+  const handleScreenshotShortcut = () => {
+    aiResponsesService.triggerAi({
+      shouldCaptureScreenshot: true,
+      manualInput,
+      displayInput: manualInput,
+      useWebSearch: aiResponsesService.useWebSearch,
+    });
+  };
   useGlobalShortcut(SUBMIT_SHORTCUT, handleSubmit);
   useGlobalShortcut(CANCEL_SHORTCUT, handleCancel);
-  const placeholder = isWaitingForTab
-    ? 'Press Tab to focus, or Enter to submit silently'
-    : aiResponsesService.isCommittingTranscriptions
-      ? 'Ask about your screen or audio'
-      : 'Ask about your screen';
+  useGlobalShortcut(SCREENSHOT_SHORTCUT, handleScreenshotShortcut);
+  const placeholder = aiResponsesService.isCommittingTranscriptions
+    ? 'Ask about your screen or audio'
+    : 'Ask about your screen';
   useEffect(() => {
     if (inputRef.current) {
       const inputElement = inputRef.current;
@@ -64,7 +65,6 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
           onChange={(value) => {
             setManualInput(value);
           }}
-          onClick={handleClick}
           onBlur={(e) => {
             if (e.relatedTarget?.tagName !== 'BUTTON' && e.relatedTarget?.tagName !== 'INPUT') {
               handleCancel();
@@ -72,12 +72,9 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
           }}
         />
         <div className="absolute right-3.5 top-1/2 transform -translate-y-1/2 flex items-center gap-4">
-          <div className="pointer-events-auto">
-            <SelectModel 
-              onSelect={() => {}} // We're using the global state, so no need for a specific onSelect handler
-            />
-          </div>
-          {isWindows && <AutoFocusToggle show={!manualInput} checked={windowsAutoFocusWindow} onChange={setWindowsAutoFocusWindow} />}
+          <SelectModel
+            onSelect={() => { }} // We're using the global state, so no need for a specific onSelect handler
+          />
           <div className="pointer-events-auto">
             <Shortcut accelerator="Enter" label="Submit" onTrigger={handleSubmit} />
           </div>
@@ -87,40 +84,3 @@ export const ManualInputView = observer(({ className }: { className?: string }) 
   );
 })
 
-
-const AutoFocusToggle = ({ show, checked, onChange }: { show: boolean, checked: boolean, onChange: (checked: boolean) => void }) => {
-  const content = (
-    <div className="flex items-center gap-1.5">
-      <span className="text-white/30 text-[11px]">Auto focus</span>
-      <label className="relative flex items-center">
-        <input
-          type="checkbox"
-          className="appearance-none w-3.5 h-3.5 rounded border-1 border-white/30 hover:border-white/50 checked:border-white/30 transition pointer-events-auto focus:outline-none"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        {checked && (
-          <svg className="absolute left-0 top-0 w-3.5 h-3.5 text-white/50" viewBox="0 0 14 14">
-            <title>Checked</title>
-            <path d="M4 7.5l2 2 4-4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" stroke="currentColor" fill="none" />
-          </svg>
-        )}
-      </label>
-    </div>
-  );
-
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.1 }}
-        >
-          {content}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};

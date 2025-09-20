@@ -15,7 +15,6 @@ interface ShortcutProps {
   large?: boolean;
   shouldHover?: boolean;
   className?: string;
-  fullBorderRadius?: boolean;
   showAccelerator?: boolean;
 }
 
@@ -28,7 +27,6 @@ export function Shortcut({
   shouldHover = true,
   showAccelerator = true,
   className,
-  fullBorderRadius = false,
 }: ShortcutProps) {
   useGlobalShortcut(accelerator, () => onTrigger?.({ fromClick: false }), {
     enable: onTrigger ? enable : false,
@@ -67,7 +65,7 @@ export function Shortcut({
       <div className="relative">
       {shouldHover && (
         <HeadlessButton
-          className={cn("absolute -inset-x-1.5 -inset-y-1.5 rounded hover:bg-white/10 focus:bg-white/20 transition", fullBorderRadius ? "rounded-full" : "rounded-md")}
+          className={cn("absolute transition -inset-1.5 rounded-full hover:bg-white/10 active:bg-white/20")}
           onClick={() => onTrigger({ fromClick: true })}
         />
       )}

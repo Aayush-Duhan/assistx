@@ -16,6 +16,7 @@ import { useChatModels } from "@/hooks/use-chat-models";
 import { Button } from "./select-button";
 import { useAtom, useSetAtom } from 'jotai';
 import { chatModelAtom, setChatModelAtom } from "@/stores/modelStore";
+import { cn } from "@/lib/utils";
 
 
 interface SelectModelProps {
@@ -82,8 +83,16 @@ export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
                         {providers?.map((provider, i) => (
                             <Fragment key={provider.provider}>
                                 <CommandGroup
-                                    heading={<ProviderHeader provider={provider.provider} />}
-                                    className="pb-4 group"
+                                    heading={
+                                        <ProviderHeader
+                                            provider={provider.provider}
+                                            hasAPIKey={provider.hasAPIKey}
+                                        />
+                                    }
+                                    className={cn(
+                                        "pb-4 group",
+                                        !provider.hasAPIKey && "opacity-50",
+                                    )}
                                     onWheel={(e) => {
                                         e.stopPropagation();
                                     }}
@@ -91,12 +100,13 @@ export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
                                     {provider.models.map((item) => (
                                         <CommandItem
                                             key={item.name}
+                                            disabled={!provider.hasAPIKey}
                                             className="cursor-pointer"
                                             onSelect={() => {
                                                 handleSelect({
                                                     provider: provider.provider,
                                                     model: item.name,
-                                                  });
+                                                });
                                             }}
                                             value={item.name}
                                         >
@@ -124,7 +134,8 @@ export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
 
 const ProviderHeader = memo(function ProviderHeader({
     provider,
-}: { provider: string }) {
+    hasAPIKey,
+}: { provider: string; hasAPIKey: boolean }) {
     return (
         <div className="text-sm text-muted-foreground flex items-center gap-1.5 group-hover:text-foreground transition-colors duration-300">
             {provider === "openai" ? (
@@ -136,6 +147,13 @@ const ProviderHeader = memo(function ProviderHeader({
                 <ModelProviderIcon provider={provider} className="size-3" />
             )}
             {provider}
+            {!hasAPIKey && (
+                <>
+                    <span className="text-xs ml-auto text-muted-foreground">
+                        No API Key
+                    </span>
+                </>
+            )}
         </div>
     );
 });

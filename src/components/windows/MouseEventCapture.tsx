@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { send } from "@/services/electron";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef, MutableRefObject } from "react";
 
 const mouseEventCaptureRegions = new Set<symbol>();
 
@@ -24,36 +24,48 @@ interface MouseEventsCaptureProps {
     children: React.ReactNode;
 }
 
-export const MouseEventsCapture = ({ enabled = true, children }: MouseEventsCaptureProps) => {
-    const elementRef = useRef<HTMLDivElement>(null);
-    const regionId = useRef(Symbol('mouse-capture-region'));
-  
-    useEffect(() => {
-      if (!enabled) return;
-  
-      const currentElement = elementRef.current;
-      if (!currentElement) return;
-  
-      const onMouseEnter = () => addMouseCaptureRegion(regionId.current);
-      const onMouseLeave = () => removeMouseCaptureRegion(regionId.current);
-  
-      currentElement.addEventListener('mouseenter', onMouseEnter);
-      currentElement.addEventListener('mouseleave', onMouseLeave);
-  
-      // Cleanup on unmount
-      return () => {
-        currentElement.removeEventListener('mouseenter', onMouseEnter);
-        currentElement.removeEventListener('mouseleave', onMouseLeave);
-        removeMouseCaptureRegion(regionId.current);
-      };
-    }, [enabled]);
-  
-    // Final cleanup when the component instance is destroyed
-    useEffect(() => () => removeMouseCaptureRegion(regionId.current), []);
-  
-    return (
-      <div ref={elementRef} className={cn(enabled && 'pointer-events-auto')}>
-        {children}
-      </div>
-    );
-  };
+export const MouseEventsCapture = forwardRef<HTMLDivElement, MouseEventsCaptureProps>(
+    ({ enabled = true, children }, forwardedRef) => {
+        const elementRef = useRef<HTMLDivElement | null>(null);
+        const regionId = useRef(Symbol('mouse-capture-region'));
+
+        // Merge external ref with internal ref
+        const setRef = (node: HTMLDivElement | null) => {
+            elementRef.current = node;
+            if (typeof forwardedRef === 'function') {
+                forwardedRef(node);
+            } else if (forwardedRef) {
+                (forwardedRef as MutableRefObject<HTMLDivElement | null>).current = node;
+            }
+        };
+
+        useEffect(() => {
+            if (!enabled) return;
+
+            const currentElement = elementRef.current;
+            if (!currentElement) return;
+
+            const onMouseEnter = () => addMouseCaptureRegion(regionId.current);
+            const onMouseLeave = () => removeMouseCaptureRegion(regionId.current);
+
+            currentElement.addEventListener('mouseenter', onMouseEnter);
+            currentElement.addEventListener('mouseleave', onMouseLeave);
+
+            // Cleanup on unmount
+            return () => {
+                currentElement.removeEventListener('mouseenter', onMouseEnter);
+                currentElement.removeEventListener('mouseleave', onMouseLeave);
+                removeMouseCaptureRegion(regionId.current);
+            };
+        }, [enabled]);
+
+        // Final cleanup when the component instance is destroyed
+        useEffect(() => () => removeMouseCaptureRegion(regionId.current), []);
+
+        return (
+            <div ref={setRef} className={cn(enabled && 'pointer-events-auto')}>
+                {children}
+            </div>
+        );
+    }
+);

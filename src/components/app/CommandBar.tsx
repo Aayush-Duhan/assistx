@@ -36,7 +36,6 @@ export const CommandBar: React.FC = observer(() => {
                             <span className="text-white/90">Hide</span>
                         </div>
                     }
-                    fullBorderRadius
                     enable="always"
                     accelerator={SHORTCUT_TOGGLE_VISIBILITY}
                     showAccelerator={false}
@@ -60,7 +59,6 @@ export const CommandBar: React.FC = observer(() => {
                     <Type className="opacity-60" size={14} />
                     <span>Ask Question</span>
                 </div>}
-                fullBorderRadius={true}
                 enable="onlyWhenVisible"
                 accelerator={SHORTCUT_ASK_AI}
                 showAccelerator={false}

@@ -32,9 +32,7 @@ export const Tooltip = ({
   const isVertical = position === 'top' || position === 'bottom';
   return (
     <div className="relative">
-      <div className="peer inline-block">
-        {children}
-      </div>
+      <div className="peer">{children}</div>
       <div
         className={cn(
           'absolute z-50 px-3 py-2 shadow-lg bg-zinc-950/95 rounded-lg whitespace-nowrap pointer-events-none opacity-0 transition-opacity text-[11px] text-white/90',

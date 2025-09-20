@@ -42,7 +42,7 @@ async function tryCaptureScreenshot(): Promise<TryCaptureResult> {
 
 async function takeAndProcessScreenshot(): Promise<ScreenshotResult> {
   const { contentType, data } = await invoke('capture-screenshot', null);
-  return processScreenshot(contentType, data);
+  return processScreenshot(contentType, data.buffer as ArrayBuffer);
 }
 
 function processScreenshot(contentType: string, data: ArrayBuffer): Promise<ScreenshotResult> {
@@ -68,8 +68,18 @@ function processScreenshot(contentType: string, data: ArrayBuffer): Promise<Scre
         canvas.height = image.height * scale;
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-        const url = canvas.toDataURL(SCREENSHOT_CONTENT_TYPE, SCREENSHOT_QUALITY);
-        resolve({ contentType: SCREENSHOT_CONTENT_TYPE, url });
+        // Try WebP first, fall back to PNG if not supported
+        let url: string;
+        let contentType: string;
+        try {
+            url = canvas.toDataURL(SCREENSHOT_CONTENT_TYPE, SCREENSHOT_QUALITY);
+            contentType = SCREENSHOT_CONTENT_TYPE;
+        } catch (error) {
+            console.warn('WebP encoding failed, falling back to PNG:', error);
+            url = canvas.toDataURL('image/png', 0.8);
+            contentType = 'image/png';
+        }
+        resolve({ contentType, url });
       } catch (error) {
         reject(error);
       } finally {

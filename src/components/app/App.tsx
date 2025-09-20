@@ -82,7 +82,6 @@ export const App: FC = observer(() => {
                                                         tooltipContent={<div className="text-white/90">Activity & Settings</div>}
                                                     >
                                                         <Shortcut
-                                                            fullBorderRadius
                                                             label={<House size={16} className="text-white/90" />}
                                                             onTrigger={() => setSettingsWindowVisible((prev: boolean) => !prev)}
                                                             showAccelerator={false}

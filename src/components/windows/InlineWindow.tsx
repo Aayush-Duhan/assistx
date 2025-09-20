@@ -53,7 +53,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
                             backgroundClassname
                         )}
                         style={{
-                            borderRadius: fullBorderRadius ? 999 : 8,
+                            borderRadius: fullBorderRadius ? 999 : 12,
                             backgroundColor: void 0
                         }}
                         transition={{ duration, ease }}
