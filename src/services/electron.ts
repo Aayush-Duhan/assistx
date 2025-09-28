@@ -52,6 +52,15 @@ type IpcChannels = {
     'gmail-send': [{ to: string; subject: string; body: string }, { success: boolean }];
     'request-window-visibility': [null, { visible: boolean }];
     'restart-window': [null, void];
+    // MCP
+    'mcp-list-clients': [null, { id: string; name: string; status: 'connected' | 'disconnected' | 'loading' | 'authorizing'; error?: unknown; toolInfo: { name: string; description: string; inputSchema?: Record<string, unknown> }[]; config: Record<string, unknown> }[]];
+    'mcp-refresh-client': [{ id: string }, void];
+    'mcp-authorize-client': [{ id: string }, { url?: string }];
+    'mcp-check-token': [{ id: string }, { authenticated: boolean }];
+    'mcp-call-tool': [{ id: string; toolName: string; input: unknown }, Record<string, unknown>];
+    'mcp-get-config-path': [null, { path: string }];
+    'mcp-open-config': [null, void];
+    'mcp-reveal-config': [null, void];
 }
 
 type Channel = keyof IpcChannels;

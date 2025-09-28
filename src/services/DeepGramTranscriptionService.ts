@@ -40,7 +40,7 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
       if (this.state.state === 'running' && this.state.connection) {
         // Deepgram SDK expects a Buffer or ArrayBuffer.
         const buffer = Buffer.from(data.pcm16Base64, 'base64');
-        this.state.connection.send(buffer);
+        this.state.connection.send(buffer.buffer);
       }
     });
 
@@ -89,10 +89,10 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
         smart_format: true,
         vad_events: true,
         interim_results: true,
-        punctuate: true,
         encoding: 'linear16',
         sample_rate: 16000, // Standard sample rate
         channels: 1,
+        diarize: true
       });
 
       const { refreshHeartbeatTimeout } = this.initHeartbeatCheck(abortController.signal);
@@ -115,7 +115,6 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
         refreshHeartbeatTimeout();
 
         const transcript = data.channel?.alternatives?.[0]?.transcript?.trim() ?? '';
-        
         if (data.is_final) {
           console.log(`DeepgramTranscriptionService (${this.source}): Final transcript:`, transcript);
           this.setState({ ...this.state, partialText: null });

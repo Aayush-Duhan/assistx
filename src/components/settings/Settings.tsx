@@ -8,6 +8,7 @@ import { SettingPage } from './SettingPage';
 import { PersonalizePage } from './PersonalizePage';
 import { IntegrationsPage } from './IntegrationsPage';
 import { observer } from 'mobx-react-lite';
+import { ToolsPage } from './components/ToolsPage';
  
 
 export const Settings = observer(() => {
@@ -41,6 +42,9 @@ export const Settings = observer(() => {
                     )}
                     {activeApp === 'settings.integrations' && (
                         <IntegrationsPage />
+                    )}
+                    {activeApp === 'settings.tools' && (
+                        <ToolsPage />
                     )}
                 </div>
             </div>

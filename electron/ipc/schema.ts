@@ -109,6 +109,50 @@ export const ipcMainHandlerEventsSchema = {
             visible: z.boolean(),
         }),
     },
+    // MCP
+    'mcp-list-clients': {
+        payload: z.null(),
+        response: z.array(z.object({
+            id: z.string(),
+            name: z.string(),
+            status: z.enum(['connected','disconnected','loading','authorizing']),
+            error: z.unknown().optional(),
+            toolInfo: z.array(z.object({
+                name: z.string(),
+                description: z.string(),
+                inputSchema: z.object({}).passthrough().optional(),
+            })),
+            config: z.object({}).passthrough(),
+        })),
+    },
+    'mcp-refresh-client': {
+        payload: z.object({ id: z.string() }),
+        response: z.void(),
+    },
+    'mcp-authorize-client': {
+        payload: z.object({ id: z.string() }),
+        response: z.object({ url: z.string().url().optional() }),
+    },
+    'mcp-check-token': {
+        payload: z.object({ id: z.string() }),
+        response: z.object({ authenticated: z.boolean() }),
+    },
+    'mcp-call-tool': {
+        payload: z.object({ id: z.string(), toolName: z.string(), input: z.unknown() }),
+        response: z.object({}).passthrough(),
+    },
+    'mcp-get-config-path': {
+        payload: z.null(),
+        response: z.object({ path: z.string() }),
+    },
+    'mcp-open-config': {
+        payload: z.null(),
+        response: z.void(),
+    },
+    'mcp-reveal-config': {
+        payload: z.null(),
+        response: z.void(),
+    },
 };
 
 export type IpcMainEvents = typeof IpcMainEventSchema;

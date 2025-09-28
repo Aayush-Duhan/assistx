@@ -9,6 +9,7 @@ import { initializeIpcHandlers } from './ipc/ipcHandlers';
 import { applyGlobalShortcuts } from './features/shortcuts';
 import { initializeUpdater } from './features/autoUpdater';
 import { getAvailableDisplays } from './windows/OverlayManager';
+import { initMCPManager } from './lib/ai/mcp/mcp-manager';
 import { setupMainProtocolHandlers } from './protocol-handler';
 
 const APP_ID = 'assistx';
@@ -106,6 +107,7 @@ async function main(): Promise<void> {
   initializeDisplayListeners();
   applyGlobalShortcuts();
   setupMainProtocolHandlers();
+  await initMCPManager();
 }
 
 main();

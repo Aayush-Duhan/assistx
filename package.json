@@ -7,6 +7,8 @@
     "dev": "vite --host",
     "dev:build": "vite build && vite",
     "build": "tsc && vite build && electron-builder",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -64,6 +66,8 @@
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "vitest": "^2.0.5",
+    "vite-tsconfig-paths": "^5.1.2",
     "@types/json-schema": "^7.0.15",
     "@types/node": "^24.3.3",
     "@types/react": "^18.2.64",

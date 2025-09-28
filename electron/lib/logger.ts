@@ -1,5 +1,5 @@
 import { createConsola, LogLevels } from "consola";
-import { IS_DEV } from "./constants";
+import { isDev } from "../utils/platform";
 
 /**
  * Logger instance for the application.
@@ -16,7 +16,7 @@ import { IS_DEV } from "./constants";
  * ```
  */
 const logger = createConsola({
-  level: IS_DEV ? LogLevels.debug : LogLevels.info,
+  level: isDev ? LogLevels.debug : LogLevels.info,
   defaults: {
     tag: "assistx",
   },

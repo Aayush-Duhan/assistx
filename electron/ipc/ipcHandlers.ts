@@ -12,6 +12,8 @@ import { startMicMonitor, stopMicMonitor } from "../features/mac/micMonitor";
 import { checkMacOsVersion } from "../features/mac/utils";
 import { startMacNativeRecorder, stopMacNativeRecorder } from "../features/mac/nativeRecorder";
 import { clearTokens, getStatus, sendGmailEmail, setOAuthClient, startOAuthFlow } from "../features/gmailOAuth";
+import { authorizeMcpClientAction, callMcpToolAction, checkTokenMcpClientAction, refreshMcpClientAction, removeMcpClientAction, selectMcpClientsAction } from "../lib/ai/mcp/actions";
+import { MCP_CONFIG_PATH } from "../lib/ai/mcp/config-path";
 
 export function initializeIpcHandlers(): void {
   let currentWindow = windowManager.getCurrentWindow();
@@ -101,6 +103,50 @@ export function initializeIpcHandlers(): void {
   // Gmail integration handlers
   handle('gmail-set-oauth-client', async (_event, payload) => {
     setOAuthClient(payload);
+  });
+
+  // MCP handlers
+  handle('mcp-list-clients', async () => {
+    const clients = await selectMcpClientsAction();
+    return clients.map((c) => ({
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      error: c.error,
+      toolInfo: c.toolInfo,
+      config: c.config,
+    }));
+  });
+
+  handle('mcp-refresh-client', async (_event, { id }) => {
+    await refreshMcpClientAction(id);
+  });
+
+  handle('mcp-authorize-client', async (_event, { id }) => {
+    const url = await authorizeMcpClientAction(id).catch(() => undefined);
+    return { url };
+  });
+
+  handle('mcp-check-token', async (_event, { id }) => {
+    const authenticated = await checkTokenMcpClientAction(id);
+    return { authenticated };
+  });
+
+  handle('mcp-call-tool', async (_event, { id, toolName, input }) => {
+    const result = await callMcpToolAction(id, toolName, input);
+    return result as any;
+  });
+
+  handle('mcp-get-config-path', async () => {
+    return { path: MCP_CONFIG_PATH };
+  });
+
+  handle('mcp-open-config', async () => {
+    await shell.openPath(MCP_CONFIG_PATH);
+  });
+
+  handle('mcp-reveal-config', async () => {
+    shell.showItemInFolder(MCP_CONFIG_PATH);
   });
   handle('gmail-get-status', async () => {
     return getStatus();

@@ -1,5 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
@@ -208,11 +208,13 @@ export class MCPClient {
       if (isMaybeStdioConfig(this.serverConfig)) {
 
         const config = MCPStdioConfigZodSchema.parse(this.serverConfig);
+        const defaultEnv = getDefaultEnvironment();
         this.transport = new StdioClientTransport({
           command: config.command,
           args: config.args,
-          // Merge process.env with config.env, ensuring PATH is preserved and filtering out undefined values
-          env: Object.entries({ ...process.env, ...config.env }).reduce(
+          // Use SDK-provided default env for cross-platform compatibility (e.g., PATH/ComSpec on Windows),
+          // then merge in any explicit env overrides from the server config.
+          env: Object.entries({ ...defaultEnv, ...config.env }).reduce(
             (acc, [key, value]) => {
               if (value !== undefined) {
                 acc[key] = value;

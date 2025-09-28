@@ -55,7 +55,7 @@ export class MCPClientsManager {
     // Optional storage for persistent configurations
     constructor(
         private storage: MCPConfigStorage = createMemoryMCPConfigStorage(),
-        private autoDisconnectSeconds: number = 60 * 30, // 30 minutes
+        private autoDisconnectSeconds: number = 60 * 60, // 60 minutes
     ) {
         process.on("SIGINT", this.cleanup.bind(this));
         process.on("SIGTERM", this.cleanup.bind(this));
@@ -298,7 +298,7 @@ export class MCPClientsManager {
 
 export function createMCPClientsManager(
     storage?: MCPConfigStorage,
-    autoDisconnectSeconds: number = 60 * 30, // 30 minutes
+    autoDisconnectSeconds: number = 60 * 60, // 60 minutes
 ): MCPClientsManager {
     return new MCPClientsManager(storage, autoDisconnectSeconds);
 }
