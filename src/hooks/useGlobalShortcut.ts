@@ -1,78 +1,43 @@
-import { useEffect, useRef, useState } from 'react';
-import { useEventCallback } from 'usehooks-ts';
-import { send, on, off, invoke } from '@/services/electron';
+import { useSharedState } from "@/shared/shared";
+import { useEffect } from "react";
+import { useEventCallback } from "usehooks-ts";
+import { registerGlobalShortcut, unregisterGlobalShortcut } from "@/lib/globalShortcut";
 
-const shortcutListeners = new Map<string, Set<() => void>>();
-
-on('global-shortcut-triggered', (accelerator) => {
-    const callbacks = shortcutListeners.get(accelerator);
-    if (callbacks) {
-        for (const callback of callbacks) {
-            callback();
-        }
-    }
-});
-
+/** Defaults to enable = "onlyWhenVisible", unless specified. */
 export function useGlobalShortcut(
-	accelerator: string | null | undefined,
-	onTrigger?: () => void,
-	options?: { enable?: 'onlyWhenVisible' | 'always' | boolean }
+    accelerator?: string,
+    callback?: () => void,
+    options?: { enable?: boolean | "onlyWhenVisible" },
 ) {
-    const { enable = 'onlyWhenVisible' } = options || {};
+    const enable = options?.enable ?? "onlyWhenVisible";
 
-	const stableOnTrigger = useEventCallback(() => {
-		onTrigger?.();
-	});
+    const stableCallback = useEventCallback(() => {
+        callback?.();
+    });
 
-    // Visible state via IPC
-    const [isWindowVisible, setIsWindowVisible] = useState<boolean>(true);
-    const isMounted = useRef(false);
-    useEffect(() => {
-        isMounted.current = true;
-        // Prime visibility from main
-        (async () => {
-            try {
-                const { visible } = await invoke('request-window-visibility', null);
-                if (isMounted.current) setIsWindowVisible(visible);
-            } catch {
-                // default to true
-            }
-        })();
-        const handleShown = (_: null) => setIsWindowVisible(true);
-        const handleHidden = (_: null) => setIsWindowVisible(false);
-        on('window-shown', handleShown);
-        on('window-hidden', handleHidden);
-        return () => {
-            isMounted.current = false;
-            off('window-shown', handleShown);
-            off('window-hidden', handleHidden);
-        };
-    }, []);
+    const { windowHidden, recordingKeybinding } = useSharedState();
 
-    const isEnabled = enable === 'onlyWhenVisible' ? isWindowVisible : enable;
-    // Whether the hook should actively register the accelerator
-    const canTrigger = !!(accelerator && onTrigger && isEnabled);
+    const resolvedEnable = recordingKeybinding
+        ? false
+        : enable === "onlyWhenVisible"
+            ? !windowHidden
+            : enable;
+
+    const hasCallback = !!callback;
 
     useEffect(() => {
-        if (!accelerator || !onTrigger || !isEnabled) return;
-        let listeners = shortcutListeners.get(accelerator);
-        if (!listeners) {
-            listeners = new Set();
-            shortcutListeners.set(accelerator, listeners);
-            send('register-global-shortcut', { accelerator });
+        if (resolvedEnable && accelerator && stableCallback && hasCallback) {
+            // delay the registration by a tick to ensure rapid state changes get
+            // batched together
+            const timeout = setTimeout(() => {
+                registerGlobalShortcut(accelerator, stableCallback);
+            }, 0);
+
+            return () => {
+                clearTimeout(timeout);
+                // no-ops if stableCallback is not registered
+                unregisterGlobalShortcut(accelerator, stableCallback);
+            };
         }
-        listeners.add(stableOnTrigger);
-
-        return () => {
-            const currentListeners = shortcutListeners.get(accelerator);
-            if (currentListeners) {
-                currentListeners.delete(stableOnTrigger);
-                if (currentListeners.size === 0) {
-                    shortcutListeners.delete(accelerator);
-                    send('unregister-global-shortcut', { accelerator });
-                }
-            }
-        };
-
-    }, [accelerator, stableOnTrigger, isEnabled, onTrigger, canTrigger]);
+    }, [accelerator, stableCallback, hasCallback, resolvedEnable]);
 }

@@ -10,6 +10,12 @@
   "files": [
     "out"
   ],
+  "protocols": {
+    "name": "AssistX Protocol",
+    "schemes": [
+      "assistx"
+    ]
+  },
   "mac": {
     "target": [
       "dmg"

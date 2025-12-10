@@ -1,209 +1,202 @@
-import { BrowserWindow, screen, shell, BrowserWindowConstructorOptions, Display, Rectangle } from 'electron';
-import { join } from 'node:path';
+import { BrowserWindow, shell, app } from 'electron';
+import path, { join } from 'node:path';
+import { APP_NAME } from '../utils/constants';
 import { isWindows, isDev } from '../utils/platform';
-import { animateWindowResize, animateWindowOpacity } from '../utils/animation';
+import { windowManager } from './WindowManager';
+import { getSharedState } from '../utils/shared/stateManager';
 
 const __dirname = import.meta.dirname;
 
-export interface WindowCreationOptions {
-  undetectabilityEnabled: boolean;
-  finishedOnboarding?: boolean;
-}
 
-export class BaseWindow {
-  public readonly window: BrowserWindow;
-  protected undetectabilityEnabled: boolean;
-  protected currentDisplay: Display = screen.getPrimaryDisplay();
+export abstract class BaseWindow {
+  public window: BrowserWindow;
+  public windowIsClosing = false;
 
-  constructor(options: WindowCreationOptions, browserWindowOptions?: BrowserWindowConstructorOptions) {
-    this.window = new BrowserWindow(
-      browserWindowOptions || {
-        show: isWindows, // On Windows, show immediately for undetectability to work.
-        // Window style
-        type: "panel",
-        alwaysOnTop: true,
-        transparent: true,
-        frame: false,
-        roundedCorners: false,
-        hasShadow: false,
-        // Window resize options
-        fullscreenable: false,
-        minimizable: false,
-        // macOS specific options
-        hiddenInMissionControl: true,
-        // macOS + Windows specific options
-        skipTaskbar: options.undetectabilityEnabled,
-        webPreferences: {
-          preload: join(__dirname, "preload.cjs")
-        },
-      }
-    );
-    this.undetectabilityEnabled = options.undetectabilityEnabled;
-    // Apply content protection to prevent screen capture, unless skipped.
-    if (this.undetectabilityEnabled) {
-      this.window.setContentProtection(true);
+  constructor(
+    options: Electron.BrowserWindowConstructorOptions,
+    protected moreOptions: {
+      skipTaskbar: () => boolean;
     }
-
-    this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    this.window.setResizable(false);
-    
-    if (isWindows) {
-      this.window.setAlwaysOnTop(true, "screen-saver", 1);
-      this.window.webContents.setBackgroundThrottling(false);
-    }
-
-    this.moveToPrimaryDisplay();
-    this.setIgnoreMouseEvents(true);
-
-    this.window.once("ready-to-show", () => {
-      this.window.show();
+  ) {
+    this.moreOptions = moreOptions;
+    this.window = new BrowserWindow({
+      ...options,
+      show: false,
+      title: APP_NAME,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.cjs'),
+      },
     });
 
-    // Open external links in the default browser.
+    this.restoreUndetectability();
+
+    if (isWindows) {
+      const handleUndetectability = () => this.restoreUndetectability();
+      this.window.on('show', handleUndetectability);
+      this.window.on('restore', handleUndetectability);
+      this.window.on('focus', handleUndetectability);
+    }
+
+    // Show window when ready
+    this.window.once("ready-to-show", () => {
+      this.window.show();
+      this.window.setTitle(APP_NAME);
+    });
+
+    // Handle load failures
+    this.window.webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
+      console.error(`Window failed to load remote content: ${errorCode} ${errorDescription}`);
+      windowManager.setShowOfflineWindow(true);
+    });
+
+    // Handle renderer crashes
+    this.window.webContents.on("render-process-gone", (_event, details) => {
+      console.error("Renderer process crashed or was killed", {
+        reason: details.reason,
+        exitCode: details.exitCode,
+      });
+
+      if (details.reason === "crashed") {
+        if (!this.window.isDestroyed()) {
+          this.loadUrl().catch((error) => {
+            console.error("Failed to reload window after crash", error);
+            windowManager.setShowOfflineWindow(true);
+          });
+        }
+      }
+    });
+
+    this.window.webContents.on("unresponsive", () => {
+      console.error("Renderer process became unresponsive");
+    });
+
+    this.window.webContents.on("responsive", () => {
+      console.log("Renderer process became responsive again");
+    });
+
+    // Prevent title changes
+    this.window.on("page-title-updated", () => {
+      if (this.window.getTitle() !== APP_NAME) {
+        this.window.setTitle(APP_NAME);
+      }
+    });
+
+    // Prevent navigation
+    this.window.webContents.on("will-navigate", (event) => {
+      event.preventDefault();
+    });
+
+    // Handle external link clicks
     this.window.webContents.setWindowOpenHandler((details) => {
       try {
         const url = new URL(details.url);
-        if (url.protocol === 'https:' || (isDev && url.protocol === 'http:')) {
+        if (
+          url.protocol === "https:" ||
+          (isDev && url.protocol === "http:") ||
+          url.protocol === "mailto:"
+        ) {
           shell.openExternal(details.url);
         }
       } catch (error) {
-        console.error(`error trying to open url ${details.url}`, error);
+        console.error(`Error trying to open url ${details.url}`, error);
       }
-      return { action: 'deny' };
+      return { action: "deny" };
     });
 
-    // Load the renderer content.
+    // Handle window close
+    this.window.on("close", (event) => {
+      if (
+        !this.windowIsClosing &&
+        !windowManager.appIsQuitting 
+        // TODO: Add update check
+        // && !isQuittingForUpdateInstall()
+      ) {
+        event.preventDefault();
+        windowManager.fakeQuit();
+      }
+    });
+
+    // Load the window content
+    this.loadUrl().catch((error) => {
+      if (!this.window.isDestroyed()) {
+        console.error("Error loading window url", error);
+        windowManager.setShowOfflineWindow(true);
+      }
+    });
+  }
+
+  /**
+   * Load a local HTML page from the renderer
+   * @param page - The HTML file to load (default: "index.html")
+   * @param searchParams - Optional URL search params for routing
+   */
+  protected async loadLocalPage(page: string = 'index.html', searchParams?: URLSearchParams): Promise<void> {
+    const query = searchParams?.toString();
+    const queryString = query ? `?${query}` : '';
+
     if (isDev && process.env.VITE_DEV_SERVER_URL) {
-      this.window.loadURL(process.env.VITE_DEV_SERVER_URL);
+      await this.window.loadURL(`${process.env.VITE_DEV_SERVER_URL}/${page}${queryString}`);
     } else {
-      this.window.loadFile(join(__dirname, '../dist/index.html'));
-    }
-    if (options?.finishedOnboarding) {
-      this.window.webContents.once("did-finish-load", () => {
-        this.window.webContents.send("finished-onboarding", {});
+      await this.window.loadFile(join(__dirname, `../dist/${page}`), {
+        search: query,
       });
     }
   }
 
-  getCurrentDisplay() {
-    return this.currentDisplay;
-  }
-
-  sendToWebContents(channel: string, payload: unknown): void {
+  /**
+   * Send message to window's web contents
+   */
+  sendToWebContents(channel: string, data: unknown): void {
     if (!this.window.isDestroyed()) {
-      this.window.webContents.send(channel, payload);
+      this.window.webContents.send(channel, data);
     }
   }
 
-  setIgnoreMouseEvents(ignore: boolean): void {
-    this.window.setIgnoreMouseEvents(ignore, { forward: true });
-  }
 
-  resizeWindow(width: number, height: number, duration: number): void {
-    animateWindowResize(this.window, width, height, duration);
-  }
 
-  focus(): void {
-    this.window.focus();
-  }
-  
-  blur(): void {
-    if (isWindows) {
-      // Workaround to properly blur on Windows
-      this.window.setFocusable(false);
-      this.window.setFocusable(true);
-      this.window.setSkipTaskbar(true);
-    }
-    this.window.blur();
-  }
-
-  getBounds(): Rectangle {
-    return this.window.getBounds();
-  }
-
-  moveToDisplay(display: Display): void {
-    this.currentDisplay = display;
-    this.window.setPosition(display.workArea.x, display.workArea.y);
-    this.window.setSize(display.workArea.width, display.workArea.height);
-    this.sendToWebContents("display-changed", null);
-  }
-  show(shouldFocus = false) {
-    if (this.window.isDestroyed()) {
-      return;
-    }
-
-    // Prepare for animation by ensuring the window is technically visible but transparent.
-    if (!this.window.isVisible()) {
-      this.window.setOpacity(0);
-      // showInactive() displays the window without activating it (stealing focus).
-      this.window.showInactive();
-    }
-
-    // Animate to full opacity.
-    animateWindowOpacity(this.window, 1, 150, () => {
-      // If focus is requested, we give it focus *after* the animation.
-      if (shouldFocus) {
-        this.window.focus();
-      }
-      this.sendToWebContents('window-shown', null);
-    });
-  }
-
-  hide() {
-    if (!this.window.isDestroyed() && this.window.isVisible()) {
-      // Animate to zero opacity, then hide the window.
-      animateWindowOpacity(this.window, 0, 150, () => {
-        this.window.hide();
-        this.window.setOpacity(1); // Reset opacity for the next time it's shown.
-        this.sendToWebContents('window-hidden', null);
-      });
-    }
-  }
-
-  isVisible(): boolean {
-    return !this.window.isDestroyed() && this.window.isVisible();
-  }
-
-  toggleVisibility() {
-    if (!this.window.isDestroyed()) {
-      if (this.window.isVisible()) {
-        this.hide();
-      } else {
-        // Explicitly show without focus.
-        this.show(false);
-      }
-    }
-  }
-
+  /**
+   * Close the window
+   */
   close(): void {
     if (!this.window.isDestroyed()) {
+      this.windowIsClosing = true;
       this.window.close();
     }
   }
 
-  isDestroyed(): boolean {
-    return this.window.isDestroyed();
-  }
-
-  moveToPrimaryDisplay() {
-    const primaryDisplay = screen.getPrimaryDisplay();
-    this.moveToDisplay(primaryDisplay);
-  }
-
+  /**
+   * Reload the window
+   */
   reload(): void {
     this.window.webContents.reload();
   }
 
-  onUnload(callback: () => void): void {
-    this.window.webContents.on("did-navigate", callback);
-  }
 
+
+  /**
+   * Load the window's URL (implemented by subclasses)
+   */
+  abstract loadUrl(): Promise<void>;
+
+  /**
+   * Toggle developer tools
+   */
   toggleDevTools(): void {
     if (this.window.webContents.isDevToolsOpened()) {
       this.window.webContents.closeDevTools();
     } else {
       this.window.webContents.openDevTools({ mode: "detach" });
-      this.window.focus();
+      app.focus();
+    }
+  }
+
+  /**
+   * Apply undetectability settings to window
+   */
+  restoreUndetectability(): void {
+    this.window.setContentProtection(getSharedState().undetectabilityEnabled);
+    if (isWindows) {
+      this.window.setSkipTaskbar(this.moreOptions.skipTaskbar());
     }
   }
 }

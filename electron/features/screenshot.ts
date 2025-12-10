@@ -2,7 +2,20 @@ import { desktopCapturer } from 'electron';
 import { Buffer } from 'node:buffer';
 import { isMac } from '../utils/platform';
 import { windowManager } from '../windows/WindowManager';
-import { resetOnboarding } from '../onboarding';
+import { loadOnboardingState } from '../utils/utils';
+import { updateSharedState } from '../utils/shared/stateManager';
+
+/**
+ * Reset onboarding state
+ */
+function resetOnboarding(): void {
+  updateSharedState({
+    onboardingState: {
+      ...loadOnboardingState(),
+      completed: false,
+    },
+  });
+}
 
 interface Screenshot {
   data: Buffer;
@@ -14,7 +27,7 @@ interface Screenshot {
  * This avoids the __dirname issue with the screenshot-desktop library.
  */
 export async function captureScreenshot(): Promise<Screenshot> {
-  const currentDisplay = windowManager.getCurrentWindow().getCurrentDisplay();
+  const currentDisplay = windowManager.getTargetDisplay();
   try {
     const sources = await desktopCapturer.getSources({
       types: ['screen'],

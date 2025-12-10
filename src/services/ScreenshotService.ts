@@ -1,95 +1,64 @@
-import { invoke } from '../services/electron';
+import { invokeIpcMain } from '@/shared';
+import type { Buffer } from 'buffer';
 
 const MAX_SCREENSHOT_HEIGHT = 1080;
 const SCREENSHOT_CONTENT_TYPE = 'image/webp';
 const SCREENSHOT_QUALITY = 0.7;
+const SCREENSHOT_RETRIES = 3;
 
-type ScreenshotResult = {
+export type Screenshot = {
   contentType: string;
   url: string;
 };
 
-type TryCaptureResult = {
-  screenshot: ScreenshotResult | null;
-  error: unknown;
-};
-
-export async function captureScreenshot(): Promise<ScreenshotResult> {
-  const result1 = await tryCaptureScreenshot();
-  if (result1.screenshot) return result1.screenshot;
-  console.warn('First screenshot attempt failed, retrying...');
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  const result2 = await tryCaptureScreenshot();
-  if (result2.screenshot) return result2.screenshot;
-  console.warn('Second screenshot attempt failed, retrying...');
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  const result3 = await tryCaptureScreenshot();
-  if (result3.screenshot) return result3.screenshot;
-
-  console.warn('Third screenshot attempt failed.');
-  throw result3.error;
-}
-
-async function tryCaptureScreenshot(): Promise<TryCaptureResult> {
-  try {
-    return { screenshot: await takeAndProcessScreenshot(), error: null };
-  } catch (error) {
-    return { screenshot: null, error };
+export async function captureScreenshotWithRetry(): Promise<Screenshot> {
+  let error: unknown;
+  for (let i = 0; i < SCREENSHOT_RETRIES; i++) {
+    try {
+      const { contentType, data } = await invokeIpcMain("capture-screenshot", null);
+      return await scaleAndCompressScreenshot(contentType, data);
+    } catch (err) {
+      console.warn(`Screenshot attempt #${i} failed, retrying...`);
+      error = err;
+    }
   }
+  throw error;
 }
 
-async function takeAndProcessScreenshot(): Promise<ScreenshotResult> {
-  const { contentType, data } = await invoke('capture-screenshot', null);
-  return processScreenshot(contentType, data.buffer as ArrayBuffer);
-}
+function scaleAndCompressScreenshot(contentType: string, data: Buffer) {
+  return new Promise<Screenshot>((resolve, reject) => {
+    const blob = new Blob([data as Buffer<ArrayBuffer>], { type: contentType });
+    const url = URL.createObjectURL(blob);
 
-function processScreenshot(contentType: string, data: ArrayBuffer): Promise<ScreenshotResult> {
-  return new Promise((resolve, reject) => {
-    const blob = new Blob([data], { type: contentType });
-    const objectUrl = URL.createObjectURL(blob);
-    const image = new Image();
-    image.src = objectUrl;
+    const img = new Image();
+    img.src = url;
 
-    image.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (!context) {
-          throw new Error('Failed to get canvas context');
-        }
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
 
-        const scale = image.height > MAX_SCREENSHOT_HEIGHT 
-          ? MAX_SCREENSHOT_HEIGHT / image.height 
-          : 1;
-          
-        canvas.width = image.width * scale;
-        canvas.height = image.height * scale;
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-        // Try WebP first, fall back to PNG if not supported
-        let url: string;
-        let contentType: string;
-        try {
-            url = canvas.toDataURL(SCREENSHOT_CONTENT_TYPE, SCREENSHOT_QUALITY);
-            contentType = SCREENSHOT_CONTENT_TYPE;
-        } catch (error) {
-            console.warn('WebP encoding failed, falling back to PNG:', error);
-            url = canvas.toDataURL('image/png', 0.8);
-            contentType = 'image/png';
-        }
-        resolve({ contentType, url });
-      } catch (error) {
-        reject(error);
-      } finally {
-        URL.revokeObjectURL(objectUrl);
+      if (!context) {
+        URL.revokeObjectURL(url);
+        reject(new Error("Failed to get canvas context"));
+        return;
       }
+
+      const scale = img.height > MAX_SCREENSHOT_HEIGHT ? MAX_SCREENSHOT_HEIGHT / img.height : 1;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+
+      resolve({
+        contentType: SCREENSHOT_CONTENT_TYPE,
+        url: canvas.toDataURL(SCREENSHOT_CONTENT_TYPE, SCREENSHOT_QUALITY),
+      });
     };
 
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Failed to load image from screenshot data'));
+    img.onerror = (error) => {
+      URL.revokeObjectURL(url);
+      reject(error);
     };
   });
 }

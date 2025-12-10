@@ -9,15 +9,18 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 // Load environment variables
 dotenv.config({ path: '.env.local' })
 // https://vitejs.dev/config/
-export default defineConfig({ 
+export default defineConfig({
   resolve: {
-    alias: {
-      'ws': path.resolve(__dirname, './src/shims/ws-browser.js'),
-      '@': path.resolve(__dirname, './src'),
-      '@/hooks': path.resolve(__dirname, './src/hooks'),
-      '@/services': path.resolve(__dirname, './src/services'),
-      '@/utils': path.resolve(__dirname, './src/utils')
-    }
+    alias: [
+      { find: 'ws', replacement: path.resolve(__dirname, './src/shims/ws-browser.js') },
+      { find: '@/hooks', replacement: path.resolve(__dirname, './src/hooks') },
+      { find: '@/services', replacement: path.resolve(__dirname, './src/services') },
+      { find: '@/utils', replacement: path.resolve(__dirname, './src/utils') },
+      { find: '@/lib', replacement: path.resolve(__dirname, './src/lib') },
+      { find: '@/shared', replacement: path.resolve(__dirname, './shared') },
+      { find: '@/sharedLib', replacement: path.resolve(__dirname, './sharedLib') },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+    ]
   },
   define: {
     'process.env.GOOGLE_GENERATIVE_AI_API_KEY': JSON.stringify(process.env.GOOGLE_GENERATIVE_AI_API_KEY),
@@ -31,7 +34,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
-        overlay: path.resolve(__dirname, 'overlay.html')
+        onboarding: path.resolve(__dirname, 'onboarding.html'),
+        offline: path.resolve(__dirname, 'offline.html'),
+        dashboard: path.resolve(__dirname, 'dashboard.html'),
       }
     }
   },
@@ -47,6 +52,11 @@ export default defineConfig({
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
         vite: {
+          resolve: {
+            alias: {
+              '@/shared': path.resolve(__dirname, './shared'),
+            },
+          },
           build: {
             rollupOptions: {
               // Externalize native module so Rollup doesn't try to bundle/parse .node binaries

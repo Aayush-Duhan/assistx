@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { MouseEventsCapture } from "./MouseEventCapture";
+import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 
 export interface InlineWindowProps {
     positionClassName?: string;
@@ -45,7 +45,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
             >
-                <MouseEventsCapture enabled={captureMouseEvents}>
+                <CaptureMouseEventsWrapper enabled={captureMouseEvents}>
                     <motion.div
                         className={cn(
                             'absolute inset-0 shadow-md inset-ring-1 inset-ring-zinc-400/33 border-[0.5px] border-black/80',
@@ -70,7 +70,7 @@ export const InlineWindow = forwardRef<HTMLDivElement, InlineWindowProps>(
                     >
                         {children}
                     </motion.div>
-                </MouseEventsCapture>
+                </CaptureMouseEventsWrapper>
             </div>
         )
     }

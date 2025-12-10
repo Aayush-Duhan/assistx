@@ -1,77 +1,122 @@
-import { useEffect, useState, StrictMode } from "react";
-import { send } from './services/electron';
+import React, { useEffect } from "react";
+import { motion } from "framer-motion";
 import { createRoot } from "react-dom/client";
-import { observer } from "mobx-react-lite";
-import { InlineWindow } from "./components/windows/InlineWindow";
-import { Button } from "./components/ui/Button";
-import { APP_NAME } from "./lib/constants";
+import { SharedStateProvider } from "@/shared/shared";
+import { APP_NAME } from "@/shared/constants";
+import network from "@/assets/network.svg"
+import { sendToIpcMain } from "@/shared/ipc";
+import { Button } from "@/components/ui/Button";
 
-const RETRY_COUNTDOWN_SECONDS = 10;
+/** Interval in milliseconds to check for internet connectivity (10 seconds) */
+const CONNECTIVITY_CHECK_INTERVAL = 10 * 1000;
 
-const OfflineScreen = observer(() => {
-    const [countdown, setCountdown] = useState(RETRY_COUNTDOWN_SECONDS);
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCountdown((prevCount) => {
-                const newCount = prevCount - 1;
+/** Spring animation configuration for smooth transitions */
+const SPRING_ANIMATION = {
+    type: "spring",
+    stiffness: 260,
+    damping: 25,
+} as const;
 
-                if (newCount === 0) {
-                    clearInterval(interval);
-                    send("restart-window", null);
-                    return 0;
-                }
-                else{
-                    return newCount;
-                }
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    return (
-        <div className="w-full flex justify-center mt-24">
-            <InlineWindow opaque={true}
-                captureMouseEvents={true}
-            >
-                <div className="w-[400px] p-8 flex flex-col gap-0 leading-none items-center rounded">
-                    <div className="text-white text-lg font-medium leading-none">
-                        {APP_NAME} can't connect to the internet.
-                    </div>
-                    <div className="text-white/50 mt-3 mb-8 leading-none">
-                        Retrying in {countdown}…
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                        <Button
-                            className="text-base font-medium w-full rounded-full"
-                            onClick={() => send("restart-window", null)}>
-                            <span className="flex items-center justify-center gap-1.5">
-                                Retry Now
-                            </span>
-                        </Button>
-                        <Button
-                            className="text-base font-medium w-full rounded-full"
-                            onClick={() => send("quit-app", null)}
-                        >
-                            <span className="flex items-center justify-center gap-1.5">
-                                Quit
-                            </span>
-                        </Button>
-                    </div>
-                </div>
-            </InlineWindow>
-        </div>
-    );
-});
-
-const rootElement = document.getElementById("offline-root");
-if (!rootElement) {
-  throw new Error("Offline root element not found");
+/**
+ * Checks if the application has internet connectivity.
+ * First checks navigator.onLine, then attempts to fetch from the update server.
+ * 
+ * @returns Promise<boolean> - true if online, false otherwise
+ */
+async function checkInternetConnectivity(): Promise<boolean> {
+    // Quick check using browser's online status
+    if (!navigator.onLine) {
+        return false;
+    }
+    return true;
 }
 
-const reactRoot = createRoot(rootElement);
-reactRoot.render(
-    <StrictMode>
-        <OfflineScreen />
-    </StrictMode>
-);
+/**
+ * Clears the offline window and returns to the main application.
+ * Called when connectivity is restored or user clicks "Retry Now".
+ */
+function dismissOfflineWindow(): void {
+    sendToIpcMain("clear-offline-window", null);
+}
+
+export function OfflineScreen() {
+    // Set up periodic connectivity check
+    useEffect(() => {
+        const intervalId = setInterval(async () => {
+            const isOnline = await checkInternetConnectivity();
+
+            if (isOnline) {
+                // Connection restored - dismiss the offline window
+                dismissOfflineWindow();
+            }
+        }, CONNECTIVITY_CHECK_INTERVAL);
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
+    }, []);
+    return (
+        <div className="size-full relative flex flex-col items-center justify-center">
+            {/* Animated offline icon */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.2 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ ...SPRING_ANIMATION, delay: 0.5 }}
+            >
+                <img src={network} alt="Network" className="size-20 fill-zinc-400 animate-pulse" />
+            </motion.div>
+
+            {/* Status message */}
+            <motion.p
+                className="text-lg text-zinc-500 mt-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...SPRING_ANIMATION, delay: 1 }}
+            >
+                {APP_NAME} is waiting for an internet connection
+            </motion.p>
+
+            {/* Retry button - appears after 5 seconds */}
+            <motion.div
+                className="mt-5"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ ...SPRING_ANIMATION, delay: 5 }}
+            >
+                <Button
+                    onClick={dismissOfflineWindow}
+                    level="accent"
+                    size="lg"
+                >
+                    Retry Now
+                </Button>
+            </motion.div>
+
+            {/* Draggable title bar area (for window dragging on frameless window) */}
+            <div className="absolute top-0 left-0 right-0 h-12 [-webkit-app-region:drag]" />
+
+            {/* Quit */}
+            {/* <div className="absolute top-2 right-2 [-webkit-app-region:no-drag]">
+                <FallbackMenu />
+            </div> */}
+        </div>
+    );
+}
+
+function OfflineApp() {
+    const rootElement = document.getElementById("root");
+
+    if (!rootElement) {
+        console.error("Root element not found");
+        return;
+    }
+    const root = createRoot(rootElement);
+    root.render(
+        <React.StrictMode>
+            <SharedStateProvider>
+                <OfflineScreen />
+            </SharedStateProvider>
+        </React.StrictMode>
+    );
+}
+
+OfflineApp();

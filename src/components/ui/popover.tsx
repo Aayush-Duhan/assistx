@@ -2,7 +2,7 @@ import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/utils";
-import { MouseEventsCapture } from "@/components/windows/MouseEventCapture";
+import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 
 function Popover({
   ...props
@@ -24,7 +24,7 @@ function PopoverContent({
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
     <PopoverPrimitive.Portal>
-        <MouseEventsCapture>
+        <CaptureMouseEventsWrapper>
         <PopoverPrimitive.Content
           data-slot="popover-content"
           align={align}
@@ -35,7 +35,7 @@ function PopoverContent({
           )}
           {...props}
         />
-      </MouseEventsCapture>
+      </CaptureMouseEventsWrapper>
     </PopoverPrimitive.Portal>
   );
 }

@@ -1,8 +1,6 @@
 import { makeObservable, observable, computed, action, autorun, reaction } from 'mobx';
 import { AudioCaptureService } from './AudioCaptureService';
 import { AudioDataSource } from '../types';
-import { uuidv7 } from 'uuidv7';
-import { AudioSession } from './AudioSession';
 
 function createIdleTimer(callback: () => void, delay: number) {
     let timeoutId: NodeJS.Timeout;
@@ -17,130 +15,118 @@ function createIdleTimer(callback: () => void, delay: number) {
     };
 }
 
+export type SerializedTranscriptEntry = { createdAt: Date; role: "mic" | "system"; text: string };
+
+class EndOfParagraphMarker {
+    constructor(
+        readonly role: "mic" | "system",
+        readonly createdAt: Date,
+    ) { }
+}
+
 export class TranscriptionEntry {
     constructor(
-        public readonly role: AudioDataSource,
         public readonly text: string,
+        public readonly role: AudioDataSource,
         public readonly createdAt: Date,
-        public readonly isEndOfParagraph: boolean = false
     ) {
         makeObservable(this);
     }
-    get roledTranscript(): string {
-        return `[${this.role === "mic" ? "Me" : "Them"}]\\nTranscription:${this.text}]`;
+    get roledTranscript() {
+        const roleLabel = this.role === "mic" ? "Me" : "Them";
+        return `[${roleLabel}]\nTranscription: ${this.text}`;
+    }
+
+    get serialized(): SerializedTranscriptEntry {
+        return {
+            createdAt: this.createdAt,
+            role: this.role,
+            text: this.text,
+        };
     }
 }
 
 export class FullContext {
-    audioTranscriptions: TranscriptionEntry[] = [];
-    constructor(initialTranscriptions: TranscriptionEntry[] = []) {
-        this.audioTranscriptions = initialTranscriptions;
+    constructor(
+        private readonly audioTranscriptionsWithParagraphBreaks: (
+            | TranscriptionEntry
+            | EndOfParagraphMarker
+        )[] = [],
+    ) {
         makeObservable(this, {
-            audioTranscriptions: observable,
-            clearAudioTranscriptions: action,
-            paragraphTranscripts: computed,
-            audioContextAsText: computed,
+            audioTranscriptions: computed.struct
         });
     }
-    addAudioTranscription(e: TranscriptionEntry) {
-        this.audioTranscriptions.push(e);
+    addAudioTranscription(transcription: TranscriptionEntry) {
+        this.audioTranscriptionsWithParagraphBreaks.push(transcription);
     }
     clearAudioTranscriptions() {
-        this.audioTranscriptions.length = 0;
+        this.audioTranscriptionsWithParagraphBreaks.length = 0;
     }
+
+    get audioTranscriptions() {
+        return this.audioTranscriptionsWithParagraphBreaks.filter(
+            (t) => t instanceof TranscriptionEntry,
+        );
+    }
+
+    markEndOfParagraph(role: "mic" | "system") {
+        this.audioTranscriptionsWithParagraphBreaks.push(new EndOfParagraphMarker(role, new Date()));
+    }
+
     get paragraphTranscripts() {
-        const paragraphs: TranscriptionEntry[] = [];
-        let currentMicText = "";
-        let currentSystemText = "";
-        for (const { role, text, createdAt, isEndOfParagraph } of
-            this.audioTranscriptions) {
-            switch (role) {
+        const transcripts: TranscriptionEntry[] = [];
+        let micTextBuffer = "";
+        let systemTextBuffer = "";
+        for (const entry of this.audioTranscriptionsWithParagraphBreaks) {
+            switch (entry.role) {
                 case "mic":
-                    currentMicText = `${currentMicText} ${text}`.trim();
-                    if (currentMicText.length > 100 || (isEndOfParagraph &&
-                        currentMicText.length > 0)) {
-                        paragraphs.push(new TranscriptionEntry("mic", currentMicText.trim(),
-                            createdAt));
-                        currentMicText = "";
+                    if (entry instanceof TranscriptionEntry) {
+                        micTextBuffer = `${micTextBuffer} ${entry.text}`.trim();
+                    }
+                    if (
+                        micTextBuffer.length > 100 || // either we hit the paragraph length limit
+                        (entry instanceof EndOfParagraphMarker && micTextBuffer.length > 0) // or we hit the end of paragraph sequence and have some text
+                    ) {
+                        transcripts.push(new TranscriptionEntry(micTextBuffer, "mic", entry.createdAt));
+                        micTextBuffer = "";
                     }
                     break;
                 case "system":
-                    currentSystemText = `${currentSystemText} ${text}`.trim();
-                    if (currentSystemText.length > 100 || (isEndOfParagraph &&
-                        currentSystemText.length > 0)) {
-                        paragraphs.push(new TranscriptionEntry("system",
-                            currentSystemText.trim(), createdAt));
-                        currentSystemText = "";
+                    if (entry instanceof TranscriptionEntry) {
+                        systemTextBuffer = `${systemTextBuffer} ${entry.text}`.trim();
+                    }
+                    if (
+                        systemTextBuffer.length > 100 || // either we hit the paragraph length limit
+                        (entry instanceof EndOfParagraphMarker && systemTextBuffer.length > 0) // or we hit the end of paragraph sequence and have some text
+                    ) {
+                        transcripts.push(new TranscriptionEntry(systemTextBuffer, "system", entry.createdAt));
+                        systemTextBuffer = "";
                     }
                     break;
             }
         }
         return {
-            transcripts: paragraphs,
-            remainingMicText: currentMicText.trim(),
-            remainingSystemText: currentSystemText.trim(),
+            transcripts,
+            remainingMicText: micTextBuffer,
+            remainingSystemText: systemTextBuffer,
         };
     }
-    get audioContextAsText(): string {
-        if (!this.audioTranscriptions.length) return "";
-        const { transcripts, remainingMicText, remainingSystemText } =
-            this.paragraphTranscripts;
-        let context = transcripts.length > 0 ? `${transcripts.map((t) =>
-            t.roledTranscript).join("\\n\\n")}\\n\\n` : "";
-        if (remainingMicText) {
-            context += `[Me]\\nTranscription: ${remainingMicText}\\n\\n`;
-        }
-        if (remainingSystemText) {
-            context += `[Them]\\nTranscription: ${remainingSystemText}\\n\\n`;
-        }
-        return `Audio:\\n\\n${context}`;
-    }
-}
 
-export class LiveInsights {
-    summary = LiveInsights.createInitialSummary();
-    actions: any[] = [];
-    fakeActions: any[] = [];
-    constructor() {
-        makeObservable(this, {
-            summary: observable,
-            actions: observable,
-            fakeActions: observable,
-            updateSummary: action,
-            addAction: action,
-            addFakeAction: action,
-            clearSummaryAndActions: action,
-        });
-    }
-    updateSummary(newSummary: any) {
-        if (new Date(newSummary.inputTimestamp) > new Date(this.summary.inputTimestamp)) {
-            this.summary = newSummary;
+    get audioContextAsText() {
+        if (!this.audioTranscriptions.length) {
+            return "";
         }
+        return `Audio:\n\n${this.audioTranscriptions.map((t) => t.roledTranscript).join("\n")}`;
     }
-    addAction(newAction: any, maxActions: number) {
-        if (this.actions.some((a) => a.text === newAction.text)) return;
-        const sortByTimestamp = (a: any, b: any) => new Date(a.inputTimestamp).getTime() -
-            new Date(b.inputTimestamp).getTime();
-        const newActions = [...this.actions, newAction].sort(sortByTimestamp);
-        this.actions = newActions.slice(-maxActions);
-    }
-    addFakeAction(action: any) {
-        this.fakeActions.push({ ...action, id: uuidv7() });
-    }
-    clearSummaryAndActions() {
-        this.summary = LiveInsights.createInitialSummary();
-        this.actions = [];
-        this.fakeActions = [];
-    }
-    static createInitialSummary() {
+
+    getNewAudioContextAsText(skipAudioContextBefore: Date | null) {
+        const newTranscriptions = skipAudioContextBefore
+            ? this.audioTranscriptions.filter((t) => t.createdAt > skipAudioContextBefore)
+            : this.audioTranscriptions;
         return {
-            inputTimestamp: new Date().toISOString(),
-            inputTranscriptEntryCount: 0,
-            processedTranscriptEntryCount: 0,
-            lines: [
-                { type: "heading", text: "Start of Summary" },
-                { type: "bullet", indent: 0, text: "Started recording…" },
-            ],
+            newAudioContextAsText: new FullContext(newTranscriptions).audioContextAsText,
+            includesAudioContextBefore: new Date(),
         };
     }
 }
@@ -149,10 +135,9 @@ export class ContextService {
     micAudioCaptureService: AudioCaptureService;
     systemAudioCaptureService: AudioCaptureService;
     cleanUp: () => void;
-    newAudioSessionOptions: any | null = null;
     fullContext = new FullContext();
-    liveInsights = new LiveInsights();
-    audioSession: AudioSession | null = null;
+    /** Timestamp when audio session started, used for duration display */
+    sessionStartedAt: Date | null = null;
     constructor(services: {
         micAudioCaptureService: AudioCaptureService;
         systemAudioCaptureService: AudioCaptureService;
@@ -160,8 +145,7 @@ export class ContextService {
         this.micAudioCaptureService = services.micAudioCaptureService;
         this.systemAudioCaptureService = services.systemAudioCaptureService;
         makeObservable(this, {
-            newAudioSessionOptions: observable,
-            audioSession: observable,
+            sessionStartedAt: observable,
             isTranscribing: computed,
             isInAudioSessionAndAudioIsPaused: computed,
             isInAudioSessionAndNotPaused: computed,
@@ -175,27 +159,20 @@ export class ContextService {
             () => this.isInAudioSession,
             (inSession) => {
                 if (inSession) {
-                    this.audioSession?.dispose();
                     action(() => {
-                        this.audioSession = new AudioSession(
-                            this,
-                            true,
-                            this.newAudioSessionOptions ?? undefined
-                        );
+                        this.sessionStartedAt = new Date();
+                        this.fullContext.clearAudioTranscriptions();
                     })();
                 } else {
-                    this.audioSession?.dispose();
                     action(() => {
-                        this.newAudioSessionOptions = null;
-                        this.audioSession = null;
+                        this.sessionStartedAt = null;
                     })();
                 }
             },
             { fireImmediately: true }
         );
         const { refresh: refreshMic, dispose: disposeMic } = createIdleTimer(() => {
-            this.fullContext.addAudioTranscription(new TranscriptionEntry("mic", "",
-                new Date(), true));
+            this.fullContext.markEndOfParagraph("mic");
         }, 2500);
         const disposeMicBufferWatcher = autorun(() => {
             if (this.micAudioCaptureService.transcriptionService?.buffer) {
@@ -203,8 +180,7 @@ export class ContextService {
             }
         });
         const { refresh: refreshSystem, dispose: disposeSystem } = createIdleTimer(() => {
-            this.fullContext.addAudioTranscription(new TranscriptionEntry("system",
-                "", new Date(), true));
+            this.fullContext.markEndOfParagraph("system");
         }, 2500);
         const disposeSystemBufferWatcher = autorun(() => {
             if (this.systemAudioCaptureService.transcriptionService?.buffer) {
@@ -216,12 +192,11 @@ export class ContextService {
             (service) => {
                 service?.onTranscription((entry) => {
                     const transcriptionEntry = new TranscriptionEntry(
-                        entry.source,
                         entry.text,
+                        entry.source,
                         entry.createdAt,
-                        false
                     );
-                    this.fullContext.audioTranscriptions.push(transcriptionEntry);
+                    this.fullContext.addAudioTranscription(transcriptionEntry);
                 });
             },
             { fireImmediately: true }
@@ -231,12 +206,11 @@ export class ContextService {
             (service) => {
                 service?.onTranscription((entry) => {
                     const transcriptionEntry = new TranscriptionEntry(
-                        entry.source,
                         entry.text,
+                        entry.source,
                         entry.createdAt,
-                        false
                     );
-                    this.fullContext.audioTranscriptions.push(transcriptionEntry);
+                    this.fullContext.addAudioTranscription(transcriptionEntry);
                 });
             },
             { fireImmediately: true }
@@ -253,7 +227,6 @@ export class ContextService {
     }
     dispose() {
         this.cleanUp();
-        this.audioSession?.dispose();
     }
     async commitTranscriptions() {
         await Promise.all([
@@ -268,6 +241,7 @@ export class ContextService {
     pauseAudio = () => this.getServices().map((service) => service.pause());
     restartAudio = () => this.getServices().map((service) => service.restart());
     resumeAudio = () => this.getServices().map((service) => service.resume());
+    retryAudioSession = () => this.restartAudio();
     private getServices() {
         return [this.micAudioCaptureService, this.systemAudioCaptureService];
     }

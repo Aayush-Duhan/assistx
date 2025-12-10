@@ -43,10 +43,8 @@ export const windowsAutoFocusAtom = atomWithStorage('windowsAutoFocusWindow', tr
  */
 export const isClearingAtom = atom(false);
 
-export const activeAppAtom = atom('app' as 'app' | 'login' | 'activity' | 'personalize' | 'settings.tools' | 'settings.security' | 'settings.integrations');
-
-export const settingsWindowVisibleAtom = atom(false);
-
 export const manualInputAtom = atom('');
 
 export const isThinkingAtom = atom(false);
+
+export const recordingKeybindingAtom = atom(false);

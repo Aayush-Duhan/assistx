@@ -1,11 +1,8 @@
 
-export const APP_NAME = "AssistX";
-export const APP_VERSION = "1.0.0";
-export const APP_DESCRIPTION = 'An invisible desktop assistant that sees your screen and hears your audio. Helpful for meetings, sales calls, and more.';
-export const IS_DEV = window.electron.process.env.NODE_ENV === 'development';
+// Re-export shared constants for backwards compatibility
+export { APP_NAME, APP_VERSION, IS_DEV, IS_MAC, IS_WINDOWS } from "@/shared/constants";
 
-export const IS_MAC = window.electron.process.platform === 'darwin';
-export const IS_WINDOWS = window.electron.process.platform === 'win32';
+export const APP_DESCRIPTION = 'An invisible desktop assistant that sees your screen and hears your audio. Helpful for meetings, sales calls, and more.';
 
 export const PREDEFINED_PROMPTS = {
     whatShouldISay: {
@@ -114,5 +111,4 @@ export const SHORTCUTS = {
     VIM_MOVE_RIGHT: 'CommandOrControl+L',
     VIM_MOVE_UP: 'CommandOrControl+Shift+K',
     VIM_MOVE_DOWN: 'CommandOrControl+Shift+J',
-    };
-    
+};

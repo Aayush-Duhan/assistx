@@ -6,16 +6,26 @@ dotenv.config({ path: '.env.local' });
 import { isDev, isMac, isWindows } from './utils/platform';
 import { windowManager } from './windows/WindowManager';
 import { initializeIpcHandlers } from './ipc/ipcHandlers';
-import { applyGlobalShortcuts } from './features/shortcuts';
+import { refreshGlobalShortcuts } from './features/shortcuts';
 import { initializeUpdater } from './features/autoUpdater';
-import { getAvailableDisplays } from './windows/OverlayManager';
 import { initMCPManager } from './lib/ai/mcp/mcp-manager';
 import { setupMainProtocolHandlers } from './protocol-handler';
+import { updateSharedState } from './utils/shared/stateManager';
 
 const APP_ID = 'assistx';
+const PROTOCOL_NAME = 'assistx';
+
+// Register protocol handler for deep links (assistx://)
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(PROTOCOL_NAME, process.execPath, [process.argv[1]]);
+  }
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL_NAME);
+}
 
 if (isMac) {
-  app.dock.hide();
+  app.dock?.hide();
 }
 
 if (isWindows) {
@@ -40,14 +50,19 @@ if (!isDev) {
 
 app.on('activate', () => {
   windowManager.handleDockIcon();
-  windowManager.getCurrentWindow().sendToWebContents("unhide-window", null);
+  updateSharedState({ showDashboard: true });
 });
 
 function initializeDisplayListeners(): void {
   const handler = () => {
-    windowManager.getCurrentWindow().moveToPrimaryDisplay();
-    const displays = getAvailableDisplays();
-    windowManager.getCurrentWindow().sendToWebContents('available-displays', { displays });
+    const targetDisplay = windowManager.getTargetDisplay();
+    const displayExists = screen.getAllDisplays().some((d) => d.id === targetDisplay.id);
+    if (displayExists) {
+      windowManager.setTargetDisplay(targetDisplay);
+    } else {
+      windowManager.setTargetDisplay(screen.getPrimaryDisplay());
+      windowManager.sendToWebContents("reset-hud-position", null);
+    }
   };
   screen.on('display-added', handler);
   screen.on('display-removed', handler);
@@ -100,13 +115,12 @@ async function main(): Promise<void> {
   setupAppMenu();
   setupDisplayMediaHandler();
 
-  windowManager.createOrRecreateWindow();
-
   initializeUpdater();
   initializeIpcHandlers();
   initializeDisplayListeners();
-  applyGlobalShortcuts();
+  refreshGlobalShortcuts();
   setupMainProtocolHandlers();
+  windowManager.recreateWindowsForView();
   await initMCPManager();
 }
 

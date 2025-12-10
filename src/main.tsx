@@ -1,11 +1,11 @@
 import { createRoot } from 'react-dom/client';
-import { App } from './components/app/App';
-import { Onboarding } from './components/app/Onboarding';
+import App from './app';
 import './index.css';
 import 'katex/dist/katex.min.css';
-import { invoke } from '@/services/electron';
 import { GlobalServicesContextProvider } from './services/GlobalServicesContextProvider';
 import { StrictMode } from 'react';
+import { SharedStateProvider } from '@/shared/shared';
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
     throw new Error("Failed to find the root element. Make sure your index.html has a div with id='root'.");
@@ -13,15 +13,12 @@ if (!rootElement) {
 
 const root = createRoot(rootElement);
 
-async function startApp(): Promise<void> {
-    const { hasOnboarded }: { hasOnboarded: boolean } = await invoke('request-has-onboarded', null);
-    root.render(
-        <StrictMode>
+root.render(
+    <StrictMode>
+        <SharedStateProvider>
             <GlobalServicesContextProvider>
-                {hasOnboarded ? <App /> : <Onboarding />}
+                <App />
             </GlobalServicesContextProvider>
-        </StrictMode>
-    );
-}
-
-startApp(); 
+        </SharedStateProvider>
+    </StrictMode>
+);

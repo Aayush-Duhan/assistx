@@ -1,16 +1,25 @@
 import { makeAutoObservable } from 'mobx';
 import { AiResponse } from './AiResponse';
-import { AudioSession } from '../../services/AudioSession';
 import { ContextService } from '../../services/ContextService';
 import { FullContext } from '../../services/ContextService';
 import { uuidv7 } from 'uuidv7';
+
+/**
+ * Simple session interface for AI responses.
+ * Since we no longer have backend sessions, this is always in 'created' state.
+ */
+interface SimpleSession {
+    state: {
+        state: 'created';
+        sessionId: string;
+    };
+}
 
 export class AiConversation {
     public prevResponses: AiResponse[] = [];
     public latestResponse: AiResponse;
     public readonlyid = uuidv7();
-    private nonAudioSession: AudioSession | null;
-    public readonly session: AudioSession;
+    public readonly session: SimpleSession;
 
     constructor(
         private readonly contextService: ContextService,
@@ -23,14 +32,13 @@ export class AiConversation {
             metadata?: Record<string, any>;
         }
     ) {
-        if (contextService.audioSession) {
-            this.nonAudioSession = null;
-            this.session = contextService.audioSession;
-        } else {
-            this.nonAudioSession = new AudioSession(contextService, false);
-            this.session = this.nonAudioSession;
-        }
-
+        // Create a simple local session - always in 'created' state
+        this.session = {
+            state: {
+                state: 'created',
+                sessionId: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            }
+        };
 
         // Create the very first response in the conversation.
         this.latestResponse = this.createResponseFromContext({
@@ -58,7 +66,6 @@ export class AiConversation {
             response.dispose();
         }
         this.latestResponse.dispose();
-        this.nonAudioSession?.dispose();
     }
 
     public createNewResponse(options: {
@@ -118,11 +125,6 @@ export class AiConversation {
         if (options.newContext.audioContextAsText) {
             contentParts.push(options.newContext.audioContextAsText);
             hasAudioContext = true;
-        }
-        if (options.manualInput) {
-            contentParts.push(
-                `User's message (always respond; if asked to send or draft an email, use the gmail_draft tool to create a draft for user approval. Otherwise answer normally. Do not send emails without an explicit tool call.):\\n\\n${options.manualInput}`
-            );
         }
 
         const content = [

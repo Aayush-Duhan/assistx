@@ -1,19 +1,18 @@
 import React, { useMemo } from 'react';
 import { createContext, useContext } from 'react';
-
+import { useService } from '@/hooks/useService';
 // Import all the service classes
 import { AudioCaptureService } from './AudioCaptureService';
 import { ContextService } from './ContextService';
 import { AiResponsesService } from './AiResponseService';
-import { LiveInsightsService } from './LiveInsightsService';
+import { IS_DEV } from '@/shared/constants';
 
 // Type definitions
 interface GlobalServices {
-    micAudioCaptureService: AudioCaptureService;
-    systemAudioCaptureService: AudioCaptureService;
-    contextService: ContextService;
-    aiResponsesService: AiResponsesService;
-    liveInsightsService: LiveInsightsService;
+  micAudioCaptureService: AudioCaptureService;
+  systemAudioCaptureService: AudioCaptureService;
+  contextService: ContextService;
+  aiResponsesService: AiResponsesService;
 }
 
 /**
@@ -25,11 +24,15 @@ const GlobalServicesContext = createContext<GlobalServices | null>(null);
  * Hook to access global services from any component within the provider.
  */
 export function useGlobalServices(): GlobalServices {
-    const services = useContext(GlobalServicesContext);
-    if (!services) {
-        throw new Error('useGlobalServices must be used within a GlobalServicesContextProvider');
-    }
-    return services;
+  const services = useContext(GlobalServicesContext);
+  if (!services) {
+    throw new Error('useGlobalServices must be used within a GlobalServicesContextProvider');
+  }
+  return services;
+}
+
+export function useMaybeGlobalServices(): Partial<GlobalServices> {
+  return useContext(GlobalServicesContext) ?? {};
 }
 
 /**
@@ -39,49 +42,41 @@ export function useGlobalServices(): GlobalServices {
  * Uses Deepgram for real-time transcription of both mic and system audio.
  */
 export function GlobalServicesContextProvider({ children }: { children: React.ReactNode }): React.ReactElement {
-    // Create audio capture services with Deepgram transcription
-    const micAudioCaptureService = useMemo(() => new AudioCaptureService('mic'), []);
-    const systemAudioCaptureService = useMemo(() => new AudioCaptureService('system'), []);
+  // Create audio capture services with Deepgram transcription
+  const micAudioCaptureService = useService(() => new AudioCaptureService('mic'), []);
+  const systemAudioCaptureService = useService(() => new AudioCaptureService('system'), []);
 
-    const contextService = useMemo(
+  const contextService = useService(
     () => new ContextService({ micAudioCaptureService, systemAudioCaptureService }),
     [micAudioCaptureService, systemAudioCaptureService]
   );
 
-    const aiResponsesService = useMemo(
-        () => new AiResponsesService(contextService),
-        [contextService]
-    );
+  const aiResponsesService = useService(
+    () => new AiResponsesService(contextService),
+    [contextService]
+  );
 
-    const liveInsightsService = useMemo(
-        () => new LiveInsightsService(contextService),
-        [contextService]
-    );
+  // The value provided to the context contains all the service instances.
+  const services = useMemo<GlobalServices>(() => ({
+    micAudioCaptureService,
+    systemAudioCaptureService,
+    contextService,
+    aiResponsesService,
+  }), [
+    micAudioCaptureService,
+    systemAudioCaptureService,
+    contextService,
+    aiResponsesService,
+  ]);
 
-    // The value provided to the context contains all the service instances.
-    const services = useMemo(() => ({
-        micAudioCaptureService,
-        systemAudioCaptureService,
-        contextService,
-        aiResponsesService,
-        liveInsightsService,
-      }), [
-        micAudioCaptureService,
-        systemAudioCaptureService,
-        contextService,
-        aiResponsesService,
-        liveInsightsService,
-      ]);
+  if (IS_DEV) {
+    // defines window.screenCaptureService, window.micAudioCaptureService, etc.
+    Object.assign(window, services);
+  }
 
-    // Expose services to the window for easy debugging in development mode.
-    if (process.env.NODE_ENV === 'development') {
-        Object.assign(window, services);
-        console.log('🛠 [GlobalServices] Services exposed to window for debugging:', Object.keys(services));
-    }
-
-    return (
-        <GlobalServicesContext.Provider value={services}>
-          {children}
-        </GlobalServicesContext.Provider>
-      );
+  return (
+    <GlobalServicesContext value={services}>
+      {children}
+    </GlobalServicesContext>
+  );
 }

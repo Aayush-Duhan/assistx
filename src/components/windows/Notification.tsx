@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { InlineWindow } from "./InlineWindow";
 import type { InlineWindowProps } from "./InlineWindow";
-import { NotificationPortal } from "../Portal";
+import { NotificationsPortal } from "../Portal";
 import { MovableWindowsPortal } from "../Portal";
 import { WindowTitle } from "../ui/WindowTitle";
 import { WindowMessage } from "../ui/WindowMessage";
@@ -31,7 +31,7 @@ export const NotificationWindow = ({
   ...props
 }: NotificationWindowProps) => {
   const actionArray: NotificationAction[] = Array.isArray(actions) ? actions : [actions];
-  const Portal = windowType === "notification" ? NotificationPortal : MovableWindowsPortal;
+  const Portal = windowType === "notification" ? NotificationsPortal : MovableWindowsPortal;
   return (
     <Portal>
       <AnimatePresence>

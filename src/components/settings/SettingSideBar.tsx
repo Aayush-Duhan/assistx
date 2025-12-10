@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import { TrafficLights } from "../TrafficLights";
 import { AnimatePresence, motion } from "framer-motion";
 import { HeadlessButton } from "../ui/HeadlessButton";
 import { observer } from "mobx-react-lite";
-import { Logo } from "../app/Logo";
-import { useAtom, useSetAtom } from "jotai";
-import { activeAppAtom, settingsWindowVisibleAtom } from "@/state/atoms";
-import { Tooltip } from "../ui/Tooltip";
-import { Activity, BookOpen, ChevronRight, Eye, EyeOff, LaptopMinimal, Settings, Waypoints, Wrench } from "lucide-react";
-import { useInvisibility } from "@/hooks/useInvisibility";
+import { useAtom } from "jotai";
+import { activeAppAtom } from "@/dashboard/atoms";
+import { Activity, BookOpen, ChevronRight, LaptopMinimal, Settings, Waypoints, Wrench } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
 
 interface SidebarItemProps {
     isActive: boolean;
@@ -58,8 +55,6 @@ const SidebarItem = observer(({ isActive, isParent = false, isNested = false, is
 
 export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => void }) => {
     const [activeApp, setActiveApp] = useAtom(activeAppAtom);
-    const setWindowVisible = useSetAtom(settingsWindowVisibleAtom);
-    const { isInvisible } = useInvisibility();
 
     const handleNav = (app: 'app' | 'activity' | 'personalize' | 'settings.tools' | 'settings.security' | 'settings.integrations') => {
         if (activeApp === app) {
@@ -76,78 +71,75 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
     }, [isSettingsActive]);
 
     return (
-        <aside className="relative h-full p-2 border-white/10 bg-black border-r shadow-inner flex flex-col" aria-label="Settings sidebar">
-            <TrafficLights className="ml-1 mt-1" onClose={() => setWindowVisible(false)} />
-            <div className="absolute top-3 right-3 flex items-center gap-3">
-                <Tooltip tooltipContent={`AssistX is currently ${isInvisible ? 'invisible' : 'visible'} to screen capture.`} position="bottom">
-                    {isInvisible ? (
-                        <EyeOff className="size-3.5 stroke-white/80" />
-                    ) : (
-                        <Eye className="size-3.5 stroke-white/80" />
-                    )}
-                </Tooltip>
-            </div>
-            <div className="mt-5 ml-1 flex items-center gap-2">
-                <Logo className="size-5" />
-                <div className="text-white text-sm font-semibold">AssistX</div>
-            </div>
-
-            <nav className="mt-5 flex-1" role="menu">
-                <div className="px-2 text-[10px] uppercase tracking-wider text-white/40">General</div>
-                <div className="mt-2 space-y-1">
-                    <SidebarItem isActive={activeApp === 'activity'} onClick={() => handleNav('activity')}>
-                        <Activity size={14} />
-                        My Activity
-                    </SidebarItem>
-                    <SidebarItem isActive={activeApp === 'personalize'} onClick={() => handleNav('personalize')}>
-                        <BookOpen size={14} />
-                        Personalize
-                    </SidebarItem>
-                </div>
-
-                <div className="mt-4 px-2 text-[10px] uppercase tracking-wider text-white/40">Settings</div>
-                <div className="mt-2 space-y-1">
-                    <SidebarItem
-                        isParent
-                        isExpanded={isSettingsExpanded}
-                        isActive={isSettingsActive}
-                        onClick={() => {
-                            if (!isSettingsExpanded) setIsSettingsExpanded(true);
-                            handleNav('app');
-                        }}
-                        onToggleExpand={() => setIsSettingsExpanded((v) => !v)}
+        <aside className="h-full p-4 flex flex-col w-[250px]">
+            <div className="bg-zinc-900/50 h-full w-full rounded-xl p-2 relative before:absolute before:top-0 before:left-0 before:right-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-zinc-500 before:to-transparent">
+                <div className="flex justify-between items-center pt-2 px-2">
+                    <img src="/Logo.png" alt="Logo" className="h-8 w-auto" />
+                    <button
+                        className="p-1.5 rounded-full hover:bg-white/10 text-white/60 hover:text-white/80 transition-colors duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+                        aria-label="Collapse sidebar (coming soon)"
+                        title="Collapse sidebar (coming soon)"
                     >
-                        <Settings size={14} />
-                        Settings
-                    </SidebarItem>
-
-                    <AnimatePresence initial={false}>
-                        {isSettingsExpanded && (
-                            <motion.div
-                                key="settings-group"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.15, ease: 'easeOut' }}
-                                className="space-y-1 overflow-hidden"
-                            >
-                                <SidebarItem isNested isActive={activeApp === 'app'} onClick={() => handleNav('app')}>
-                                    <LaptopMinimal size={14} />
-                                    App
-                                </SidebarItem>
-                                <SidebarItem isNested isActive={activeApp === 'settings.tools'} onClick={() => handleNav('settings.tools')}>
-                                    <Wrench size={14} />
-                                    Tools
-                                </SidebarItem>
-                                <SidebarItem isNested isActive={activeApp === 'settings.integrations'} onClick={() => handleNav('settings.integrations')}>
-                                    <Waypoints size={14} />
-                                    Integrations
-                                </SidebarItem>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                        <PanelLeftClose size={16} color="#bd470f"/>
+                    </button>
                 </div>
-            </nav>
+                <nav className="mt-3 flex-1" role="menu">
+                    <div className="px-2 text-[12px] uppercase tracking-wider text-white font-semibold">General</div>
+                    <div className="mt-2 space-y-1">
+                        <SidebarItem isActive={activeApp === 'activity'} onClick={() => handleNav('activity')}>
+                            <Activity size={14} />
+                            My Activity
+                        </SidebarItem>
+                        <SidebarItem isActive={activeApp === 'personalize'} onClick={() => handleNav('personalize')}>
+                            <BookOpen size={14} />
+                            Personalize
+                        </SidebarItem>
+                    </div>
+
+                    <div className="mt-4 px-2 text-[10px] uppercase tracking-wider text-white/40">Settings</div>
+                    <div className="mt-2 space-y-1">
+                        <SidebarItem
+                            isParent
+                            isExpanded={isSettingsExpanded}
+                            isActive={isSettingsActive}
+                            onClick={() => {
+                                if (!isSettingsExpanded) setIsSettingsExpanded(true);
+                                handleNav('app');
+                            }}
+                            onToggleExpand={() => setIsSettingsExpanded((v) => !v)}
+                        >
+                            <Settings size={14} />
+                            Settings
+                        </SidebarItem>
+
+                        <AnimatePresence initial={false}>
+                            {isSettingsExpanded && (
+                                <motion.div
+                                    key="settings-group"
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                                    className="space-y-1 overflow-hidden"
+                                >
+                                    <SidebarItem isNested isActive={activeApp === 'app'} onClick={() => handleNav('app')}>
+                                        <LaptopMinimal size={14} />
+                                        App
+                                    </SidebarItem>
+                                    <SidebarItem isNested isActive={activeApp === 'settings.tools'} onClick={() => handleNav('settings.tools')}>
+                                        <Wrench size={14} />
+                                        Tools
+                                    </SidebarItem>
+                                    <SidebarItem isNested isActive={activeApp === 'settings.integrations'} onClick={() => handleNav('settings.integrations')}>
+                                        <Waypoints size={14} />
+                                        Integrations
+                                    </SidebarItem>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </nav>
+            </div>
         </aside>
     )
 }

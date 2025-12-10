@@ -1,10 +1,21 @@
 export interface Display {
     id: number;
     label: string;
-    bounds: { x: number; y: number; width: number; height: number };
-    scaleFactor: number;
     primary: boolean;
-    current: boolean; // Custom flag to indicate if it's the window's current display
+    current: boolean;
+    bounds: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    workArea: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    scaleFactor: number;
 }
 export type AudioDataSource = 'mic' | 'system';
 
@@ -27,12 +38,12 @@ export interface BufferState {
 export interface ITranscriptionService {
     state: any; // State type varies between implementations
     source: AudioDataSource;
-    
+
     // Methods
     dispose(): void;
     commitTranscription(): Promise<void>;
     onTranscription(callback: (transcription: AudioTranscription) => void): () => void;
-    
+
     // Properties
     readonly buffer: BufferState | null;
 }
@@ -57,29 +68,6 @@ export class Transcription implements AudioTranscription {
     }
 }
 
-// --- Live Insights Types ---
-
-export interface SummaryLine {
-    type: 'heading' | 'bullet';
-    text: string;
-    indent?: number;
-}
-
-export interface LiveInsightsSummary {
-    lines: SummaryLine[];
-}
-
-export interface LiveInsightsAction {
-    id: string;
-    text: string;
-    useWebSearch?: boolean;
-}
-
-export interface LiveInsights {
-    summary: LiveInsightsSummary;
-    actions: LiveInsightsAction[];
-    lastUpdated: Date;
-}
 
 export enum FeatureFlag {
     VIM_MODE_KEY_BINDINGS = 'vim_mode_key_bindings',
@@ -93,5 +81,4 @@ export enum FeatureFlag {
     NATIVE_MAC_RECORDER_V2 = 'native_mac_recorder_v2',
     ONLY_COMMAND_ENTER = 'only_command_enter',
     LIVE_INSIGHTS_ACTIONS_MODEL = 'live_insights_actions_model',
-  }
-  
+}

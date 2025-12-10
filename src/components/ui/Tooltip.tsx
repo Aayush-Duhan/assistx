@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import { ReactNode } from 'react';
-import { useMovableWindowApi } from '@/hooks/useMovableWindow';
 
 interface TooltipProps {
   tooltipContent?: ReactNode;
@@ -56,8 +55,3 @@ export const Tooltip = ({
     </div>
   );
 };
-
-export function MovableTooltip(props: Omit<React.ComponentProps<typeof Tooltip>, 'position'>) {
-  const { vOrientation } = useMovableWindowApi();
-  return <Tooltip position={vOrientation === 'top' ? 'bottom' : 'top'} {...props} />;
-}

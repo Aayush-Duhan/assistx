@@ -3,24 +3,17 @@ import { EventEmitter } from "node:events";
 import { electronAppUniversalProtocolClient } from 'electron-app-universal-protocol-client';
 import { app } from 'electron';
 import { windowManager } from "./windows/WindowManager";
+import { updateSharedState } from "./utils/shared/stateManager";
 
 const PROTOCOL_NAME = "assistx";
 const isDev = process.env.NODE_ENV === "development";
 
 // Simple event bus for main-process consumers (e.g., MCP OAuth manager)
 const protocolEvents = new EventEmitter();
+let initialProtocolUrl: string | null = null;
 
-// Queue deep links that arrive before a window is ready
-let pendingProtocolUrls: string[] = [];
-
-function deliverToRenderer(channel: string, payload: any) {
-	const currentWindow = windowManager.getCurrentWindow();
-	if (currentWindow && !currentWindow.isDestroyed()) {
-		currentWindow.sendToWebContents(channel, payload);
-	} else {
-		// No window available; queue as a generic URL to reprocess later
-		pendingProtocolUrls.push(payload?.__rawUrl || channel);
-	}
+export function setInitialProtocolUrl(url: string): void {
+	initialProtocolUrl = url;
 }
 
 function handleProtocolUrl(url: string) {
@@ -41,12 +34,12 @@ function handleProtocolUrl(url: string) {
 			// Notify main-process listeners
 			protocolEvents.emit("mcp-oauth-callback", { code, state, url });
 			// Also notify renderer (optional UI handling)
-			deliverToRenderer("mcp-oauth-callback", { code, state, __rawUrl: url });
+			windowManager.sendToWebContents("mcp-oauth-callback", { code, state, __rawUrl: url });
 			return;
 		}
 
 		// Generic route: deliver host as channel with params and pathname
-		deliverToRenderer(host, { ...params, __pathname: pathname, __rawUrl: url });
+		windowManager.sendToWebContents('protocol-data', { host, pathname, params });
 	} catch (error) {
 		console.error(`Failed to handle protocol URL: ${url}`, error);
 	}
@@ -60,20 +53,10 @@ function processArgvForProtocol(argv: string[]): void {
 }
 
 export function setupMainProtocolHandlers(): void {
-	// Drain any queued deep links when the window changes/appears
-	windowManager.onWindowChange(() => {
-		if (pendingProtocolUrls.length) {
-			for (const url of pendingProtocolUrls.splice(0)) {
-				handleProtocolUrl(url);
-			}
-		}
-	});
-
 	electronAppUniversalProtocolClient.on('request', (url) => {
 		windowManager.handleDockIcon();
-		const currentWindow = windowManager.getCurrentWindow();
-		if (currentWindow?.show) currentWindow.show();
-		currentWindow?.sendToWebContents("unhide-window", null);
+		updateSharedState({ showDashboard: true });
+		windowManager.getOnboardingWindow()?.window.show();
 		handleProtocolUrl(url);
 	});
 
@@ -84,11 +67,20 @@ export function setupMainProtocolHandlers(): void {
 
 	processArgvForProtocol(process.argv);
 
+	app.on('activate', () => {
+		windowManager.handleDockIcon();
+		updateSharedState({ showDashboard: true });
+	});
+
 	app.on('second-instance', (_event, argv) => {
-		const currentWindow = windowManager.getCurrentWindow();
-		currentWindow?.sendToWebContents("unhide-window", null);
+		updateSharedState({ showDashboard: true });
 		processArgvForProtocol(argv);
 	});
+
+	if (initialProtocolUrl) {
+		handleProtocolUrl(initialProtocolUrl);
+		initialProtocolUrl = null;
+	}
 }
 
 // Allow other main-process modules to subscribe to MCP OAuth callbacks

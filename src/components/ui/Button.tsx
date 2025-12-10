@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { HeadlessButton } from './HeadlessButton';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

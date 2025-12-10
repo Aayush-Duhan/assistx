@@ -30,3 +30,6 @@ out
 *.sw?
 bun.lock
 package-lock.json
+
+release/*
+release/**/*

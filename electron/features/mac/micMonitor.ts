@@ -2,8 +2,8 @@ import { app } from "electron";
 import { spawn, ChildProcess } from "child_process";
 import { EventEmitter } from "node:events";
 import { isMac } from "../../utils/platform";
-import type { BaseWindow } from "../../windows/baseWindow";
 import type { OnboardingWindow } from "../../windows/OnboardingWindow";
+import { AppWindow } from "../../windows/AppWindow";
 
 const MIC_APP_MATCH_RULES: [string, string][] = [
     ['VoiceMemos', 'Voice Memos'],
@@ -157,7 +157,7 @@ let micMonitorInstance: MicMonitor | null = null;
 
 app.on('before-quit', () => stopMicMonitor());
 
-export function startMicMonitor(window: BaseWindow | OnboardingWindow): void {
+export function startMicMonitor(window: AppWindow | OnboardingWindow): void {
     if (!micMonitorInstance && isMac) {
         micMonitorInstance = new MicMonitor();
         micMonitorInstance.start();

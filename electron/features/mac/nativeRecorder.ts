@@ -1,8 +1,8 @@
 import { ChildProcess, spawn } from "node:child_process";
 import { getMacExtraResourcePath, getChildProcessOutput } from "./utils";
 import { app } from "electron";
-import type { BaseWindow } from "../../windows/baseWindow";
 import type { OnboardingWindow } from "../../windows/OnboardingWindow";
+import { AppWindow } from "../../windows/AppWindow";
 
 const NATIVE_MAC_RECORDER_PATH = getMacExtraResourcePath('nativeMacRecorder');
 const MAC_RECORDER_TIMEOUT = 24000;
@@ -11,7 +11,7 @@ let nativeMacRecorderProcess: ChildProcess | null = null;
 
 app.on('before-quit', () => stopMacNativeRecorder());
 
-export function startMacNativeRecorder(window: BaseWindow | OnboardingWindow): void{
+export function startMacNativeRecorder(window: AppWindow | OnboardingWindow): void{
     stopMacNativeRecorder();
     const execPath = NATIVE_MAC_RECORDER_PATH;
     nativeMacRecorderProcess = spawn(execPath, [MAC_RECORDER_TIMEOUT.toString()]);
@@ -26,7 +26,7 @@ export function stopMacNativeRecorder(): void{
     }
 }
 
-function pipeMacRecorderData(process: ChildProcess, window: BaseWindow | OnboardingWindow): void{
+function pipeMacRecorderData(process: ChildProcess, window: AppWindow | OnboardingWindow): void{
     let buffer = '';
     if (!process.stdout) return;
 

@@ -35,8 +35,8 @@ export type MCPToolInfo = {
   name: string;
   description: string;
   inputSchema?: {
-    type?: any;
-    properties?: Record<string, any>;
+    type?: string | string[];
+    properties?: Record<string, unknown>;
     required?: string[];
   };
 };

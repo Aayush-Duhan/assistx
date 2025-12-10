@@ -1,14 +1,49 @@
-import { makeObservable, observable, computed, action } from 'mobx';
-import { AiConversation } from '../components/ai/AiConversation';
-import { captureScreenshot } from './ScreenshotService';
+import { makeObservable, observable, computed, action, runInAction } from 'mobx';
+import { captureScreenshotWithRetry } from './ScreenshotService';
 import { ContextService } from './ContextService';
+import { aiApiService } from './AiApiService';
+import { uuidv7 } from 'uuidv7';
 
-interface TriggerAiState {
-    abortController: AbortController;
-    step: 'capturing-screenshot' | 'committing-transcriptions';
+// Types adopted from hud.tsx pattern
+export type ConversationResponse = {
+    id: string;
+    text: string;
+    input: {
+        messages: any[];
+        displayInput: string | null;
+    };
+    response: any[];
+};
+
+export type PendingResponse =
+    | {
+        state: "streaming";
+        id: string;
+        text: string;
+        hasScreenshot: boolean;
+        screenshot: string | null;
+        reasoningSteps: { text: string }[];
+        displayInput: string | null;
+    }
+    | {
+        state: "error";
+        reason: "network" | "unknown";
+        userFacingMessage?: string;
+        displayInput: string | null;
+    };
+
+export type AiConversation = {
+    responses: ConversationResponse[];
+    pendingResponse: PendingResponse | null;
+};
+
+export interface TriggerAiState {
+    displayInput: string | null;
+    hasScreenshot: boolean;
+    screenshot: string | null;
 }
 
-type TriggerAiOptions = {
+export type TriggerAiOptions = {
     shouldCaptureScreenshot: boolean;
     manualInput?: string | null;
     displayInput?: string | null;
@@ -16,63 +51,107 @@ type TriggerAiOptions = {
     metadata?: Record<string, any>;
 };
 
+/** Tracks which actions were triggered via UI clicks (for showing shortcut notifications) */
+export interface ClickedState {
+    askAi: boolean;
+    clear: boolean;
+    hide: boolean;
+}
+
 export class AiResponsesService {
     triggerAiState: TriggerAiState | null = null;
-    currentConversation: AiConversation | null = null;
+    conversation: AiConversation = {
+        responses: [],
+        pendingResponse: null,
+    };
     isManualInputActive = false;
     isAudioSessionWindowOpen = false;
     useWebSearch = false;
+    /** When true, the conversation is visually hidden but not cleared */
+    ignoreCurrentConversation = false;
+
+    /** Tracks which actions were triggered via UI clicks (for showing shortcut notifications) */
+    clicked: ClickedState = {
+        askAi: false,
+        clear: false,
+        hide: false,
+    };
+
+    private abortController: AbortController | null = null;
+
     constructor(private readonly contextService: ContextService) {
         makeObservable(this, {
             triggerAiState: observable,
-            currentConversation: observable,
+            conversation: observable,
             isManualInputActive: observable,
             isAudioSessionWindowOpen: observable,
             useWebSearch: observable,
+            ignoreCurrentConversation: observable,
+            clicked: observable,
             isCapturingScreenshot: computed,
-            isCommittingTranscriptions: computed,
             showMainAppAiContent: computed,
-            clearCurrentConversation: action,
+            clearConversation: action,
+            revealCurrentConversation: action,
+            setClickedAskAi: action,
+            setClickedClear: action,
+            setClickedHide: action,
             setIsManualInputActive: action,
             setIsAudioSessionWindowOpen: action,
             setUseWebSearch: action,
             setTriggerAiState: action,
-            createNewResponse: action,
+            updateConversation: action,
         });
     }
 
-    private draftEmailHandler: ((draft?: { to: string; subject: string; body: string }) => void) | null = null;
-
-    public registerDraftEmailHandler(handler: (draft?: { to: string; subject: string; body: string }) => void) {
-        this.draftEmailHandler = handler;
-    }
-
     dispose(): void {
-        this.triggerAiState?.abortController.abort();
-        this.currentConversation?.dispose();
+        this.abortController?.abort();
     }
 
     get isCapturingScreenshot(): boolean {
-        return this.triggerAiState?.step === 'capturing-screenshot';
-    }
-
-    get isCommittingTranscriptions(): boolean {
-        return this.triggerAiState?.step === 'committing-transcriptions';
+        return this.triggerAiState !== null;
     }
 
     get showMainAppAiContent(): boolean {
         return (
             this.isCapturingScreenshot ||
-            this.isCommittingTranscriptions ||
             this.isManualInputActive ||
-            !!this.currentConversation
+            this.conversation.responses.length > 0 ||
+            this.conversation.pendingResponse !== null
         );
     }
 
-    clearCurrentConversation = (): void => {
-        this.setTriggerAiState(null);
-        this.currentConversation?.dispose();
-        this.currentConversation = null;
+    /**
+     * Clears (or visually hides) the current conversation.
+     */
+    clearConversation = (options?: { onlyClearVisually?: boolean }): void => {
+        if (options?.onlyClearVisually) {
+            this.ignoreCurrentConversation = true;
+        } else {
+            this.abortController?.abort();
+            this.triggerAiState = null;
+            this.conversation = { responses: [], pendingResponse: null };
+            this.ignoreCurrentConversation = false;
+        }
+    };
+
+    /** Reveals a visually hidden conversation */
+    revealCurrentConversation = (): void => {
+        this.ignoreCurrentConversation = false;
+    };
+
+    /** Set clicked state for askAi action */
+    setClickedAskAi = (value: boolean): void => {
+        this.clicked = { ...this.clicked, askAi: value };
+    };
+
+    /** Set clicked state for clear action */
+    setClickedClear = (value: boolean): void => {
+        this.clicked = { ...this.clicked, clear: value };
+    };
+
+    /** Set clicked state for hide action */
+    setClickedHide = (value: boolean): void => {
+        this.clicked = { ...this.clicked, hide: value };
     };
 
     setIsManualInputActive = (isActive: boolean): void => {
@@ -87,78 +166,203 @@ export class AiResponsesService {
         this.useWebSearch = useWebSearch;
     }
 
+    setTriggerAiState(newState: TriggerAiState | null) {
+        this.triggerAiState = newState;
+    }
+
+    updateConversation(updater: (conv: AiConversation) => void) {
+        updater(this.conversation);
+    }
+
     public async triggerAi({
         shouldCaptureScreenshot,
         manualInput,
         displayInput,
         useWebSearch,
-        metadata,
     }: TriggerAiOptions) {
-        const abortController = new AbortController();
+        // Abort any previous request
+        this.abortController?.abort();
+        const controller = new AbortController();
+        this.abortController = controller;
+
         try {
-            this.setTriggerAiState({ abortController, step: 'capturing-screenshot' });
+            // Set trigger state for UI feedback
+            runInAction(() => {
+                this.setTriggerAiState({
+                    displayInput: displayInput ?? null,
+                    hasScreenshot: shouldCaptureScreenshot,
+                    screenshot: null,
+                });
+            });
 
-            const getScreenshot = shouldCaptureScreenshot ? captureScreenshot : async () => null;
+            // Capture screenshot if needed
+            const screenshot = shouldCaptureScreenshot
+                ? await captureScreenshotWithRetry()
+                : null;
 
-            const [screenshot] = await Promise.all([
-                getScreenshot().then(result => {
-                    if (!abortController.signal.aborted) {
-                        this.setTriggerAiState({ abortController, step: 'committing-transcriptions' });
+            if (controller.signal.aborted) return;
+
+            // Commit any pending transcriptions
+            await this.contextService.commitTranscriptions();
+
+            if (controller.signal.aborted) return;
+
+            // Create the pending response
+            const responseId = uuidv7();
+            runInAction(() => {
+                this.conversation.pendingResponse = {
+                    state: "streaming",
+                    id: responseId,
+                    text: "",
+                    hasScreenshot: !!screenshot,
+                    screenshot: screenshot?.url ?? null,
+                    reasoningSteps: [],
+                    displayInput: displayInput ?? null,
+                };
+                this.triggerAiState = null;
+            });
+
+            // Build messages for AI
+            const messages = this.buildMessages(manualInput, screenshot);
+
+            // Stream the response
+            await this.streamResponse(controller, messages, displayInput ?? null, useWebSearch);
+
+        } catch (error) {
+            if (controller.signal.aborted) return;
+
+            console.error('Error triggering AI response:', error);
+
+            runInAction(() => {
+                const isNetworkError = error instanceof Error &&
+                    (error.message.includes('fetch') || error.message.includes('network'));
+
+                this.conversation.pendingResponse = {
+                    state: "error",
+                    reason: isNetworkError ? "network" : "unknown",
+                    userFacingMessage: error instanceof Error ? error.message : 'Unknown error',
+                    displayInput: displayInput ?? null,
+                };
+            });
+        } finally {
+            if (!controller.signal.aborted) {
+                runInAction(() => {
+                    this.triggerAiState = null;
+                });
+            }
+        }
+    }
+
+    private buildMessages(manualInput: string | null | undefined, screenshot: any | null): any[] {
+        // Get existing conversation history
+        const historyMessages = this.conversation.responses.flatMap(response => [
+            ...response.input.messages,
+            { role: 'assistant', content: response.text },
+        ]);
+
+        // Build user message content parts
+        const contentParts: any[] = [];
+
+        // Add audio context if available
+        const audioContext = this.contextService.fullContext.audioContextAsText;
+        if (audioContext) {
+            contentParts.push({ type: 'text', text: audioContext });
+        }
+
+        // Add manual input
+        if (manualInput) {
+            contentParts.push({ type: 'text', text: manualInput });
+        }
+
+        // Add screenshot if available
+        if (screenshot) {
+            contentParts.push({
+                type: 'image',
+                image: screenshot.url,
+            });
+        }
+
+        // If no content, add a default prompt
+        if (contentParts.length === 0) {
+            contentParts.push({ type: 'text', text: 'Please assist me.' });
+        }
+
+        const userMessage = {
+            role: 'user',
+            content: contentParts,
+        };
+
+        return [...historyMessages, userMessage];
+    }
+
+    private async streamResponse(
+        controller: AbortController,
+        messages: any[],
+        displayInput: string | null,
+        useWebSearch?: boolean,
+    ): Promise<void> {
+        try {
+            const { textStream, finishPromise } = await aiApiService.streamResponse({
+                messages,
+                abortSignal: controller.signal,
+                useSearchGrounding: useWebSearch,
+            });
+
+            let fullText = "";
+
+            // Stream text deltas
+            for await (const delta of textStream) {
+                if (controller.signal.aborted) return;
+
+                fullText += delta;
+
+                runInAction(() => {
+                    if (this.conversation.pendingResponse?.state === "streaming") {
+                        this.conversation.pendingResponse.text = fullText;
                     }
-                    return result;
-                }),
-                this.contextService.commitTranscriptions(),
-            ]);
+                });
+            }
 
-            if (abortController.signal.aborted) return;
+            // Wait for finish
+            const result = await finishPromise;
 
-            const requestedEmailDraft = !!(manualInput && /\b(email|mail)\b/i.test(manualInput) && /\b(send|draft)\b/i.test(manualInput));
+            if (controller.signal.aborted) return;
 
-            this.createNewResponse({
-                fullContext: this.contextService.fullContext,
-                screenshot,
-                manualInput: manualInput ?? null,
-                displayInput: displayInput ?? null,
-                useWebSearch,
-                metadata: {
-                    ...metadata,
-                    openDraftEmail: (draft: { to: string; subject: string; body: string }) => {
-                        this.draftEmailHandler?.(draft);
-                    },
-                    requestedEmailDraft,
-                },
+            // Move pending to completed
+            runInAction(() => {
+                const pending = this.conversation.pendingResponse;
+                if (pending?.state === "streaming") {
+                    const newResponse: ConversationResponse = {
+                        id: pending.id,
+                        text: fullText,
+                        input: {
+                            messages,
+                            displayInput,
+                        },
+                        response: [{ role: 'assistant', content: result.text }],
+                    };
+
+                    this.conversation.responses.push(newResponse);
+                    this.conversation.pendingResponse = null;
+                }
             });
 
         } catch (error) {
-            console.error('"Error triggering AI response:', error);
-        } finally {
-            if (!abortController.signal.aborted) {
-                this.setTriggerAiState(null);
-            }
-        }
-    };
+            if (controller.signal.aborted) return;
 
-    setTriggerAiState(newState: TriggerAiState | null) {
-        if (this.triggerAiState && this.triggerAiState.abortController !== newState?.abortController) {
-            this.triggerAiState.abortController.abort();
-        }
-        this.triggerAiState = newState;
-    };
+            console.error('Streaming error:', error);
 
-    createNewResponse(options: {
-        fullContext: any;
-        screenshot: any | null;
-        manualInput: string | null;
-        displayInput: string | null;
-        useWebSearch?: boolean;
-        metadata?: Record<string, any>;
-    }) {
-        if (this.currentConversation) {
-            this.currentConversation.createNewResponse(options);
-        } else {
-            this.currentConversation = new AiConversation(this.contextService, options);
+            runInAction(() => {
+                const isNetworkError = error instanceof Error &&
+                    (error.message.includes('fetch') || error.message.includes('network'));
+
+                this.conversation.pendingResponse = {
+                    state: "error",
+                    reason: isNetworkError ? "network" : "unknown",
+                    userFacingMessage: error instanceof Error ? error.message : 'Streaming failed',
+                    displayInput,
+                };
+            });
         }
-        this.isManualInputActive = false;
     }
-
-} 
+}

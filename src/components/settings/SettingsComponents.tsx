@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { HeadlessButton } from "../ui/HeadlessButton";
 import { observer } from "mobx-react-lite";
-import { Shortcut } from "../ui/Shortcut";
+import { kit } from "@/components/kit";
 
 export function SettingsSection({
     title,
@@ -72,16 +72,16 @@ export const ShortcutsList = observer(({ className }: { className?: string }) =>
     return (
         <div className={cn("divide-y divide-white/20 justify-center", className)}>
             <ShortcutItem title="Show / Hide" description={`Toggle visibility of AssistX`}>
-                <Shortcut large accelerator={SHORTCUT_SHOW_HIDE} />
+                <kit.Shortcut large accelerator={SHORTCUT_SHOW_HIDE} />
             </ShortcutItem>
             <ShortcutItem title="Ask" description={`Ask AssistX about your screen or audio`}>
-                <Shortcut large accelerator="CommandOrControl+Enter" />
+                <kit.Shortcut large accelerator="CommandOrControl+Enter" />
             </ShortcutItem>
             <ShortcutItem title="Scroll Response" description="Scroll through the AI's response">
-                <Shortcut large accelerator="CommandOrControl+Up/Down" />
+                <kit.Shortcut large accelerator="CommandOrControl+Up/Down" />
             </ShortcutItem>
             <ShortcutItem title="Clear" description={`Clear the current conversation with AssistX`}>
-                <Shortcut large accelerator="CommandOrControl+R" />
+                <kit.Shortcut large accelerator="CommandOrControl+R" />
             </ShortcutItem>
         </div>
     )

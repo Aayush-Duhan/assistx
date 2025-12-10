@@ -1,15 +1,14 @@
 import { observer } from "mobx-react-lite";
 import { ShortcutsList, SettingsSection, SettingsButton } from "./SettingsComponents";
-import { send } from "@/services/electron";
-import { useInvisibility } from "@/hooks/useInvisibility";
-import { APP_NAME, APP_VERSION } from "@/lib/constants";
-import { IS_DEV } from "@/lib/constants";
+import { sendToIpcMain } from "@/services/electron";
+import { useIsInvisible } from "@/hooks/useInvisibility";
+import { APP_NAME, APP_VERSION, IS_DEV } from "@/shared/constants";
 export const SettingPage = observer(() => {
-    const { isInvisible, toggleInvisibility } = useInvisibility();
+    const isInvisible = useIsInvisible();
 
     return (
         <>
-            <div className="p-8 space-y-6 h-full overflow-x-auto scrollbar scrollbar-thumb-stone-300 scrollbar-track-stone-100">
+            <div className="p-8 h-full overflow-x-auto scrollbar scrollbar-thumb-stone-300 scrollbar-track-stone-100">
                 <SettingsSection
                     title="Keyboard shortcuts"
                     description={`${APP_NAME} works with these easy to remember commands.`}
@@ -19,7 +18,7 @@ export const SettingPage = observer(() => {
                 <SettingsSection
                     title="Invisibility"
                     description={`${APP_NAME} is currently ${isInvisible ? 'invisible' : 'visible'} to others when sharing your screen. Changing this setting will restart ${APP_NAME}.`}
-                    rightContent={<SettingsButton onClick={toggleInvisibility}>{isInvisible ? 'Make visible' : 'Make invisible'}</SettingsButton>}
+                    rightContent={<SettingsButton onClick={() => sendToIpcMain('toggle-invisible', null)}>{isInvisible ? 'Make visible' : 'Make invisible'}</SettingsButton>}
                     dark
                 />
                 <SettingsSection
@@ -30,12 +29,12 @@ export const SettingPage = observer(() => {
                 />
                 <div className="flex justify-center gap-4">
                     <SettingsButton
-                        onClick={() => send('reset-onboarding', null)}
+                        onClick={() => sendToIpcMain('reset-onboarding', null)}
                     >
                         Reset onboarding
                     </SettingsButton>
                     <SettingsButton
-                        onClick={() => send('quit-app', null)}
+                        onClick={() => sendToIpcMain('quit-app', null)}
                     >
                         Quit {APP_NAME}
                     </SettingsButton>

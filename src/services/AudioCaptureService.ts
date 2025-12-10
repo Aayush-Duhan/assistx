@@ -10,7 +10,7 @@ const AUDIO_WORKLET_LOAD_DELAY_MS = 100; // A small delay to ensure the worklet 
 
 // A list of common names for system audio loopback devices on Windows.
 const WINDOWS_SYSTEM_AUDIO_DEVICE_NAMES = [
-    "System Audio", "Stereo Mix", "What U Hear", "Wave Out", 
+    "System Audio", "Stereo Mix", "What U Hear", "Wave Out",
     "CABLE Output", "VoiceMeeter", "BlackHole", "Soundflower", "WASAPI Loopback"
 ];
 
@@ -118,21 +118,21 @@ export class AudioCaptureService extends Subscribable {
         return () => this.dataListeners.delete(callback);
     }
 
-    dispose(): void { 
-        this.stop(); 
+    dispose(): void {
+        this.stop();
     }
 
-    start(): void { 
-        this.startAsync(); 
+    start(): void {
+        this.startAsync();
     }
 
-    stop(): void { 
-        this.setState({ state: 'not-running' }); 
+    stop(): void {
+        this.setState({ state: 'not-running' });
     }
 
-    restart(): void { 
-        this.stop(); 
-        this.start(); 
+    restart(): void {
+        this.stop();
+        this.start();
     }
 
     pause(): void {
@@ -175,7 +175,7 @@ export class AudioCaptureService extends Subscribable {
 
         const loadingAbortController = new AbortController();
         this.setState({ state: 'loading', abortController: loadingAbortController });
-        
+
         await new Promise(resolve => setTimeout(resolve, 0)); // Yield to event loop
         if (loadingAbortController.signal.aborted) return;
 
@@ -191,10 +191,10 @@ export class AudioCaptureService extends Subscribable {
                 this.detachStream(metadata);
                 throw new Error("Aborted");
             }
-            this.setState({ 
-                state: 'running', 
-                stream, 
-                metadata, 
+            this.setState({
+                state: 'running',
+                stream,
+                metadata,
                 abortController: runningAbortController,
                 paused: false
             });
@@ -202,11 +202,11 @@ export class AudioCaptureService extends Subscribable {
             runningAbortController.abort();
             if (stream) stream.getTracks().forEach(track => track.stop());
             if (loadingAbortController.signal.aborted) return;
-            
+
             console.error(`Error starting media capture for source "${this.source}":`, error);
-            this.setState({ 
-                state: 'error', 
-                error: error instanceof PermissionDeniedError ? 'permission' : 'unknown' 
+            this.setState({
+                state: 'error',
+                error: error instanceof PermissionDeniedError ? 'permission' : 'unknown'
             });
         }
     }
@@ -305,7 +305,7 @@ export class AudioCaptureService extends Subscribable {
 
             const cleanUpNativeMacRecorder = () => {
                 if (window.electron?.ipcRenderer) {
-                    window.electron.ipcRenderer.removeListener('mac-native-recorder-data', macRecorderHandler);
+                    (window.electron.ipcRenderer as any).removeListener('mac-native-recorder-data', macRecorderHandler);
                     window.electron.ipcRenderer.send('mac-set-native-recorder-enabled', { enabled: false });
                 }
             };
@@ -319,7 +319,7 @@ export class AudioCaptureService extends Subscribable {
         workletNode.port.onmessage = (event) => {
             if (signal.aborted) return;
             const pcm16Array = event.data as Int16Array;
-            const pcm16Base64 = bufferToBase64(pcm16Array.buffer);
+            const pcm16Base64 = bufferToBase64(pcm16Array.buffer as ArrayBuffer);
             for (const listener of this.dataListeners) {
                 listener({ pcm16Base64 });
             }
@@ -347,8 +347,8 @@ export class AudioCaptureService extends Subscribable {
 
     async getWindowsSystemAudioDevice(): Promise<MediaDeviceInfo | null> {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        return devices.find(d => 
-            d.kind === 'audioinput' && 
+        return devices.find(d =>
+            d.kind === 'audioinput' &&
             WINDOWS_SYSTEM_AUDIO_DEVICE_NAMES.some(name => d.label.includes(name))
         ) ?? null;
     }

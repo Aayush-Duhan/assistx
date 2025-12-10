@@ -27,7 +27,7 @@ export async function saveMcpClientAction(server: McpServerInsert) {
     throw new Error("Not allowed to add MCP servers");
   }
 
-  const nameSchema = z.string().regex(/^[a-zA-Z0-9\-]+$/, {
+  const nameSchema = z.string().regex(/^[a-zA-Z0-9]+$/, {
     message:
       "Name must contain only alphanumeric characters (A-Z, a-z, 0-9) and hyphens (-)",
   });
@@ -71,6 +71,20 @@ export async function authorizeMcpClientAction(id: string) {
     throw new Error("Authorization URL not available");
   }
   return client.client.getAuthorizationUrl()?.toString();
+}
+
+export async function toggleMcpClientConnectionAction(id: string, status: "connected" | "disconnected" | "loading" | "authorizing") {
+  const entry = await mcpClientsManager.getClient(id);
+  if (!entry) {
+    throw new Error(`Client ${id} not found`);
+  }
+
+  const client = entry.client;
+  if (status === "connected" || status === "authorizing" || status === "loading") {
+    await client.disconnect();
+  } else {
+    await client.connect();
+  }
 }
 
 export async function checkTokenMcpClientAction(id: string) {

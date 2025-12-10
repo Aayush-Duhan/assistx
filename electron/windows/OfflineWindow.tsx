@@ -1,0 +1,33 @@
+import { CenteredWindow } from './CenteredWindow';
+import { Display } from 'electron';
+import { isDev } from '../utils/platform';
+
+/**
+ * Offline window shown when network is unavailable
+ */
+export class OfflineWindow extends CenteredWindow {
+    constructor(display: Display) {
+        const options: Electron.BrowserWindowConstructorOptions = {
+            frame: false,
+            resizable: false,
+            maximizable: false,
+            fullscreenable: false,
+            minimizable: false,
+        };
+
+        super(options, {
+            initialDisplay: display,
+            skipTaskbar: () => false,
+            width: 600,
+            height: 450,
+        });
+    }
+
+    async loadUrl(): Promise<void> {
+        if (isDev && process.env.ELECTRON_RENDERER_URL) {
+            this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL}/offline.html`);
+            return;
+        }
+        this.window.loadURL("app://renderer/offline.html");
+    }
+}
