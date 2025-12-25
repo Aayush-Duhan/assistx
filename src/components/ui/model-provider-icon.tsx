@@ -20,7 +20,7 @@ export function ModelProviderIcon({
     <GeminiIcon className={className} />
   ) : provider === "groq" ? (
     <GroqIcon className={className} />
-  ) : provider === "openRouter" ? (
+  ) : provider === "openRouter" || provider === "openrouter" ? (
     <OpenRouterIcon className={className} />
   ) : (
     <BlendIcon className={className} />

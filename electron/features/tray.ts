@@ -112,7 +112,7 @@ export class TrayManager {
                 }
             ]);
         } else {
-            // User is logged in but NOT in a session
+            // User is NOT in a session
             return Menu.buildFromTemplate([
                 {
                     label: 'Start Listening',
