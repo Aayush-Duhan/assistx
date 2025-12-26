@@ -5,7 +5,6 @@ import GeneralPage from "./pages/main/generalPage";
 import KeybindingsPage from "./pages/main/keyBindingsPage";
 import ApiKeysPage from "./pages/features/apiKeysPage";
 import ModelsPage from "./pages/features/modelsPage";
-import KeyBindingsPage from "./pages/main/keyBindingsPage";
 
 export default function Dashboard() {
     const [activePage, setActivePage] = useState("general");
@@ -16,7 +15,6 @@ export default function Dashboard() {
             case "keybindings": return <KeybindingsPage />;
             case "apikeys": return <ApiKeysPage />;
             case "models": return <ModelsPage />;
-            case "keybindings": return <KeyBindingsPage />;
             // ... other cases
             default: return <GeneralPage />;
         }
