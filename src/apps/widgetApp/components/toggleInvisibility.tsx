@@ -1,4 +1,4 @@
-import { IconEyeOpen, IconEyeSlash2 } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { IoEye, IoEyeOff } from "react-icons/io5";
 import { updateState, useSharedState } from "@/shared";
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
@@ -13,8 +13,8 @@ export default function ToggleInvisibility() {
 
   const ref = useRef<HTMLDivElement>(null);
 
-  const CurrentIcon = undetectabilityEnabled ? IconEyeSlash2 : IconEyeOpen;
-  const OppositeIcon = undetectabilityEnabled ? IconEyeOpen : IconEyeSlash2;
+  const CurrentIcon = undetectabilityEnabled ? IoEyeOff : IoEye;
+  const OppositeIcon = undetectabilityEnabled ? IoEye : IoEyeOff;
 
   return (
     <motion.div

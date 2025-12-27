@@ -1,11 +1,5 @@
-import {
-    IconArrowCornerDownLeft,
-    IconChevronDownMedium,
-    IconCrossLarge,
-    IconDotGrid2x3,
-    IconPause,
-    IconStop,
-} from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { LuCornerDownLeft, LuX, LuGripVertical } from "react-icons/lu";
+import { FaChevronDown, FaPause, FaStop } from "react-icons/fa6";
 import type { HTMLAttributes, InputHTMLAttributes, PropsWithChildren } from "react";
 import { useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
@@ -168,7 +162,7 @@ export function ChatInput({
                 <div className="inline-flex gap-1 mx-1 -translate-y-px items-center">
                     <Kbd>{IS_MAC ? <Command /> : "Ctrl"}</Kbd>
                     <Kbd>
-                        <IconArrowCornerDownLeft />
+                        <LuCornerDownLeft />
                     </Kbd>
                 </div>
                 to start typing
@@ -182,7 +176,7 @@ export function ChatInput({
                 Ask about your screen or conversation, or
                 <div className="inline-flex items-center gap-1 mx-1 -translate-y-px">
                     <Kbd>
-                        <IconArrowCornerDownLeft />
+                        <LuCornerDownLeft />
                     </Kbd>
                 </div>
                 for Assist
@@ -209,24 +203,24 @@ export function CommandBar() {
             <div className="shadow-pane p-1.5 gap-1 flex items-center bg-surface-opaque rounded-full">
                 <div className="shadow-pane-action cursor-pointer flex gap-2 items-center border-[0.5px] border-[#9B9B9B]/40 bg-surface-action py-1.5 pl-2 pr-1 rounded-full text-xs w-fit text-white">
                     AssistX for Sales
-                    <IconChevronDownMedium className="size-4 opacity-50 shrink-0" />
+                    <FaChevronDown className="size-4 opacity-50 shrink-0" />
                 </div>
                 <div className="flex items-center rounded-full w-fit">
                     <div className="size-7 group flex justify-center items-center rounded-l-full secondary-button p-[7px] pl-[10px]">
-                        <IconPause className="size-full text-white group-hover:scale-[115%] origin-[25%_50%] transition-transform duration-150 ease-out" />
+                        <FaPause className="size-full text-white group-hover:scale-[115%] origin-[25%_50%] transition-transform duration-150 ease-out" />
                     </div>
                     <div className="h-[26px] w-[1px] bg-white/[0.17]" />
                     <div className="size-7 group flex justify-center items-center rounded-r-full secondary-button p-[7px] pr-[10px]">
-                        <IconStop className="size-full text-white group-hover:scale-[115%] origin-[75%_50%] transition-transform duration-150 ease-out" />
+                        <FaStop className="size-full text-white group-hover:scale-[115%] origin-[75%_50%] transition-transform duration-150 ease-out" />
                     </div>
                 </div>
                 <div className="h-7 w-[1px] bg-white/[0.17] ml-1.5" />
                 <div className="size-7 cursor-pointer flex items-center justify-center">
-                    <IconDotGrid2x3 className="size-5 text-white" />
+                    <LuGripVertical className="size-5 text-white" />
                 </div>
             </div>
             <div className="bg-surface-opaque rounded-full shadow-pane-action size-6 p-1.5">
-                <IconCrossLarge className="size-full text-white" />
+                <LuX className="size-full text-white" />
             </div>
         </div>
     );

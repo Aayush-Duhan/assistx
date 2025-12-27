@@ -2,7 +2,8 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { IS_MAC } from './constants';
 import { ReactNode } from 'react';
-import { IconCmd, IconArrowCornerDownLeft, IconArrowLeft, IconArrowRight, IconArrowDown, IconArrowUp } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { FiCommand, FiCornerDownLeft } from "react-icons/fi";
+import { FaArrowRight, FaArrowLeft, FaArrowDown, FaArrowUp } from "react-icons/fa6";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -55,13 +56,13 @@ export function electronAcceleratorToLabels(accelerator: string) {
 
 const ELECTRON_ACCELERATOR_PART_TO_LABEL: Record<string, ReactNode> = {
   Control: "Ctrl",
-  CommandOrControl: IS_MAC ? <IconCmd /> : "^",
+  CommandOrControl: IS_MAC ? <FiCommand /> : "^",
   Shift: "⇧",
-  Enter: <IconArrowCornerDownLeft />,
-  Left: <IconArrowLeft />,
-  Right: <IconArrowRight />,
-  Down: <IconArrowDown />,
-  Up: <IconArrowUp />,
+  Enter: <FiCornerDownLeft />,
+  Left: <FaArrowLeft />,
+  Right: <FaArrowRight />,
+  Down: <FaArrowDown />,
+  Up: <FaArrowUp />,
   Capslock: "Caps Lock",
   Scrolllock: "Scroll Lock",
   Numlock: "Num Lock",

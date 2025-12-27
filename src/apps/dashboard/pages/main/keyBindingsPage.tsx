@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, RotateCcw, Keyboard, X, AlertTriangle, Info, Edit2 } from 'lucide-react';
+import { LuSearch, LuRotateCcw, LuX, LuInfo, LuKeyboard } from 'react-icons/lu';
+import { GoAlert } from "react-icons/go";
+import { FiEdit } from "react-icons/fi";
 import { cn } from '@/lib/utils';
 import { useSharedState, updateState } from '@/shared/shared';
 import { keyboardEventToAccelerator, formatAcceleratorForDisplay } from '@/lib/accelerator';
@@ -173,14 +175,14 @@ const KeybindingsPage = () => {
                     onClick={resetAllToDefault}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800 border border-zinc-700/50 transition-all duration-150"
                 >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <LuRotateCcw className="w-3.5 h-3.5" />
                     Reset All
                 </button>
             </div>
 
             {/* Search Bar */}
             <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <LuSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                 <input
                     type="text"
                     value={searchQuery}
@@ -236,7 +238,7 @@ const KeybindingsPage = () => {
                                                 className="p-1.5 rounded-lg text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-150"
                                                 title="Edit keybinding"
                                             >
-                                                <Edit2 className="w-3.5 h-3.5" />
+                                                <FiEdit className="w-3.5 h-3.5" />
                                             </button>
 
                                             {/* Reset Button */}
@@ -246,7 +248,7 @@ const KeybindingsPage = () => {
                                                     className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all duration-150"
                                                     title="Reset to default"
                                                 >
-                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    <LuRotateCcw className="w-3.5 h-3.5" />
                                                 </button>
                                             )}
 
@@ -303,13 +305,13 @@ const KeybindingsPage = () => {
                                 onClick={cancelRecording}
                                 className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all duration-150"
                             >
-                                <X className="w-5 h-5" />
+                                <LuX className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Recording Display */}
                         <div className="flex flex-col items-center py-8">
-                            <Keyboard className="w-12 h-12 text-zinc-600 mb-4" />
+                            <LuKeyboard className="w-12 h-12 text-zinc-600 mb-4" />
                             <div className={cn(
                                 "text-2xl font-mono font-medium mb-2 min-h-[36px]",
                                 recordedAccelerator ? "text-zinc-100" : "text-zinc-600"
@@ -330,9 +332,9 @@ const KeybindingsPage = () => {
                                     : "bg-amber-500/10 border border-amber-500/20"
                             )}>
                                 {conflictKey ? (
-                                    <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                    <GoAlert className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                                 ) : (
-                                    <Info className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                                    <LuInfo className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                                 )}
                                 <p className={cn(
                                     "text-xs",

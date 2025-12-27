@@ -1,4 +1,4 @@
-import { Check, Copy } from "lucide-react";
+import { LuCheck, LuCopy } from "react-icons/lu";
 import { observer } from "mobx-react-lite";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -54,7 +54,7 @@ export const CopyAll = observer(function CopyAll() {
             animate={didCopy ? "hidden" : "visible"}
             className="inline-block"
           >
-            <Copy className="size-3 inline-block mr-1" />
+            <LuCopy className="size-3 inline-block mr-1" />
             Copy All
           </motion.span>
           {didCopy && (
@@ -66,7 +66,7 @@ export const CopyAll = observer(function CopyAll() {
               transition={{ duration: 0.1, ease: "easeOut" }}
               className="pointer-events-none absolute left-1/2 top-1/2"
             >
-              <Check className="size-4" />
+              <LuCheck className="size-4" />
             </motion.div>
           )}
         </AnimatePresence>

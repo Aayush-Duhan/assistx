@@ -1,9 +1,7 @@
-import {
-  IconChevronRight,
-  IconPaperPlaneTopRight,
-  IconSearchIntelligence,
-  IconSearchMenu,
-} from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { RiMenuSearchLine } from "react-icons/ri";
+import { FaChevronRight } from "react-icons/fa6";
+import { PiPaperPlaneTiltFill } from "react-icons/pi";
+import { LuUserSearch } from "react-icons/lu";
 import { updateState, useSharedState } from "@/shared/shared";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -106,7 +104,7 @@ export default function Hide() {
                 "Use the shortcut to continue"
               ) : (
                 <>
-                  Complete <IconChevronRight className="size-3" />
+                  Complete <FaChevronRight className="size-3" />
                 </>
               )}
             </OnboardingButton>
@@ -127,7 +125,7 @@ export default function Hide() {
           }}
         >
           Skip
-          <IconChevronRight className="size-3" />
+          <FaChevronRight className="size-3" />
         </OnboardingButton>
       </OnboardingForm>
       <OnboardingDemo className="px-4 overflow-hidden justify-around relative">
@@ -159,7 +157,7 @@ export default function Hide() {
                 <UserMessage>Is it secure? We handle pretty sensitive info.</UserMessage>
                 <div className="flex flex-col gap-1">
                   <ToolCall>
-                    <IconSearchMenu />
+                    <RiMenuSearchLine />
                     Searched records
                   </ToolCall>
                   <AssistantMessage>
@@ -171,11 +169,11 @@ export default function Hide() {
               <div className="flex flex-col h-fit gap-2">
                 <StaticActions className="opacity-40">
                   <StaticAction>
-                    <IconPaperPlaneTopRight className="!size-3" />
+                    <PiPaperPlaneTiltFill className="!size-3" />
                     Send recap email
                   </StaticAction>
                   <StaticAction>
-                    <IconSearchIntelligence />
+                    <LuUserSearch className="!size-3" />
                     Research meeting participants
                   </StaticAction>
                 </StaticActions>

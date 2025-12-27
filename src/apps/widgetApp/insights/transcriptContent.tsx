@@ -1,6 +1,6 @@
 import { sendToIpcMain } from "@/shared";
 import { motion } from "framer-motion";
-import { ChevronRight, Mic } from "lucide-react";
+import { LuChevronRight, LuMic } from "react-icons/lu";
 import { useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { didSelectText } from "../chat/conversationContent";
@@ -69,8 +69,8 @@ export function TranscriptContent({ mode }: { mode: "chat" | "transcript" }) {
           }}
           className="flex items-center gap-1 cursor-pointer transition-colors text-muted-foreground hover:text-primary-foreground"
         >
-          <Mic className="size-4 inline-block" /> <span className="text-xs">{micDeviceName}</span>
-          <ChevronRight className="size-4 inline-block" />
+          <LuMic className="size-4 inline-block" /> <span className="text-xs">{micDeviceName}</span>
+          <LuChevronRight className="size-4 inline-block" />
         </kit.HeadlessButton>
         <p className="text-shade-11">Start speaking to see real-time transcriptions...</p>
       </div>

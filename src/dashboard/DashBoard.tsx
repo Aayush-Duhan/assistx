@@ -9,7 +9,7 @@ import { useCallback, useState } from "react";
 import { activeAppAtom } from "./atoms";
 import { ElectronDragWrapper } from "../components/electronDragWrapper";
 import { IS_MAC } from "@/shared/constants";
-import { Search } from "lucide-react";
+import { LuSearch } from "react-icons/lu";
 
 
 export const Dashboard = observer(() => {
@@ -27,7 +27,7 @@ export const Dashboard = observer(() => {
                         type="button"
                         className="opacity-60 hover:opacity-100 outline-none bg-zinc-200 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 relative cursor-pointer select-none flex items-center w-md justify-center font-medium duration-150 transition-[colors, opacity] gap-x-1.5 py-1.5 px-1.5 rounded-lg pl-4 pr-6"
                     >
-                        <Search className="size-3" />
+                        <LuSearch className="size-3" />
                         <span className="text-xs truncate max-w-[75%]">Search or ask anything...</span>
                     </button>
                 </div>

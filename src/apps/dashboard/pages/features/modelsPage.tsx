@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, X, Check, ChevronDown } from 'lucide-react';
+import { LuPlus, LuTrash2, LuX, LuCheck, LuChevronDown } from 'react-icons/lu';
+import { FiEdit } from "react-icons/fi";
 import { cn } from '@/lib/utils';
 import { ModelProviderIcon } from '@/components/ui/model-provider-icon';
 
@@ -150,7 +151,7 @@ const ModelsPage = () => {
                         onClick={() => setIsAddingModel(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-all duration-150"
                     >
-                        <Plus className="w-3.5 h-3.5" />
+                        <LuPlus className="w-3.5 h-3.5" />
                         Add Custom Model
                     </button>
                 )}
@@ -175,7 +176,7 @@ const ModelsPage = () => {
                                 onClick={resetForm}
                                 className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all duration-150"
                             >
-                                <X className="w-5 h-5" />
+                                <LuX className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -210,7 +211,7 @@ const ModelsPage = () => {
                                         <span>{getProviderName(formProvider)}</span>
                                     </div>
                                     {!addingToProvider && (
-                                        <ChevronDown className={cn("w-4 h-4 text-zinc-500 transition-transform", showProviderDropdown && "rotate-180")} />
+                                        <LuChevronDown className={cn("w-4 h-4 text-zinc-500 transition-transform", showProviderDropdown && "rotate-180")} />
                                     )}
                                 </button>
                                 {showProviderDropdown && !addingToProvider && (
@@ -230,7 +231,7 @@ const ModelsPage = () => {
                                                 <ModelProviderIcon provider={provider.id} className="w-4 h-4" />
                                                 <span className="text-zinc-300">{provider.name}</span>
                                                 {formProvider === provider.id && (
-                                                    <Check className="w-4 h-4 ml-auto text-emerald-400" />
+                                                    <LuCheck className="w-4 h-4 ml-auto text-emerald-400" />
                                                 )}
                                             </button>
                                         ))}
@@ -268,7 +269,7 @@ const ModelsPage = () => {
                                         : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
                                 )}
                             >
-                                <Check className="w-4 h-4" />
+                                <LuCheck className="w-4 h-4" />
                                 {editingModelId ? 'Update' : 'Add Model'}
                             </button>
                         </div>
@@ -347,14 +348,14 @@ const ModelsPage = () => {
                                                 className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 transition-all"
                                                 title="Edit model"
                                             >
-                                                <Edit2 className="w-3 h-3" />
+                                                <FiEdit className="w-3 h-3" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteModel(model.id)}
                                                 className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/20 transition-all"
                                                 title="Delete model"
                                             >
-                                                <Trash2 className="w-3 h-3" />
+                                                <LuTrash2 className="w-3 h-3" />
                                             </button>
                                         </div>
                                     </div>
@@ -367,7 +368,7 @@ const ModelsPage = () => {
                                     onClick={() => startAddingToProvider(providerId)}
                                     className="mt-3 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-zinc-500 hover:text-zinc-400 bg-zinc-800/20 hover:bg-zinc-800/40 border border-dashed border-zinc-700/30 hover:border-zinc-600/50 transition-all duration-150"
                                 >
-                                    <Plus className="w-3 h-3" />
+                                    <LuPlus className="w-3 h-3" />
                                     Add custom model
                                 </button>
                             )}

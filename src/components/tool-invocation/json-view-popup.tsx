@@ -1,6 +1,6 @@
 import { useCopy } from "@/hooks/use-copy";
 import { cn, isString } from "@/lib/utils";
-import { Check, Copy } from "lucide-react";
+import { LuCheck, LuCopy } from "react-icons/lu";
 import { ReactNode } from "react";
 import { Button } from "ui/button";
 import {
@@ -49,7 +49,7 @@ export function JsonViewPopup({
             className={cn("size-3! p-4! ml-auto")}
             onClick={() => copy(isString(data) ? data : JSON.stringify(data))}
           >
-            {copied ? <Check /> : <Copy />}
+            {copied ? <LuCheck /> : <LuCopy />}
           </Button>
           <JsonView data={data} />
         </div>

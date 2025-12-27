@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, Check, X, ExternalLink, ClipboardPaste } from 'lucide-react';
+import { LuEye, LuEyeOff, LuCheck, LuX, LuExternalLink, LuClipboardPaste } from 'react-icons/lu';
 import { cn } from '@/lib/utils';
 import { ModelProviderIcon } from '@/components/ui/model-provider-icon';
 
@@ -127,7 +127,7 @@ const ApiKeysPage = () => {
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all duration-150"
                                 >
-                                    <ExternalLink className="w-3 h-3" />
+                                    <LuExternalLink className="w-3 h-3" />
                                     Get key
                                 </a>
                             </div>
@@ -155,14 +155,14 @@ const ApiKeysPage = () => {
                                             className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all duration-150"
                                             title="Paste from clipboard"
                                         >
-                                            <ClipboardPaste className="w-4 h-4" />
+                                            <LuClipboardPaste className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => toggleVisibility(provider.id)}
                                             className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all duration-150"
                                             title={state.isVisible ? "Hide key" : "Show key"}
                                         >
-                                            {state.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            {state.isVisible ? <LuEyeOff className="w-4 h-4" /> : <LuEye className="w-4 h-4" />}
                                         </button>
                                     </div>
                                 </div>
@@ -178,7 +178,7 @@ const ApiKeysPage = () => {
                                             : "bg-zinc-900/50 text-zinc-600 cursor-not-allowed border border-zinc-800/50"
                                     )}
                                 >
-                                    <Check className="w-4 h-4" />
+                                    <LuCheck className="w-4 h-4" />
                                     <span>Save</span>
                                 </button>
 
@@ -189,7 +189,7 @@ const ApiKeysPage = () => {
                                         className="h-10 px-3 rounded-lg text-sm font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-150"
                                         title="Remove key"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <LuX className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>

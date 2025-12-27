@@ -1,11 +1,7 @@
-import type { CentralIconBaseProps } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
-import type { LucideProps } from "lucide-react";
-import type { FC, ForwardRefExoticComponent, RefAttributes } from "react";
+import type { IconType } from "react-icons";
 import { twMerge } from "tailwind-merge";
 
-export type StaticInsightIcon =
-  | ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>
-  | FC<CentralIconBaseProps>;
+export type StaticInsightIcon = IconType;
 
 export function StaticInsight({
   className,

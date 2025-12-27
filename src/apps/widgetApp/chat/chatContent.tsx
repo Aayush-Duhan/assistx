@@ -1,4 +1,4 @@
-import { IconHomeOpen } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { GoHomeFill } from "react-icons/go";
 import { sendToIpcMain, updateState, useSharedState } from "@/shared";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -72,7 +72,7 @@ export function ChatContent({
                                     updateState({ showDashboard: true });
                                 }}
                             >
-                                <IconHomeOpen className="text-white/60 size-5 group-hover/button:text-white drop-shadow-transparent transition-all duration-150 group-hover/button:drop-shadow-white/50 drop-shadow-sm" />
+                                <GoHomeFill className="text-white/60 size-5 group-hover/button:text-white drop-shadow-transparent transition-all duration-150 group-hover/button:drop-shadow-white/50 drop-shadow-sm" />
                             </kit.HeadlessButton>
                             {audioState.state === "on" && (
                                 <div className="flex items-center gap-2">

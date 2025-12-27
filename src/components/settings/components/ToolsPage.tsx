@@ -4,7 +4,7 @@ import { invokeIpcMain } from '@/services/electron';
 import { WindowFooter } from '@/components/ui/WindowFooter';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
-import { ChevronsUpDown, FileCog, FolderOpen, Info, Power, RefreshCw, Search, Trash2, Wrench } from 'lucide-react';
+import { LuChevronsUpDown, LuFileCog, LuFolderOpen, LuInfo, LuPower, LuRefreshCw, LuSearch, LuTrash2, LuWrench } from 'react-icons/lu';
 
 type McpClient = {
   id: string;
@@ -136,19 +136,19 @@ export function ToolsPage() {
           </div>
           <div className="px-4 py-3 border-t border-white/10 flex items-center gap-3 flex-wrap">
             <div className="text-[11px] text-white/60 truncate flex items-center gap-2">
-              <FileCog className="size-4 text-white/70" />
+              <LuFileCog className="size-4 text-white/70" />
               <span className="truncate max-w-[280px] md:max-w-[420px] lg:max-w-[640px]">{configPath}</span>
             </div>
             <div className="flex items-center gap-2 ml-auto">
-              <ToolbarButton onClick={() => void openConfig()} icon={<FileCog className="size-3.5" />}>Open config</ToolbarButton>
-              <ToolbarButton onClick={() => void revealConfig()} icon={<FolderOpen className="size-3.5" />}>Reveal</ToolbarButton>
-              <ToolbarButton onClick={() => void load()} icon={<RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />}>Reload</ToolbarButton>
+              <ToolbarButton onClick={() => void openConfig()} icon={<LuFileCog className="size-3.5" />}>Open config</ToolbarButton>
+              <ToolbarButton onClick={() => void revealConfig()} icon={<LuFolderOpen className="size-3.5" />}>Reveal</ToolbarButton>
+              <ToolbarButton onClick={() => void load()} icon={<LuRefreshCw className={cn('size-3.5', loading && 'animate-spin')} />}>Reload</ToolbarButton>
             </div>
           </div>
           <div className="px-4 pb-4">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="size-3.5 text-white/50 absolute left-2 top-1/2 -translate-y-1/2" />
+                <LuSearch className="size-3.5 text-white/50 absolute left-2 top-1/2 -translate-y-1/2" />
                 <Input
                   className="pl-7 pr-3 py-1.5 rounded-md bg-black/40 border border-white/10 focus:ring-1 focus:ring-white/20"
                   placeholder="Search servers..."
@@ -171,7 +171,7 @@ export function ToolsPage() {
                         onClick={() => handleSuggestionClick(suggestion)}
                       >
                         <div className="flex items-center gap-2">
-                          <Search className="size-3 text-white/40" />
+                          <LuSearch className="size-3 text-white/40" />
                           <span className="text-white/90">{suggestion}</span>
                         </div>
                       </button>
@@ -204,13 +204,13 @@ export function ToolsPage() {
                           className="text-white font-semibold text-sm hover:text-white/80 transition inline-flex items-center gap-1.5"
                         >
                           <span className="truncate">{c.name}</span>
-                          <ChevronsUpDown className="size-3.5 flex-shrink-0 text-white/60" />
+                          <LuChevronsUpDown className="size-3.5 flex-shrink-0 text-white/60" />
                         </button>
                       </div>
                       <div className="mt-1 flex items-center gap-3 text-white/70 text-[11px]">
                         <StatusPill status={c.status} />
                         <div className="inline-flex items-center gap-1 text-white/60">
-                          <Wrench className="size-3.5" />
+                          <LuWrench className="size-3.5" />
                           <span>{c.toolInfo.length} tools</span>
                         </div>
                         {c.error ? (
@@ -243,7 +243,7 @@ export function ToolsPage() {
                           loading && 'cursor-not-allowed opacity-60'
                         )}
                       >
-                        <Trash2 className="size-3.5" />
+                        <LuTrash2 className="size-3.5" />
                       </button>
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export function ToolsPage() {
         </div>
       </div>
       <WindowFooter className="justify-between">
-        <div className="text-[11px] text-white/60 inline-flex items-center gap-2"><Info className="size-3.5 text-white/50" /> MCP servers are auto-loaded and refreshed on changes.</div>
+        <div className="text-[11px] text-white/60 inline-flex items-center gap-2"><LuInfo className="size-3.5 text-white/50" /> MCP servers are auto-loaded and refreshed on changes.</div>
         <div />
       </WindowFooter>
     </div>
@@ -338,7 +338,7 @@ function ConnectionToggle({ status, disabled, onToggle }: { status: McpClient['s
           isConnected ? 'translate-x-5 text-green-600' : 'translate-x-1 text-slate-800'
         )}
       >
-        <Power className="size-3" />
+        <LuPower className="size-3" />
       </span>
     </button>
   );

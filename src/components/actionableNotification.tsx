@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { LuX } from "react-icons/lu";
 import { twMerge } from "tailwind-merge";
 import { Cluely } from "@/assets/icons";
 import { CaptureMouseEventsWrapper } from "./captureMouseEventsWrapper";
@@ -69,7 +69,7 @@ export function ActionableNotification({
                                 <span className="font-semibold text-xs">{title}</span>
                                 <div className="flex items-center gap-1.5 font-medium text-xs">
                                     {onDismiss && type !== "primary" && (
-                                        <X onClick={onDismiss} className="size-4 cursor-pointer" />
+                                        <LuX onClick={onDismiss} className="size-4 cursor-pointer" />
                                     )}
                                 </div>
                             </div>

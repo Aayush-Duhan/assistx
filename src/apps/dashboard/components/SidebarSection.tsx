@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { LuChevronDown } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { SidebarSectionProps } from "./types";
@@ -11,7 +11,7 @@ export function SidebarSection({ title, items, isExpanded, onToggle, activePage,
                 className="flex items-center justify-between w-full px-3 py-2 text-left hover:bg-white/5 transition-colors"
             >
                 <span className="text-xs font-medium tracking-wide text-zinc-200">{title}</span>
-                <ChevronDown
+                <LuChevronDown
                     className={cn(
                         "w-4 h-4 text-zinc-400 transition-transform duration-200",
                         !isExpanded && "-rotate-90"

@@ -1,9 +1,7 @@
-import { Popover } from "@base-ui-components/react/popover";
-import {
-    IconImages3,
-    IconThinkingBubble,
-} from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { IoImage } from "react-icons/io5";
+import { TbBubble } from "react-icons/tb";
 import { useSharedState } from "@/shared";
+import { Popover } from "@base-ui-components/react/popover";
 import type { ModelMessage } from "ai";
 import { animate } from "motion";
 import { AnimatePresence, motion, useMotionValue } from "motion/react";
@@ -297,7 +295,7 @@ const ScreenshotTool = ({ url }: { url: string | null }) => {
             <Popover.Trigger openOnHover={!windowHidden} delay={0}>
                 <div className="flex pr-2 items-center gap-1 text-[11px] font-medium text-white/40 text-shadow-[0_0_1px_2px_rgba(0,0,0,0.1)]">
                     Sent with screenshot
-                    <IconImages3 className="size-3.5 drop-shadow-[0_0_1px_2px_rgba(0,0,0,0.1)]" />
+                    <IoImage className="size-3.5 drop-shadow-[0_0_1px_2px_rgba(0,0,0,0.1)]" />
                 </div>
             </Popover.Trigger>
             <AnimatePresence>
@@ -410,7 +408,7 @@ function AssistantReasoningMessage({ response }: { response: UnifiedResponse }) 
     return (
         <div>
             <div className="text-sm text-white/60 flex items-center gap-1">
-                <IconThinkingBubble className="size-3" />
+                <TbBubble className="size-3" />
                 Thinking about your question
             </div>
             <div

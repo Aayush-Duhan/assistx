@@ -3,7 +3,7 @@ import {
   updateState,
   useIpcRendererHandler,
 } from "@/shared";
-import { Plus } from "lucide-react";
+import { LuPlus } from "react-icons/lu";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Select,
@@ -74,7 +74,7 @@ export default function ModeSelector() {
               <SelectSeparator />
               <SelectItem value="create-mode">
                 <div className="flex items-center gap-1 text-primary-foreground">
-                  <Plus className="size-3.5" />
+                  <LuPlus className="size-3.5" />
                   Create Mode
                 </div>
               </SelectItem>

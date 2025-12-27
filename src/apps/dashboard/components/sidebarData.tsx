@@ -1,17 +1,17 @@
 import {
-    Settings,
-    Keyboard,
-    History,
-    Layers,
-    ArrowRightLeft,
-    Shield,
-    Bell,
-    Wrench,
-    Bot,
-    Cable,
-    KeyRound,
-    Brain
-} from "lucide-react";
+    LuSettings,
+    LuKeyboard,
+    LuHistory,
+    LuLayers,
+    LuArrowRightLeft,
+    LuShield,
+    LuBell,
+    LuWrench,
+    LuBot,
+    LuCable,
+    LuKeyRound,
+    LuBrain
+} from "react-icons/lu";
 import { SidebarSectionData } from "./types";
 
 const ICON_SIZE = 14;
@@ -20,28 +20,28 @@ export const sidebarData: Record<string, SidebarSectionData> = {
     main: {
         title: "Main",
         items: [
-            { key: "general", label: "General", icon: <Settings size={ICON_SIZE} /> },
-            { key: "keybindings", label: "Keybindings", icon: <Keyboard size={ICON_SIZE} /> },
-            { key: "sessions", label: "Sessions", icon: <History size={ICON_SIZE} /> },
-            { key: "modes", label: "Modes", icon: <Layers size={ICON_SIZE} /> },
-            { key: "workflows", label: "Workflows", icon: <ArrowRightLeft size={ICON_SIZE} /> }
+            { key: "general", label: "General", icon: <LuSettings size={ICON_SIZE} /> },
+            { key: "keybindings", label: "Keybindings", icon: <LuKeyboard size={ICON_SIZE} /> },
+            { key: "sessions", label: "Sessions", icon: <LuHistory size={ICON_SIZE} /> },
+            { key: "modes", label: "Modes", icon: <LuLayers size={ICON_SIZE} /> },
+            { key: "workflows", label: "Workflows", icon: <LuArrowRightLeft size={ICON_SIZE} /> }
         ],
     },
     features: {
         title: "Features",
         items: [
-            { key: "apikeys", label: "API Keys", icon: <KeyRound size={ICON_SIZE} /> },
-            { key: "models", label: "Models", icon: <Brain size={ICON_SIZE} /> },
-            { key: "shield", label: "Shield", icon: <Shield size={ICON_SIZE} /> },
-            { key: "bell", label: "Bell", icon: <Bell size={ICON_SIZE} /> }
+            { key: "apikeys", label: "API Keys", icon: <LuKeyRound size={ICON_SIZE} /> },
+            { key: "models", label: "Models", icon: <LuBrain size={ICON_SIZE} /> },
+            { key: "shield", label: "Shield", icon: <LuShield size={ICON_SIZE} /> },
+            { key: "bell", label: "Bell", icon: <LuBell size={ICON_SIZE} /> }
         ],
     },
     tools: {
         title: "Tools",
         items: [
-            { key: "mcps", label: "MCPs", icon: <Cable size={ICON_SIZE} /> },
-            { key: "built-in", label: "Built-in", icon: <Wrench size={ICON_SIZE} /> },
-            { key: "agents", label: "Agents", icon: <Bot size={ICON_SIZE} /> }
+            { key: "mcps", label: "MCPs", icon: <LuCable size={ICON_SIZE} /> },
+            { key: "built-in", label: "Built-in", icon: <LuWrench size={ICON_SIZE} /> },
+            { key: "agents", label: "Agents", icon: <LuBot size={ICON_SIZE} /> }
         ],
     },
 };

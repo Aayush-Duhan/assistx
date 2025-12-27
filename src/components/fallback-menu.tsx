@@ -1,4 +1,4 @@
-import { IconSettingsGear2 } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { IoIosSettings } from "react-icons/io";
 import { sendToIpcMain } from "@/shared/ipc";
 import { useSharedState } from "@/shared/shared";
 import clsx from "clsx";
@@ -11,7 +11,8 @@ import {
     DropdownMenu,
     DropdownTitle,
 } from "@/components/catalyst/dropdown";
-import { ArrowUpCircleIcon, PowerIcon, CircleQuestionMarkIcon } from 'lucide-react'
+import { IoArrowUpCircleOutline, IoPower } from "react-icons/io5";
+import { GrCircleQuestion } from "react-icons/gr";
 import { useDarkMode } from "usehooks-ts";
 
 
@@ -21,14 +22,14 @@ export function FallbackMenu() {
     return (
         <Dropdown>
             <DropdownButton className="outline-none group p-2 cursor-pointer">
-                <IconSettingsGear2 className={`size-6 transition-colors duration-75 ${isDarkMode ? "text-white/50 group-hover:text-white/80" : "text-black/40 group-hover:text-black/80"}`} />
+                <IoIosSettings className={`size-6 transition-colors duration-75 ${isDarkMode ? "text-white/50 group-hover:text-white/80" : "text-black/40 group-hover:text-black/80"}`} />
             </DropdownButton>
             <DropdownMenu className={clsx(isDarkMode ? "dark" : "light")}>
                 <DropdownTitle>
                     {APP_NAME} v{appVersion}
                 </DropdownTitle>
                 <DropdownItem onClick={() => window.open(`https://support.cluely.com`)}>
-                    <CircleQuestionMarkIcon />
+                    <GrCircleQuestion />
                     <DropdownLabel>Help Center</DropdownLabel>
                 </DropdownItem>
                 {autoUpdateState.state === "downloaded" && (
@@ -38,12 +39,12 @@ export function FallbackMenu() {
                             sendToIpcMain("install-update", null);
                         }}
                     >
-                        <ArrowUpCircleIcon />
+                        <IoArrowUpCircleOutline />
                         <DropdownLabel>Restart to Update</DropdownLabel>
                     </DropdownItem>
                 )}
                 <DropdownItem warn onClick={() => sendToIpcMain("quit-app", null)}>
-                    <PowerIcon />
+                    <IoPower />
                     <DropdownLabel>Quit {APP_NAME}</DropdownLabel>
                 </DropdownItem>
             </DropdownMenu>

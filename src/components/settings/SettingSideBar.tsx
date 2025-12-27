@@ -4,8 +4,7 @@ import { HeadlessButton } from "../ui/HeadlessButton";
 import { observer } from "mobx-react-lite";
 import { useAtom } from "jotai";
 import { activeAppAtom } from "@/dashboard/atoms";
-import { Activity, BookOpen, ChevronRight, LaptopMinimal, Settings, Waypoints, Wrench } from "lucide-react";
-import { PanelLeftClose } from "lucide-react";
+import { LuActivity, LuBookOpen, LuChevronRight, LuLaptopMinimal, LuSettings, LuWaypoints, LuWrench, LuPanelLeftClose } from "react-icons/lu";
 
 interface SidebarItemProps {
     isActive: boolean;
@@ -46,7 +45,7 @@ const SidebarItem = observer(({ isActive, isParent = false, isNested = false, is
                         onToggleExpand?.();
                     }}
                 >
-                    <ChevronRight className={`size-3.5 shrink-0 text-white/60 transition-transform ${isExpanded ? 'rotate-90 text-white/80' : ''}`} />
+                    <LuChevronRight className={`size-3.5 shrink-0 text-white/60 transition-transform ${isExpanded ? 'rotate-90 text-white/80' : ''}`} />
                 </span>
             )}
         </HeadlessButton>
@@ -80,18 +79,18 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
                         aria-label="Collapse sidebar (coming soon)"
                         title="Collapse sidebar (coming soon)"
                     >
-                        <PanelLeftClose size={16} color="#bd470f"/>
+                        <LuPanelLeftClose size={16} color="#bd470f" />
                     </button>
                 </div>
                 <nav className="mt-3 flex-1" role="menu">
                     <div className="px-2 text-[12px] uppercase tracking-wider text-white font-semibold">General</div>
                     <div className="mt-2 space-y-1">
                         <SidebarItem isActive={activeApp === 'activity'} onClick={() => handleNav('activity')}>
-                            <Activity size={14} />
+                            <LuActivity size={14} />
                             My Activity
                         </SidebarItem>
                         <SidebarItem isActive={activeApp === 'personalize'} onClick={() => handleNav('personalize')}>
-                            <BookOpen size={14} />
+                            <LuBookOpen size={14} />
                             Personalize
                         </SidebarItem>
                     </div>
@@ -108,7 +107,7 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
                             }}
                             onToggleExpand={() => setIsSettingsExpanded((v) => !v)}
                         >
-                            <Settings size={14} />
+                            <LuSettings size={14} />
                             Settings
                         </SidebarItem>
 
@@ -123,15 +122,15 @@ export const SettingSideBar = ({ onNavToSamePage }: { onNavToSamePage: () => voi
                                     className="space-y-1 overflow-hidden"
                                 >
                                     <SidebarItem isNested isActive={activeApp === 'app'} onClick={() => handleNav('app')}>
-                                        <LaptopMinimal size={14} />
+                                        <LuLaptopMinimal size={14} />
                                         App
                                     </SidebarItem>
                                     <SidebarItem isNested isActive={activeApp === 'settings.tools'} onClick={() => handleNav('settings.tools')}>
-                                        <Wrench size={14} />
+                                        <LuWrench size={14} />
                                         Tools
                                     </SidebarItem>
                                     <SidebarItem isNested isActive={activeApp === 'settings.integrations'} onClick={() => handleNav('settings.integrations')}>
-                                        <Waypoints size={14} />
+                                        <LuWaypoints size={14} />
                                         Integrations
                                     </SidebarItem>
                                 </motion.div>

@@ -1,4 +1,4 @@
-import { ArrowDown } from "lucide-react";
+import { LuArrowDown } from "react-icons/lu";
 import {
   AnimatePresence,
   motion,
@@ -196,7 +196,7 @@ function ViewLatest({
             onClick={onViewLatest}
             className="flex backdrop-blur-md justify-center items-center size-6 text-white bg-surface-action shadow-pane-action hover:bg-surface-action-hover rounded-full"
           >
-            <ArrowDown className="size-4" />
+            <LuArrowDown className="size-4" />
           </motion.div>
         )}
       </AnimatePresence>

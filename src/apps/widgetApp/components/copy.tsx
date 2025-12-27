@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { LuCheck, LuCopy } from "react-icons/lu";
 import { useEffect, useState } from "react";
-import { CopyIcon } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { kit } from "@/components/kit";
 
@@ -50,7 +49,7 @@ export const CopyIconButton = ({
             transition={{ duration: 0.1, ease: "easeOut" }}
             key={copied ? "copied" : "copy"}
           >
-            {copied ? <Check className="size-3" /> : <CopyIcon className="size-3" />}
+            {copied ? <LuCheck className="size-3" /> : <LuCopy className="size-3" />}
           </motion.div>
         </AnimatePresence>
       </div>

@@ -1,4 +1,4 @@
-import { IconImages3 } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { IoImage } from "react-icons/io5";
 import { DEFAULT_KEYBINDINGS } from "@/shared";
 import { motion, type Transition } from "motion/react";
 import { useEffect, useState } from "react";
@@ -132,7 +132,7 @@ export function ChatInput({
                     "text-[#6EC0F2] bg-[#2377ED]/20 border-[#3C92E9]/50 group-hover/pill:text-[#6EC0F2] group-hover/pill:bg-[#2377ED]/30 group-hover/pill:border-[#3C92E9]/80",
                   )}
                 >
-                  <IconImages3 size={12} className="shrink-0 fill-current" />
+                  <IoImage size={12} className="shrink-0 fill-current" />
                   Use Screen
                 </div>
               </kit.HeadlessButton>

@@ -44,13 +44,17 @@
       ],
       "@/lib/*": [
         "src/lib/*"
+      ],
+      "@server/*": [
+        "server/src/*"
       ]
     }
   },
   "include": [
     "src",
     "electron",
-    "shared"
+    "shared",
+    "server"
   ],
   "references": [
     {

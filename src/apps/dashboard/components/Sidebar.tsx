@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PanelLeft } from "lucide-react";
+import { LuPanelLeft } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 import { SidebarSection } from "./SidebarSection";
 import { sidebarData, getAllSidebarItems } from "./sidebarData";
@@ -49,7 +49,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="p-1.5 hover:bg-zinc-800/80 rounded-md transition-colors text-zinc-400 hover:text-zinc-100"
                 >
-                    <PanelLeft className="w-5 h-5" />
+                    <LuPanelLeft className="w-5 h-5" />
                 </button>
             </div>
 

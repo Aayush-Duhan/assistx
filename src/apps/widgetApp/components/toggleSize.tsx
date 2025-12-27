@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Command } from "lucide-react";
+import { LuCommand } from "react-icons/lu";
 import { Collapse } from "@/assets/collapse";
 import { Expand } from "@/assets/expand";
 import Kbd from "@/components/catalyst/kbd";
@@ -41,7 +41,7 @@ export function ToggleSize({ setMode }: Props) {
             <span>Collapse conversation</span>
             <div className="inline-flex items-center gap-1">
               <Kbd>
-                <Command className="size-2.5" />
+                <LuCommand className="size-2.5" />
               </Kbd>
               <Kbd className="text-[10px]">R</Kbd>
             </div>

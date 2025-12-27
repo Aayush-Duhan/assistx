@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCopyToClipboard } from 'usehooks-ts';
 import { cn } from '@/lib/utils';
-import { Check, Copy, RotateCcw } from 'lucide-react';
+import { LuCheck, LuCopy, LuRotateCcw } from 'react-icons/lu';
 import { HeadlessButton } from './HeadlessButton';
 import { Tooltip } from './Tooltip';
 import { AnimatePresence } from 'framer-motion';
@@ -50,9 +50,9 @@ export function CopyButton({ content, className, showText = false, size = 'md', 
                 onMouseOut={onMouseOut}
             >
                 {justCopied ? (
-                    <Check size={size === 'lg' ? 14 : 12} />
+                    <LuCheck size={size === 'lg' ? 14 : 12} />
                 ) : (
-                    <Copy size={size === 'lg' ? 14 : 12} />
+                    <LuCopy size={size === 'lg' ? 14 : 12} />
                 )}
                 {showText && <span className="font-sans">{justCopied ? "Copied" : "Copy"}</span>}
             </HeadlessButton>
@@ -81,7 +81,7 @@ export function ResetButton({ onReset, className, size = 16, shortcut = "Ctrl+R"
                 )}
                 onClick={handleReset}
             >
-                <RotateCcw
+                <LuRotateCcw
                     size={size}
                     className={cn(
                         "transition-transform duration-200",

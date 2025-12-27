@@ -1,4 +1,4 @@
-import { IconChevronRight } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { FaChevronRight } from "react-icons/fa6";
 import { updateState, useSharedState } from "@/shared/shared";
 import { type OnboardingMode } from "@/shared/onboardingState";
 import { motion } from "motion/react";
@@ -147,7 +147,7 @@ export function ModeItem({
                     <p className={`text-sm ${isDarkMode ? "text-[#888888]" : "text-[#A3A3A5]"}`}>{description}</p>
                 </div>
             </div>
-            <IconChevronRight className={`size-4 ${isDarkMode ? "text-[#666666]" : "text-[#BABABB]"}`} />
+            <FaChevronRight className={`size-4 ${isDarkMode ? "text-[#666666]" : "text-[#BABABB]"}`} />
         </HeadlessButton>
     );
 }

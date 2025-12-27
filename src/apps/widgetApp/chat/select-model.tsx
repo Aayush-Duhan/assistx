@@ -1,5 +1,5 @@
 import { ChatModel } from "@/types/chat";
-import { CheckIcon, ChevronDown } from "lucide-react";
+import { LuCheck, LuChevronDown } from "react-icons/lu";
 import { Fragment, memo, PropsWithChildren, useEffect, useState } from "react";
 import { ModelProviderIcon } from "@/components/ui/model-provider-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -60,7 +60,7 @@ export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
                             )}
                             <p>{model?.model || "model"}</p>
                         </div>
-                        <ChevronDown className="size-3" />
+                        <LuChevronDown className="size-3" />
                     </Button>
                 )}
             </PopoverTrigger>
@@ -110,7 +110,7 @@ export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
                                         >
                                             {model?.provider === provider.provider &&
                                                 model?.model === item.name ? (
-                                                <CheckIcon
+                                                <LuCheck
                                                     className="size-3"
                                                 />
                                             ) : (

@@ -1,4 +1,4 @@
-import { IconCrossLarge } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { LuX } from "react-icons/lu";
 import { AnimatePresence, type HTMLMotionProps, motion, useAnimate } from "motion/react";
 import { twMerge } from "tailwind-merge";
 import { useDarkMode } from "usehooks-ts";
@@ -79,7 +79,7 @@ export default function NotificationContainer({
                     onClose ? onClose() : onDismiss?.();
                   }}
                 >
-                  <IconCrossLarge className="size-3 text-[#9E9E9E] dark:text-[#A5A7AC]" />
+                  <LuX className="size-3 text-[#9E9E9E] dark:text-[#A5A7AC]" />
                 </kit.HeadlessButton>
               </CaptureMouseEventsWrapper>
               {children}

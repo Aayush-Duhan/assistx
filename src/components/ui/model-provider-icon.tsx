@@ -1,4 +1,4 @@
-import { BlendIcon } from "lucide-react";
+import { LuBlend } from "react-icons/lu";
 import { ClaudeIcon } from "./claude-icon.tsx";
 import { GeminiIcon } from "./gemini-icon.tsx";
 import { GrokIcon } from "./grok-icon.tsx";
@@ -23,6 +23,6 @@ export function ModelProviderIcon({
   ) : provider === "openRouter" || provider === "openrouter" ? (
     <OpenRouterIcon className={className} />
   ) : (
-    <BlendIcon className={className} />
+    <LuBlend className={className} />
   );
 }

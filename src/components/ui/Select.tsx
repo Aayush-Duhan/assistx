@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { LuChevronDown, LuCheck } from 'react-icons/lu';
 import { clsx } from 'clsx';
 
 export interface SelectOption {
@@ -82,8 +82,8 @@ export const Select: React.FC<SelectProps> = ({
                 )}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
-                <ChevronDown 
-                    size={14} 
+                <LuChevronDown
+                    size={14}
                     className={clsx(
                         "text-white/60 transition-transform duration-200 ml-2 flex-shrink-0",
                         isOpen && "transform rotate-180"
@@ -111,7 +111,7 @@ export const Select: React.FC<SelectProps> = ({
                             >
                                 <span className="truncate">{option.label}</span>
                                 {option.value === value && (
-                                    <Check size={14} className="text-white/80 ml-2 flex-shrink-0" />
+                                    <LuCheck size={14} className="text-white/80 ml-2 flex-shrink-0" />
                                 )}
                             </button>
                         ))}

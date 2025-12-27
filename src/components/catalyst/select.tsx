@@ -1,7 +1,7 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { LuCheck, LuChevronDown, LuChevronUp } from "react-icons/lu";
 import type * as React from "react";
 import { twMerge } from "tailwind-merge";
 import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
@@ -38,7 +38,7 @@ function SelectTrigger({
         >
             {children}
             <SelectPrimitive.Icon asChild>
-                <ChevronDownIcon className="size-4 opacity-50 shrink-0" />
+                <LuChevronDown className="size-4 opacity-50 shrink-0" />
             </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
     );
@@ -113,7 +113,7 @@ function SelectItem({
             <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
             <span className="flex size-3.5 items-center justify-center">
                 <SelectPrimitive.ItemIndicator>
-                    <CheckIcon className="size-3.5" />
+                    <LuCheck className="size-3.5" />
                 </SelectPrimitive.ItemIndicator>
             </span>
         </SelectPrimitive.Item>
@@ -146,7 +146,7 @@ function SelectScrollUpButton({
             )}
             {...props}
         >
-            <ChevronUpIcon className="size-4" />
+            <LuChevronUp className="size-4" />
         </SelectPrimitive.ScrollUpButton>
     );
 }
@@ -164,7 +164,7 @@ function SelectScrollDownButton({
             )}
             {...props}
         >
-            <ChevronDownIcon className="size-4" />
+            <LuChevronDown className="size-4" />
         </SelectPrimitive.ScrollDownButton>
     );
 }

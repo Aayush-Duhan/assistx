@@ -1,8 +1,6 @@
-import {
-  IconChevronRight,
-  IconPaperPlaneTopRight,
-  IconSearchIntelligence,
-} from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { FaChevronRight } from "react-icons/fa6";
+import { LuUserSearch } from "react-icons/lu";
+import { PiPaperPlaneTiltFill } from "react-icons/pi";
 import { updateState, useSharedState } from "@/shared/shared";
 import { animate } from "motion";
 import { motion } from "motion/react";
@@ -175,7 +173,7 @@ export default function CmdEnter() {
                 </>
               ) : (
                 <>
-                  Continue <IconChevronRight className="size-3" />
+                  Continue <FaChevronRight className="size-3" />
                 </>
               )}
             </OnboardingButton>
@@ -195,7 +193,7 @@ export default function CmdEnter() {
           }}
         >
           Skip
-          <IconChevronRight className="size-3" />
+          <FaChevronRight className="size-3" />
         </OnboardingButton>
       </OnboardingForm>
       <OnboardingDemo className="px-4 overflow-hidden relative">
@@ -231,11 +229,11 @@ export default function CmdEnter() {
               <div className="flex flex-col h-fit gap-2 p-4 pt-0">
                 <StaticActions className="opacity-40">
                   <StaticAction>
-                    <IconPaperPlaneTopRight className="!size-3" />
+                    <PiPaperPlaneTiltFill className="!size-3" />
                     Send recap email
                   </StaticAction>
                   <StaticAction>
-                    <IconSearchIntelligence />
+                    <LuUserSearch className="!size-3" />
                     Research meeting participants
                   </StaticAction>
                 </StaticActions>

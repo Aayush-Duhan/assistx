@@ -1,6 +1,7 @@
-import { IconChevronTopMedium, IconDotGrid2x3 } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
+import { LuGripVertical } from "react-icons/lu";
+import { FaChevronUp } from "react-icons/fa6";
 import { updateState, useSharedState } from "@/shared";
-import { X } from "lucide-react";
+import { LuX } from "react-icons/lu";
 import { twMerge } from "tailwind-merge";
 import { SessionControls } from "./components/sessionControls";
 import { useAudioState } from "./hooks/useAudioState";
@@ -28,7 +29,7 @@ export function CommandBar() {
             updateState({ panelHidden: !panelHidden });
           }}
         >
-          <IconChevronTopMedium
+          <FaChevronUp
             className={twMerge(
               "size-4.5 text-white transition-transform duration-150",
               panelHidden && "rotate-180",
@@ -41,7 +42,7 @@ export function CommandBar() {
           onDoubleClick={() => tweenToInitialPosition()}
           className="size-7 cursor-pointer flex items-center justify-center"
         >
-          <IconDotGrid2x3
+          <LuGripVertical
             className="size-5 text-white
           "
           />
@@ -54,7 +55,7 @@ export function CommandBar() {
         }}
         className="size-7 shadow-pane cursor-pointer bg-surface-opaque hover:bg-surface-opaque-hover hover:scale-105 transition-all duration-150 rounded-full flex items-center justify-center"
       >
-        <X className="size-4 text-white" />
+        <LuX className="size-4 text-white" />
       </kit.HeadlessButton>
     </CaptureMouseEventsWrapper>
   );

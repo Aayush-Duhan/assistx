@@ -11,6 +11,16 @@ import { initializeUpdater } from './features/autoUpdater';
 import { initMCPManager } from './lib/ai/mcp/mcp-manager';
 import { setupMainProtocolHandlers } from './protocol-handler';
 import { updateSharedState } from './utils/shared/stateManager';
+import { app as serverApp } from '@server/app';
+
+async function startServer() {
+  try {
+    const address = await serverApp.listen({ port: 3000, host: '127.0.0.1' });
+    console.log(`Server listening at ${address}`);
+  } catch (err) {
+    console.error('Server failed to start:', err);
+  }
+}
 
 const APP_ID = 'assistx';
 const PROTOCOL_NAME = 'assistx';
@@ -122,6 +132,7 @@ async function main(): Promise<void> {
   setupMainProtocolHandlers();
   windowManager.recreateWindowsForView();
   await initMCPManager();
+  startServer();
 }
 
 main();

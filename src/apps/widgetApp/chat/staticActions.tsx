@@ -1,12 +1,11 @@
-import { IconSparklesTwo2 } from "@central-icons-react/round-filled-radius-2-stroke-1.5";
-import { WandSparkles, MessageCirclePlusIcon } from "lucide-react";
+import { VscSparkleFilled } from "react-icons/vsc";
+import { LuWandSparkles, LuMessageCirclePlus, LuRefreshCcw } from "react-icons/lu";
 import { Fragment } from "react";
 import {
   StaticInsight,
   type StaticInsightIcon,
 } from "../components/staticInsight";
 // import { useSubmit } from "../hooks/useSubmit";
-import { RefreshCcwIcon } from "lucide-react";
 import { action } from "../types";
 
 type InstructionActionable = {
@@ -25,19 +24,19 @@ type ExtraAction = {
 
 const STATIC_INSIGHTS: ExtraAction[] = [
   {
-    icon: IconSparklesTwo2,
+    icon: VscSparkleFilled,
     display: "Assist",
     input: "",
     action: "assist",
   },
   {
-    icon: WandSparkles,
+    icon: LuWandSparkles,
     display: "What should I say?",
     input: "What should I say next? " + "Output only the words I should say.",
     action: "what_next",
   },
   {
-    icon: MessageCirclePlusIcon,
+    icon: LuMessageCirclePlus,
     display: "Follow-up questions",
     input:
       "Suggest two follow-up questions that I can ask to carry forward the conversation. " +
@@ -45,7 +44,7 @@ const STATIC_INSIGHTS: ExtraAction[] = [
     action: "follow_up",
   },
   {
-    icon: RefreshCcwIcon,
+    icon: LuRefreshCcw,
     display: "Recap",
     input: "Recap the most recent thing that happened in the conversation.",
     action: "recap",
