@@ -19,8 +19,8 @@ An Electron application with React and TypeScript that provides AI-powered scree
 ```
 GOOGLE_GENERATIVE_AI_API_KEY=your_actual_api_key_here
 ```
-4. Install dependencies: `bun install`
-5. Run the app: `bun run dev`
+4. Install dependencies: `npm install`
+5. Run the app: `npm run dev`
 
 ## How It Works
 
@@ -40,18 +40,17 @@ GOOGLE_GENERATIVE_AI_API_KEY=your_actual_api_key_here
 ## Development
 
 ```bash
-bun install
-bun run dev
+npm install
+npm run dev
 ```
 
 ## Building
 
 ```bash
-bun run build
+npm run build
 ```
 
 ## Requirements
 
-- Bun 1.3.1+
-- Node.js 18+ (required for Electron tooling on some systems)
+- Node.js 18+ (required for Electron tooling)
 - Google AI API key
