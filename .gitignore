@@ -40,3 +40,6 @@ re-audio-capturer/*
 extraResources/*.node
 src/assets/logo.png
 .secrets.baseline
+
+# Submodules / external repos
+better-chatbot/
