@@ -182,14 +182,17 @@ export function useUpdateInfo(): UpdateInfo {
 }
 
 /**
+ * Parses a version string into an array of numbers.
+ */
+function parseVersion(version: string) {
+  return version.split(".").map((num) => parseInt(num, 10));
+}
+
+/**
  * Simple version comparison function.
  * Returns true if newVersion is newer than currentVersion.
  */
 function isNewerVersion(newVersion: string, currentVersion: string): boolean {
-  const parseVersion = (version: string) => {
-    return version.split(".").map((num) => parseInt(num, 10));
-  };
-
   const newParts = parseVersion(newVersion);
   const currentParts = parseVersion(currentVersion);
 

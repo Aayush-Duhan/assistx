@@ -33,7 +33,7 @@ function scaleAndCompressScreenshot(contentType: string, data: Buffer) {
     const img = new Image();
     img.src = url;
 
-    img.onload = () => {
+    img.addEventListener("load", () => {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
 
@@ -54,11 +54,11 @@ function scaleAndCompressScreenshot(contentType: string, data: Buffer) {
         contentType: SCREENSHOT_CONTENT_TYPE,
         url: canvas.toDataURL(SCREENSHOT_CONTENT_TYPE, SCREENSHOT_QUALITY),
       });
-    };
+    });
 
-    img.onerror = (error) => {
+    img.addEventListener("error", (error) => {
       URL.revokeObjectURL(url);
       reject(error);
-    };
+    });
   });
 }

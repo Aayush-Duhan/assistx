@@ -110,6 +110,7 @@ export class AiApiService {
       console.error("AI API Error:", error);
       throw new Error(
         `AI service error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        { cause: error },
       );
     }
   }

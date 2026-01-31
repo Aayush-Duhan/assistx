@@ -41,7 +41,9 @@ export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorag
       if (err.code === "ENOENT") {
         return [];
       } else if (err instanceof SyntaxError) {
-        throw new Error(`Config file ${configPath} has invalid JSON: ${err.message}`);
+        throw new Error(`Config file ${configPath} has invalid JSON: ${err.message}`, {
+          cause: err,
+        });
       } else {
         throw err;
       }
@@ -62,7 +64,7 @@ export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorag
       logger.debug("Checking MCP clients Diff");
       const fileConfig = await readConfigFile();
 
-      const fileConfigs = fileConfig.sort((a, b) => a.id.localeCompare(b.id));
+      const fileConfigs = fileConfig.toSorted((a, b) => a.id.localeCompare(b.id));
 
       // Get current manager configs
       const managerConfigs = await manager

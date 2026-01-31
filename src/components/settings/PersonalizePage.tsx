@@ -6,6 +6,12 @@ import { HeadlessButton } from "@/components/ui/HeadlessButton";
 import { userContextStore } from "@/stores/userContextStore";
 import { cn } from "@/lib/utils";
 
+const truncate = (text: string, max = 90) => {
+  if (!text) return "";
+  if (text.length <= max) return text;
+  return text.slice(0, max - 1) + "…";
+};
+
 export const PersonalizePage = observer(() => {
   const contexts = userContextStore.getAllContexts();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -32,12 +38,6 @@ export const PersonalizePage = observer(() => {
       userContextStore.updateSelectedContextTitle(next);
     }
     setIsRenaming(false);
-  };
-
-  const truncate = (text: string, max = 90) => {
-    if (!text) return "";
-    if (text.length <= max) return text;
-    return text.slice(0, max - 1) + "…";
   };
 
   const normalizedQuery = search.trim().toLowerCase();

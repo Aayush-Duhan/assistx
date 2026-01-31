@@ -23,7 +23,7 @@ if (modulePath) {
 
 function postMessage(msg: OutgoingMessage) {
   if (parentPort) {
-    parentPort.postMessage(msg);
+    parentPort.postMessage(msg, parentPort.location.origin);
   }
 }
 
@@ -75,7 +75,10 @@ function handleRequestSystemAudioPermission(useCoreAudio: boolean) {
 
   getNativeInstance().requestSystemAudioPermission(useCoreAudio, (granted) => {
     if (parentPort) {
-      parentPort.postMessage({ event: "system-audio-permission-response", granted });
+      parentPort.postMessage(
+        { event: "system-audio-permission-response", granted },
+        parentPort.location.origin,
+      );
     }
     isRequestingSysAudio = false;
   });

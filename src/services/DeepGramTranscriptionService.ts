@@ -97,15 +97,15 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
 
       this.socket = new WebSocket(wsUrl);
 
-      this.socket.onopen = () => {
+      this.socket.addEventListener("open", () => {
         console.log(
           `DeepgramTranscriptionService (${this.source}): Connected to server, waiting for Deepgram ready...`,
         );
         this.reconnectAttempts = 0;
         // Don't transition to running yet - wait for 'ready' message from server
-      };
+      });
 
-      this.socket.onmessage = (event) => {
+      this.socket.addEventListener("message", (event) => {
         console.log(`DeepgramTranscriptionService (${this.source}): Received message:`, event.data);
         try {
           const message = JSON.parse(event.data);
@@ -148,13 +148,13 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
         } catch (err) {
           console.error("Failed to parse server message:", err);
         }
-      };
+      });
 
-      this.socket.onerror = (error) => {
+      this.socket.addEventListener("error", (error) => {
         console.error(`DeepgramTranscriptionService (${this.source}): WebSocket error:`, error);
-      };
+      });
 
-      this.socket.onclose = (event) => {
+      this.socket.addEventListener("close", (event) => {
         console.log(
           `DeepgramTranscriptionService (${this.source}): Connection closed (code: ${event.code})`,
         );
@@ -169,7 +169,7 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
         } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
           this.setState({ state: "error", error: "network" });
         }
-      };
+      });
     } catch (error) {
       console.error(`DeepgramTranscriptionService (${this.source}): Failed to connect:`, error);
       this.setState({ state: "error", error: "network" });

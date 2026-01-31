@@ -263,7 +263,7 @@ export const createThrottle = () => {
 export const groupBy = <T>(arr: T[], getter: keyof T | ((item: T) => string)) =>
   arr.reduce(
     (prev, item) => {
-      const key: string = getter instanceof Function ? getter(item) : (item[getter] as string);
+      const key: string = typeof getter === "function" ? getter(item) : (item[getter] as string);
 
       if (!prev[key]) prev[key] = [];
       prev[key].push(item);
@@ -307,12 +307,19 @@ export const PromiseChain = () => {
  * ```
  */
 export const Deferred = <T = void>() => {
-  let resolve: (value: T | PromiseLike<T>) => void = () => {};
-  let reject: (reason?: any) => void = () => {};
+  let resolveRef: ((value: T | PromiseLike<T>) => void) | undefined;
+  let rejectRef: ((reason?: any) => void) | undefined;
   const promise = new Promise<T>((rs, rj) => {
-    resolve = rs;
-    reject = rj;
+    resolveRef = rs;
+    rejectRef = rj;
   });
+
+  const resolve = (value: T | PromiseLike<T>) => {
+    resolveRef?.(value);
+  };
+  const reject = (reason?: any) => {
+    rejectRef?.(reason);
+  };
 
   return {
     promise,

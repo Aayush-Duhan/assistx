@@ -335,14 +335,14 @@ export class AudioCaptureService extends Subscribable {
     console.log(`AudioCaptureService (${this.source}): Setting up Web Audio API worklet`);
     const audioContext = await getSharedAudioContext();
     const workletNode = new AudioWorkletNode(audioContext, PCM_PROCESSOR_NAME);
-    workletNode.port.onmessage = (event) => {
+    workletNode.port.addEventListener("message", (event) => {
       if (signal.aborted) return;
       const pcm16Array = event.data as Int16Array;
       const pcm16Base64 = bufferToBase64(pcm16Array.buffer as ArrayBuffer);
       for (const listener of this.dataListeners) {
         listener({ pcm16Base64 });
       }
-    };
+    });
 
     const sourceNode = audioContext.createMediaStreamSource(stream);
     sourceNode.connect(workletNode);

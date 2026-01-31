@@ -32,6 +32,13 @@ function tryParseJson(str: string): { success: boolean; data: JsonValue } {
   }
 }
 
+function getDataType(value: JsonValue): string {
+  if (value === undefined) return "undefined";
+  if (Array.isArray(value)) return "array";
+  if (value === null) return "null";
+  return typeof value;
+}
+
 const JsonView = memo(({ data, name, initialExpandDepth = 2 }: JsonViewProps) => {
   const normalizedData =
     typeof data === "string" ? (tryParseJson(data).success ? tryParseJson(data).data : data) : data;
@@ -58,13 +65,6 @@ interface JsonNodeProps {
 }
 
 const JsonNode = memo(({ data, name, depth = 0, initialExpandDepth }: JsonNodeProps) => {
-  const getDataType = (value: JsonValue): string => {
-    if (value === undefined) return "undefined";
-    if (Array.isArray(value)) return "array";
-    if (value === null) return "null";
-    return typeof value;
-  };
-
   const dataType = getDataType(data);
   const [isExpanded, setIsExpanded] = useState(
     dataType === "string" ? false : depth < initialExpandDepth,

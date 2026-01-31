@@ -525,7 +525,9 @@ function createFileBasedMCPConfigStorage(configPath: string): MCPConfigStorage {
       if (error.code === "ENOENT") {
         return [];
       } else if (err instanceof SyntaxError) {
-        throw new Error(`Config file ${configPath} has invalid JSON: ${err.message}`);
+        throw new Error(`Config file ${configPath} has invalid JSON: ${err.message}`, {
+          cause: err,
+        });
       } else {
         throw err;
       }

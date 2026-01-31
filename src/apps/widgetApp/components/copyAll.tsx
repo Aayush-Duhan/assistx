@@ -12,6 +12,14 @@ type ParagraphTranscripts = {
   remainingSystemText: string;
 };
 
+const formatTime = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
 export const CopyAll = observer(function CopyAll() {
   const { contextService } = useGlobalServices();
   const { paragraphTranscripts } = contextService.fullContext;
@@ -76,14 +84,6 @@ export const CopyAll = observer(function CopyAll() {
 });
 
 function getFormattedTranscript(paragraphTranscripts: ParagraphTranscripts) {
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
-
   let text = paragraphTranscripts.transcripts
     .map((transcript) => {
       const time = formatTime(transcript.createdAt.toISOString());

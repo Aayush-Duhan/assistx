@@ -10,6 +10,39 @@ interface RoleOption {
   description: string;
 }
 
+// Simulate the state update logic
+interface OnboardingState {
+  surveys: {
+    mode: OnboardingMode | undefined;
+    surveyAnswer: string | undefined;
+    submitted: boolean;
+  };
+}
+
+function createOnboardingState(): OnboardingState {
+  return {
+    surveys: {
+      mode: undefined,
+      surveyAnswer: undefined,
+      submitted: false,
+    },
+  };
+}
+
+function handleContinue(
+  currentState: OnboardingState,
+  selectedMode: OnboardingMode | undefined,
+): OnboardingState {
+  if (!selectedMode) return currentState;
+  return {
+    ...currentState,
+    surveys: {
+      ...currentState.surveys,
+      mode: selectedMode,
+    },
+  };
+}
+
 const ROLE_OPTIONS: RoleOption[] = [
   { id: "student", title: "Student", description: "Learning and studying" },
   { id: "professional", title: "Professional", description: "Working in my field" },
@@ -171,39 +204,6 @@ describe("Mode Page", () => {
    * **Validates: Requirements 3.2, 3.4**
    */
   describe("Property 4: State update on confirmation", () => {
-    // Simulate the state update logic
-    interface OnboardingState {
-      surveys: {
-        mode: OnboardingMode | undefined;
-        surveyAnswer: string | undefined;
-        submitted: boolean;
-      };
-    }
-
-    function createOnboardingState(): OnboardingState {
-      return {
-        surveys: {
-          mode: undefined,
-          surveyAnswer: undefined,
-          submitted: false,
-        },
-      };
-    }
-
-    function handleContinue(
-      currentState: OnboardingState,
-      selectedMode: OnboardingMode | undefined,
-    ): OnboardingState {
-      if (!selectedMode) return currentState;
-      return {
-        ...currentState,
-        surveys: {
-          ...currentState.surveys,
-          mode: selectedMode,
-        },
-      };
-    }
-
     it("state update sets mode to selected value", () => {
       fc.assert(
         fc.property(onboardingModeArb, (mode) => {
@@ -295,28 +295,6 @@ describe("Mode Page Unit Tests", () => {
    * **Validates: Requirements 3.3**
    */
   describe("5.2 Navigation flow", () => {
-    interface OnboardingState {
-      surveys: {
-        mode: OnboardingMode | undefined;
-        surveyAnswer: string | undefined;
-        submitted: boolean;
-      };
-    }
-
-    function handleContinue(
-      currentState: OnboardingState,
-      selectedMode: OnboardingMode | undefined,
-    ): OnboardingState {
-      if (!selectedMode) return currentState;
-      return {
-        ...currentState,
-        surveys: {
-          ...currentState.surveys,
-          mode: selectedMode,
-        },
-      };
-    }
-
     it("state update with student mode triggers navigation condition", () => {
       const initialState: OnboardingState = {
         surveys: { mode: undefined, surveyAnswer: undefined, submitted: false },

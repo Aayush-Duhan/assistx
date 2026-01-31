@@ -1,6 +1,8 @@
 import { BaseWindow } from "./baseWindow";
 import { Display } from "electron";
 
+const clamp = (value: number, min: number, max: number) => Math.max(Math.min(value, max), min);
+
 /**
  * Base class for centered windows (dashboard, onboarding, offline)
  */
@@ -30,7 +32,6 @@ export abstract class CenteredWindow extends BaseWindow {
 
     // Center window on display
     const { workArea } = moreOptions.initialDisplay;
-    const clamp = (value: number, min: number, max: number) => Math.max(Math.min(value, max), min);
 
     const width = clamp(moreOptions.width, minWidth, workArea.width - 100);
     const height = clamp(moreOptions.height, minHeight, workArea.height - 100);

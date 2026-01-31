@@ -14,6 +14,11 @@ import {
 } from "@/components/catalyst/select";
 import { modesApi, type Mode } from "@/lib/api";
 
+const openCreateMode = () => {
+  // TODO: Implement navigation to dashboard modes page
+  console.log("[ModeSelector] Open dashboard to create mode");
+};
+
 export default function ModeSelector() {
   const [modes, setModes] = useState<Mode[]>([]);
   const [activeMode, setActiveMode] = useState<string | null>(null);
@@ -52,12 +57,6 @@ export default function ModeSelector() {
       // Rollback on failure
       setActiveMode(previousActive);
     }
-  };
-
-  // Open dashboard to create mode
-  const openCreateMode = () => {
-    // TODO: Implement navigation to dashboard modes page
-    console.log("[ModeSelector] Open dashboard to create mode");
   };
 
   // Get the active mode name for display
