@@ -1,12 +1,11 @@
-import { BrowserWindow, shell, app } from 'electron';
-import path, { join } from 'node:path';
-import { APP_NAME } from '../utils/constants';
-import { isWindows, isDev } from '../utils/platform';
-import { windowManager } from './WindowManager';
-import { getSharedState } from '../utils/shared/stateManager';
+import { BrowserWindow, shell, app } from "electron";
+import path, { join } from "node:path";
+import { APP_NAME } from "../utils/constants";
+import { IS_WINDOWS, IS_DEV } from "../../shared/constants";
+import { windowManager } from "./WindowManager";
+import { getSharedState } from "../utils/shared/stateManager";
 
 const __dirname = import.meta.dirname;
-
 
 export abstract class BaseWindow {
   public window: BrowserWindow;
@@ -16,25 +15,24 @@ export abstract class BaseWindow {
     options: Electron.BrowserWindowConstructorOptions,
     protected moreOptions: {
       skipTaskbar: () => boolean;
-    }
+    },
   ) {
-    this.moreOptions = moreOptions;
     this.window = new BrowserWindow({
       ...options,
       show: false,
       title: APP_NAME,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.cjs'),
+        preload: path.join(__dirname, "preload.cjs"),
       },
     });
 
     this.restoreUndetectability();
 
-    if (isWindows) {
+    if (IS_WINDOWS) {
       const handleUndetectability = () => this.restoreUndetectability();
-      this.window.on('show', handleUndetectability);
-      this.window.on('restore', handleUndetectability);
-      this.window.on('focus', handleUndetectability);
+      this.window.on("show", handleUndetectability);
+      this.window.on("restore", handleUndetectability);
+      this.window.on("focus", handleUndetectability);
     }
 
     // Show window when ready
@@ -92,7 +90,7 @@ export abstract class BaseWindow {
         const url = new URL(details.url);
         if (
           url.protocol === "https:" ||
-          (isDev && url.protocol === "http:") ||
+          (IS_DEV && url.protocol === "http:") ||
           url.protocol === "mailto:"
         ) {
           shell.openExternal(details.url);
@@ -107,7 +105,7 @@ export abstract class BaseWindow {
     this.window.on("close", (event) => {
       if (
         !this.windowIsClosing &&
-        !windowManager.appIsQuitting 
+        !windowManager.appIsQuitting
         // TODO: Add update check
         // && !isQuittingForUpdateInstall()
       ) {
@@ -130,11 +128,14 @@ export abstract class BaseWindow {
    * @param page - The HTML file to load (default: "index.html")
    * @param searchParams - Optional URL search params for routing
    */
-  protected async loadLocalPage(page: string = 'index.html', searchParams?: URLSearchParams): Promise<void> {
+  protected async loadLocalPage(
+    page: string = "index.html",
+    searchParams?: URLSearchParams,
+  ): Promise<void> {
     const query = searchParams?.toString();
-    const queryString = query ? `?${query}` : '';
+    const queryString = query ? `?${query}` : "";
 
-    if (isDev && process.env.VITE_DEV_SERVER_URL) {
+    if (IS_DEV && process.env.VITE_DEV_SERVER_URL) {
       await this.window.loadURL(`${process.env.VITE_DEV_SERVER_URL}/${page}${queryString}`);
     } else {
       await this.window.loadFile(join(__dirname, `../dist/${page}`), {
@@ -152,8 +153,6 @@ export abstract class BaseWindow {
     }
   }
 
-
-
   /**
    * Close the window
    */
@@ -170,8 +169,6 @@ export abstract class BaseWindow {
   reload(): void {
     this.window.webContents.reload();
   }
-
-
 
   /**
    * Load the window's URL (implemented by subclasses)
@@ -195,7 +192,7 @@ export abstract class BaseWindow {
    */
   restoreUndetectability(): void {
     this.window.setContentProtection(getSharedState().undetectabilityEnabled);
-    if (isWindows) {
+    if (IS_WINDOWS) {
       this.window.setSkipTaskbar(this.moreOptions.skipTaskbar());
     }
   }

@@ -28,11 +28,7 @@ export function JsonViewPopup({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {children || (
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-            className="text-muted-foreground text-xs"
-          >
+          <Button variant={"ghost"} size={"sm"} className="text-muted-foreground text-xs">
             JSON
           </Button>
         )}

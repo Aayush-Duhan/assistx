@@ -1,10 +1,7 @@
 import { VscSparkleFilled } from "react-icons/vsc";
 import { LuWandSparkles, LuMessageCirclePlus, LuRefreshCcw } from "react-icons/lu";
 import { Fragment } from "react";
-import {
-  StaticInsight,
-  type StaticInsightIcon,
-} from "../components/staticInsight";
+import { StaticInsight, type StaticInsightIcon } from "../components/staticInsight";
 // import { useSubmit } from "../hooks/useSubmit";
 import { action } from "../types";
 
@@ -32,7 +29,7 @@ const STATIC_INSIGHTS: ExtraAction[] = [
   {
     icon: LuWandSparkles,
     display: "What should I say?",
-    input: "What should I say next? " + "Output only the words I should say.",
+    input: "What should I say next? Output only the words I should say.",
     action: "what_next",
   },
   {

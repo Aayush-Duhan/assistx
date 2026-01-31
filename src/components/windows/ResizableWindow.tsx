@@ -1,10 +1,10 @@
-import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { usePresence } from 'framer-motion';
+import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
+import { motion } from "framer-motion";
+import { usePresence } from "framer-motion";
 
 interface ResizableContainerProps {
   show?: boolean;
-  bounceDirection?: 'up' | 'down';
+  bounceDirection?: "up" | "down";
   initialWidth?: number;
   minWidth?: number;
   contentClassName?: string;
@@ -23,34 +23,37 @@ export function ResizableContainer({
   const [isResizing, setIsResizing] = useState(false);
   const startX = useRef(0);
   const startWidth = useRef(initialWidth);
-  const resizeDirection = useRef<'left' | 'right' | null>(null);
+  const resizeDirection = useRef<"left" | "right" | null>(null);
 
-  const handleMouseDown = useCallback((
-    e: React.MouseEvent,
-    direction: 'left' | 'right'
-  ) => {
-    e.preventDefault();
-    setIsResizing(true);
-    startX.current = e.clientX;
-    startWidth.current = width;
-    resizeDirection.current = direction;
-  }, [width]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent, direction: "left" | "right") => {
+      e.preventDefault();
+      setIsResizing(true);
+      startX.current = e.clientX;
+      startWidth.current = width;
+      resizeDirection.current = direction;
+    },
+    [width],
+  );
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isResizing || !resizeDirection.current) return;
-    
-    const deltaX = e.clientX - startX.current;
-    let newWidth = startWidth.current;
-    
-    if (resizeDirection.current === "right") {
-      newWidth = startWidth.current + deltaX * 2;
-    } else {
-      newWidth = startWidth.current - deltaX * 2;
-    }
-    
-    newWidth = Math.max(minWidth, newWidth);
-    setWidth(newWidth);
-  }, [isResizing, minWidth]);
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing || !resizeDirection.current) return;
+
+      const deltaX = e.clientX - startX.current;
+      let newWidth = startWidth.current;
+
+      if (resizeDirection.current === "right") {
+        newWidth = startWidth.current + deltaX * 2;
+      } else {
+        newWidth = startWidth.current - deltaX * 2;
+      }
+
+      newWidth = Math.max(minWidth, newWidth);
+      setWidth(newWidth);
+    },
+    [isResizing, minWidth],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsResizing(false);
@@ -61,7 +64,7 @@ export function ResizableContainer({
     if (isResizing) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
-      
+
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
@@ -69,12 +72,9 @@ export function ResizableContainer({
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  const bounceY = bounceDirection === "up" 
-    ? [0, -10, 0] 
-    : bounceDirection === "down" 
-      ? [0, 10, 0] 
-      : [0, 0, 0];
-      
+  const bounceY =
+    bounceDirection === "up" ? [0, -10, 0] : bounceDirection === "down" ? [0, 10, 0] : [0, 0, 0];
+
   const transitionDuration = isResizing ? 0.02 : 0.15;
   const transitionEase = isResizing ? "linear" : "easeOut";
 
@@ -105,7 +105,7 @@ export function ResizableContainer({
               `}
               onMouseDown={(e) => handleMouseDown(e, "left")}
             />
-            
+
             {/* Right resize handle */}
             <div
               className={`
@@ -115,11 +115,9 @@ export function ResizableContainer({
               `}
               onMouseDown={(e) => handleMouseDown(e, "right")}
             />
-            
+
             {/* Content container */}
-            <div className={contentClassName}>
-              {children}
-            </div>
+            <div className={contentClassName}>{children}</div>
           </div>
         </motion.div>
       </motion.div>

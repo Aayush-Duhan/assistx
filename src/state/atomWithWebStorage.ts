@@ -7,5 +7,5 @@ import { atomWithStorage } from "jotai/utils";
  * storage.
  */
 export function atomWithWebStorage<Value>(key: string, initialValue: Value) {
-    return atomWithStorage(key, initialValue, undefined, { getOnInit: true });
+  return atomWithStorage(key, initialValue, undefined, { getOnInit: true });
 }

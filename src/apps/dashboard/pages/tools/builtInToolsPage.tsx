@@ -1,9 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const builtInToolsPage = () => {
-    return (
-        <div>builtInToolsPage</div>
-    )
-}
+  return <div>builtInToolsPage</div>;
+};
 
-export default builtInToolsPage
+export default builtInToolsPage;

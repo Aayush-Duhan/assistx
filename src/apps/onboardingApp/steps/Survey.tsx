@@ -106,8 +106,7 @@ export default function Survey() {
     });
   };
 
-  const isComplete =
-    (surveyAnswer === "other" ? !!otherSurveyAnswer : !!surveyAnswer);
+  const isComplete = surveyAnswer === "other" ? !!otherSurveyAnswer : !!surveyAnswer;
 
   return (
     <OnboardingPage>

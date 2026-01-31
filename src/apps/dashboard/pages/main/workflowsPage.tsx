@@ -1,9 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const workflowsPage = () => {
-    return (
-        <div>workflowsPage</div>
-    )
-}
+  return <div>workflowsPage</div>;
+};
 
-export default workflowsPage
+export default workflowsPage;

@@ -13,9 +13,12 @@ export function HudNotifications() {
 
   const { clientMetadata } = useSharedState();
 
-  const showAskAi = aiResponsesService.clicked.askAi && !clientMetadata?.dontShowAskAiNotificationAgain;
-  const showClear = aiResponsesService.clicked.clear && !clientMetadata?.dontShowCmdRNotificationAgain;
-  const showHide = aiResponsesService.clicked.hide && !clientMetadata?.dontShowHideNotificationAgain;
+  const showAskAi =
+    aiResponsesService.clicked.askAi && !clientMetadata?.dontShowAskAiNotificationAgain;
+  const showClear =
+    aiResponsesService.clicked.clear && !clientMetadata?.dontShowCmdRNotificationAgain;
+  const showHide =
+    aiResponsesService.clicked.hide && !clientMetadata?.dontShowHideNotificationAgain;
 
   const setMetadataIfLoaded = (newMetadata: ClientMetadata) => {
     if (clientMetadata) {

@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "oxc"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off"
+  },
+  "ignorePatterns": [
+    "dist",
+    "dist-electron",
+    "node_modules",
+    "release",
+    "*.config.*",
+    "better-chatbot"
+  ]
+}

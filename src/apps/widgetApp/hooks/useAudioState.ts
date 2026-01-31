@@ -4,24 +4,24 @@ import {
   UnknownError,
   MicAudioCapturePermissionError,
   SystemAudioCapturePermissionError,
-  NetworkError
+  NetworkError,
 } from "@/lib/audio/error";
 
 /**
  * Converts a string error code from audio/transcription services to a proper Error object.
  */
 function createErrorFromCode(
-  errorCode: 'permission' | 'network' | 'unknown' | undefined,
-  source: 'mic' | 'system'
+  errorCode: "permission" | "network" | "unknown" | undefined,
+  source: "mic" | "system",
 ): Error {
   switch (errorCode) {
-    case 'permission':
-      return source === 'mic'
+    case "permission":
+      return source === "mic"
         ? new MicAudioCapturePermissionError("Microphone permission denied")
         : new SystemAudioCapturePermissionError("System audio permission denied");
-    case 'network':
+    case "network":
       return new NetworkError("Network connection error");
-    case 'unknown':
+    case "unknown":
     default:
       return new UnknownError("An unknown error occurred while capturing audio.");
   }
@@ -59,18 +59,18 @@ export function useAudioState(): AudioState {
 
   // Check for errors from audio capture services
   if (micState === "error") {
-    return errorState(createErrorFromCode(mic.state.error, 'mic'));
+    return errorState(createErrorFromCode(mic.state.error, "mic"));
   }
   if (sysState === "error") {
-    return errorState(createErrorFromCode(sys.state.error, 'system'));
+    return errorState(createErrorFromCode(sys.state.error, "system"));
   }
 
   // Check for errors from transcription services
   if (mic.transcriptionService && micTranscriptionState === "error") {
-    return errorState(createErrorFromCode(mic.transcriptionService.state.error, 'mic'));
+    return errorState(createErrorFromCode(mic.transcriptionService.state.error, "mic"));
   }
   if (sys.transcriptionService && sysTranscriptionState === "error") {
-    return errorState(createErrorFromCode(sys.transcriptionService.state.error, 'system'));
+    return errorState(createErrorFromCode(sys.transcriptionService.state.error, "system"));
   }
 
   // Check for loading states

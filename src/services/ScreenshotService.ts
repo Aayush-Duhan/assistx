@@ -1,8 +1,8 @@
-import { invokeIpcMain } from '@/shared';
-import type { Buffer } from 'buffer';
+import { invokeIpcMain } from "@/shared";
+import type { Buffer } from "buffer";
 
 const MAX_SCREENSHOT_HEIGHT = 1080;
-const SCREENSHOT_CONTENT_TYPE = 'image/webp';
+const SCREENSHOT_CONTENT_TYPE = "image/webp";
 const SCREENSHOT_QUALITY = 0.7;
 const SCREENSHOT_RETRIES = 3;
 

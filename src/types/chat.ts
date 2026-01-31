@@ -1,4 +1,4 @@
 export type ChatModel = {
-    provider: string;
-    model: string;
-}
+  provider: string;
+  model: string;
+};

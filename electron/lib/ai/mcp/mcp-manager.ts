@@ -1,14 +1,11 @@
 import { createFileBasedMCPConfigsStorage } from "./fb-mcp-config-storage";
-import {
-  createMCPClientsManager,
-  type MCPClientsManager,
-} from "./create-mcp-clients-manager";
+import { createMCPClientsManager, type MCPClientsManager } from "./create-mcp-clients-manager";
 declare global {
   var __mcpClientsManager__: MCPClientsManager;
 }
 
 if (!globalThis.__mcpClientsManager__) {
-  const storage = createFileBasedMCPConfigsStorage()
+  const storage = createFileBasedMCPConfigsStorage();
   globalThis.__mcpClientsManager__ = createMCPClientsManager(storage);
 }
 

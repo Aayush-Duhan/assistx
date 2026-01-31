@@ -1,6 +1,6 @@
-import React, { forwardRef, InputHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
-import TextareaAutosize, { TextareaAutosizeProps } from 'react-textarea-autosize';
+import React, { forwardRef, InputHTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
+import TextareaAutosize, { TextareaAutosizeProps } from "react-textarea-autosize";
 
 interface BaseInputProps {
   multiLine?: boolean;
@@ -8,34 +8,31 @@ interface BaseInputProps {
 }
 
 type SingleLineInputProps = BaseInputProps &
-  Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {
+  Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> & {
     multiLine?: false;
   };
 
 type MultiLineInputProps = BaseInputProps &
-  Omit<TextareaAutosizeProps, 'onChange'> & {
+  Omit<TextareaAutosizeProps, "onChange"> & {
     multiLine: true;
   };
 export type InputProps = SingleLineInputProps | MultiLineInputProps;
 
 export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
   ({ className, onChange, multiLine = false, ...props }, ref) => {
-    
-    const handleChange = (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onChange?.(event.target.value);
     };
 
     const baseClassName = cn(
-      'block w-full resize-none px-4 py-2.5 focus:outline-none text-sm text-white/90',
-      'placeholder:text-white/60 disabled:text-white/60',
-      'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/50',
-      className
+      "block w-full resize-none px-4 py-2.5 focus:outline-none text-sm text-white/90",
+      "placeholder:text-white/60 disabled:text-white/60",
+      "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/50",
+      className,
     );
 
     if (multiLine) {
-      const textareaProps = props as Omit<TextareaAutosizeProps, 'onChange'>;
+      const textareaProps = props as Omit<TextareaAutosizeProps, "onChange">;
       return (
         <TextareaAutosize
           ref={ref as React.Ref<HTMLTextAreaElement>}
@@ -45,7 +42,7 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputPro
         />
       );
     } else {
-      const inputProps = props as Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'>;
+      const inputProps = props as Omit<InputHTMLAttributes<HTMLInputElement>, "onChange">;
       return (
         <input
           ref={ref as React.Ref<HTMLInputElement>}
@@ -55,7 +52,7 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputPro
         />
       );
     }
-  }
+  },
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";

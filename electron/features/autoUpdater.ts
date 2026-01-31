@@ -1,6 +1,6 @@
-import { getSharedState, updateSharedState } from '../utils/shared/stateManager';
-import { app } from 'electron';
-import autoUpdater from 'electron-updater';
+import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
+import { app } from "electron";
+import autoUpdater from "electron-updater";
 
 /** Update check interval (1 hour) */
 const UPDATE_CHECK_INTERVAL = 1000 * 60 * 60;
@@ -50,7 +50,7 @@ export function initializeUpdater(): void {
 
   // updater.logger = log;
 
-  updater.on('update-available', (info) => {
+  updater.on("update-available", (info) => {
     if (getSharedState().autoUpdateState.state === "downloaded") return;
     const state = {
       state: "available" as const,
@@ -62,7 +62,7 @@ export function initializeUpdater(): void {
     updateSharedState({ autoUpdateState: state });
   });
 
-  updater.on('update-downloaded', (info) => {
+  updater.on("update-downloaded", (info) => {
     const state = {
       state: "downloaded" as const,
       version: info.version,
@@ -72,10 +72,7 @@ export function initializeUpdater(): void {
     };
     updateSharedState({ autoUpdateState: state });
     // Force update if below minimum version
-    if (
-      configData &&
-      compareVersions(app.getVersion(), configData.minimumElectronVersion) < 0
-    ) {
+    if (configData && compareVersions(app.getVersion(), configData.minimumElectronVersion) < 0) {
       installUpdate();
     }
   });

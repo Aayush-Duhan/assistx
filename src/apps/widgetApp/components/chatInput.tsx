@@ -1,16 +1,21 @@
-import { IoImage } from "react-icons/io5";
-import { DEFAULT_KEYBINDINGS } from "@/shared";
+import { PiSlidersHorizontal } from "react-icons/pi";
+import { DEFAULT_KEYBINDINGS, useSharedState } from "@/shared";
 import { motion, type Transition } from "motion/react";
 import { useEffect, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { twMerge } from "tailwind-merge";
 import { Send } from "@/assets/send";
 import { kit } from "@/components/kit";
-import { electronAcceleratorToLabels } from "@/lib/utils"
+import { electronAcceleratorToLabels } from "@/lib/utils";
 import { useKeybindings } from "@/hooks/useKeybindings";
 import { useGlobalServices } from "@/services/GlobalServicesContextProvider";
-import { useScreenEnabled } from "@/hooks/useScreenEnabled";
-// import ModeSelector from "../chat/modeSelector";
+import { useShowConversation } from "../hooks/useShowConversation";
+import { Popover } from "@base-ui-components/react/popover";
+import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
+import { SettingsPanel } from "./settingsPanel";
+import { ModelList, ModelSelectorTrigger } from "../chat/select-model";
+import { chatModelAtom } from "@/stores/modelStore";
+import { useAtom } from "jotai";
 
 const expandTransition: Transition = {
   type: "spring",
@@ -26,7 +31,6 @@ export function ChatInput({
   onBlur,
   onSubmit,
   isFocused,
-  mode,
 }: {
   ref: React.RefObject<HTMLTextAreaElement | null>;
   value: string;
@@ -35,15 +39,11 @@ export function ChatInput({
   onBlur: () => void;
   onSubmit: () => void;
   isFocused: boolean;
-  mode: "chat" | "transcript";
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { aiResponsesService } = useGlobalServices();
-  const [useScreen, setUseScreen] = useScreenEnabled();
 
   useEffect(() => {
-    if (mode === "transcript") return;
-
     if (isFocused) {
       setIsExpanded(true);
     }
@@ -55,40 +55,64 @@ export function ChatInput({
     window.addEventListener("blur", onWindowBlur);
 
     return () => window.removeEventListener("blur", onWindowBlur);
-  }, [isFocused, mode]);
+  }, [isFocused]);
 
   const keybindings = useKeybindings();
   const triggerAiKbdLabels = electronAcceleratorToLabels(
     keybindings.trigger_ai ?? DEFAULT_KEYBINDINGS.trigger_ai,
   );
 
+  const [showSettings, setShowSettings] = useState(false);
+  const { undetectabilityEnabled } = useSharedState();
+  const showConversation = useShowConversation();
+  const [currentModel, setChatModel] = useAtom(chatModelAtom);
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+
+  useEffect(() => {
+    setShowSettings(false);
+  }, [undetectabilityEnabled]);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setShowSettings(false);
+    }
+  }, [isExpanded]);
+
+  useEffect(() => {
+    return () => setShowSettings(false);
+  }, []);
+
   return (
     <motion.div
-      className="rounded-lg overflow-hidden relative mx-3 mb-3 mt-px border-[0.5px] border-[#9B9B9B]/40"
+      className={twMerge(
+        "rounded-lg relative mt-px overflow-hidden",
+        showConversation ? "border-[0.5px] border-[#9B9B9B]/40 mx-2.5 mb-2.5" : "mx-2 mb-2",
+      )}
       style={{
-        boxShadow: "0 -1px 0 0 rgba(255, 255, 255, 0.25)",
+        boxShadow: showConversation ? "0 -1px 0 0 rgba(255, 255, 255, 0.25)" : undefined,
       }}
       initial={{ height: "fit-content" }}
       animate={{
-        height: isExpanded ? "fit-content" : "40px",
+        height: isExpanded ? "fit-content" : showConversation ? "40px" : "36px",
       }}
       transition={expandTransition}
     >
       <motion.div
         initial={{ height: "fit-content" }}
         animate={{
-          height: isExpanded ? "fit-content" : "40px",
+          height: isExpanded ? "fit-content" : showConversation ? "40px" : "36px",
         }}
         transition={expandTransition}
       >
         <TextareaAutosize
           ref={ref}
           style={{
-            boxShadow: "0 2px 20px -1px rgba(0, 0, 0, 0.05) inset",
+            boxShadow: showConversation ? "0 2px 20px -1px rgba(0, 0, 0, 0.05) inset" : undefined,
           }}
           maxRows={2}
           className={twMerge(
-            "relative z-10 block resize-none w-full p-2.5 rounded-t-lg focus:outline-none text-[13px] text-white scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/50",
+            "relative z-10 block resize-none w-full rounded-t-lg focus:outline-none text-[13px] text-white scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/50",
+            showConversation ? "p-2" : "p-1.5",
           )}
           data-testid="chat-input"
           value={value}
@@ -102,11 +126,15 @@ export function ChatInput({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.1 }}
-          className="absolute top-2.5 left-2.5 right-2.5 text-[13px] pointer-events-none text-white/60 flex items-center gap-1"
+          className={twMerge(
+            "absolute text-[13px] pointer-events-none text-white/60 flex items-center gap-1",
+            showConversation ? "top-2 left-2 right-2" : "top-1.5 left-1.5 right-1.5",
+          )}
         >
           Ask about your screen or conversation, or
           <div className="flex items-center gap-1">
             {triggerAiKbdLabels.map((label, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static
               <Kbd key={index} char={label} />
             ))}
           </div>
@@ -114,31 +142,42 @@ export function ChatInput({
         </motion.span>
       )}
       <div className="rounded-b-lg">
-        <div className="bg-surface-chat-footer rounded-b-lg flex border-white/25 border-t-[0.5px] items-center gap-2 justify-between">
-          <div className="flex items-center w-fit">
-            <kit.Tooltip tooltipContent="Uses your screen to provide better answers">
-              <kit.HeadlessButton
-                className={twMerge("hover:text-white/70 hover:border-white/40 p-1 pl-1 group/pill")}
-                onClick={() => {
-                  setUseScreen(!useScreen);
-                }}
-              >
-                <div
-                  className={twMerge(
-                    "flex h-[26px] pl-1.5 pr-2 gap-1 items-center justify-start text-xs overflow-hidden rounded-full",
-                    "bg-surface-action text-white/40 border border-white/15",
-                    "group-hover/pill:text-primary-foreground group-hover/pill:border-white/25",
-                    useScreen &&
-                    "text-[#6EC0F2] bg-[#2377ED]/20 border-[#3C92E9]/50 group-hover/pill:text-[#6EC0F2] group-hover/pill:bg-[#2377ED]/30 group-hover/pill:border-[#3C92E9]/80",
-                  )}
-                >
-                  <IoImage size={12} className="shrink-0 fill-current" />
-                  Use Screen
-                </div>
-              </kit.HeadlessButton>
-            </kit.Tooltip>
-            {/* <ModeSelector /> */}
+        <div className="rounded-b-lg flex items-center justify-between">
+          <div className="flex items-center w-fit p-0.5 gap-0.5">
+            <Popover.Root open={showSettings} onOpenChange={setShowSettings}>
+              <Popover.Trigger className="focus:outline-none">
+                <kit.HeadlessButton className="hover:text-white/70 hover:border-white/40 p-1 pl-0">
+                  <div
+                    className={twMerge(
+                      "flex h-[26px] px-2 gap-1 items-center justify-start text-xs overflow-hidden rounded-full",
+                      "text-white/40 bg-white/10",
+                    )}
+                  >
+                    <PiSlidersHorizontal className="size-4" />
+                  </div>
+                </kit.HeadlessButton>
+              </Popover.Trigger>
+
+              <Popover.Portal keepMounted={false}>
+                <Popover.Positioner align="start" side="top" sideOffset={8}>
+                  <Popover.Popup>
+                    <CaptureMouseEventsWrapper>
+                      <SettingsPanel />
+                    </CaptureMouseEventsWrapper>
+                  </Popover.Popup>
+                </Popover.Positioner>
+              </Popover.Portal>
+            </Popover.Root>
+
+            {/* Model Selector Trigger */}
+            <ModelSelectorTrigger
+              model={currentModel}
+              onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
+              showProvider={false}
+              className="p-1 h-[26px]"
+            />
           </div>
+
           <motion.div
             className={twMerge("flex items-center gap-1.5 absolute")}
             layout
@@ -158,6 +197,20 @@ export function ChatInput({
           </motion.div>
         </div>
       </div>
+
+      {/* Inline Model List */}
+      {isModelSelectorOpen && (
+        <div className="border-t border-white/10">
+          <ModelList
+            selectedModel={currentModel}
+            onSelect={(model) => {
+              setChatModel(model);
+              setIsModelSelectorOpen(false);
+            }}
+            className="w-full border-0 bg-transparent shadow-none"
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

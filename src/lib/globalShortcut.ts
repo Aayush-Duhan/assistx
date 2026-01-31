@@ -7,34 +7,34 @@ const acceleratorCallbacks = new Map<string, Set<() => void>>();
 sendToIpcMain("reset-global-shortcuts", null);
 
 addIpcRendererHandler("global-shortcut-triggered", ({ accelerator }) => {
-    const set = acceleratorCallbacks.get(accelerator);
-    if (!set) return;
+  const set = acceleratorCallbacks.get(accelerator);
+  if (!set) return;
 
-    for (const callback of set) {
-        callback();
-    }
+  for (const callback of set) {
+    callback();
+  }
 });
 
 /** No-op if the callback was already registered. */
 export function registerGlobalShortcut(accelerator: string, callback: () => void) {
-    let set = acceleratorCallbacks.get(accelerator);
-    if (!set) {
-        set = new Set();
-        acceleratorCallbacks.set(accelerator, set);
-        sendToIpcMain("register-global-shortcut", { accelerator });
-    }
+  let set = acceleratorCallbacks.get(accelerator);
+  if (!set) {
+    set = new Set();
+    acceleratorCallbacks.set(accelerator, set);
+    sendToIpcMain("register-global-shortcut", { accelerator });
+  }
 
-    set.add(callback);
+  set.add(callback);
 }
 
 /** No-op if the callback was not registered. */
 export function unregisterGlobalShortcut(accelerator: string, callback: () => void) {
-    const set = acceleratorCallbacks.get(accelerator);
-    if (!set) return;
+  const set = acceleratorCallbacks.get(accelerator);
+  if (!set) return;
 
-    set.delete(callback);
-    if (set.size === 0) {
-        acceleratorCallbacks.delete(accelerator);
-        sendToIpcMain("unregister-global-shortcut", { accelerator });
-    }
+  set.delete(callback);
+  if (set.size === 0) {
+    acceleratorCallbacks.delete(accelerator);
+    sendToIpcMain("unregister-global-shortcut", { accelerator });
+  }
 }

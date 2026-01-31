@@ -100,10 +100,11 @@ export default function CmdEnter() {
           currentMessages.map((msg) =>
             msg.id === newMessageId
               ? {
-                ...msg,
-                assistantMessage: `${msg.assistantMessage ? `${msg.assistantMessage} ` : ""
+                  ...msg,
+                  assistantMessage: `${
+                    msg.assistantMessage ? `${msg.assistantMessage} ` : ""
                   }${content}`,
-              }
+                }
               : msg,
           ),
         );
@@ -145,8 +146,14 @@ export default function CmdEnter() {
         <div />
         <div className="flex flex-col gap-20 items-center text-center">
           <div className="flex flex-col gap-4">
-            <h2 className={`font-semibold text-sm ${isDarkMode ? "text-white/40" : "text-black/40"}`}>Try AssistX</h2>
-            <h1 className={`text-4xl tracking-[-1.254px] font-medium ${isDarkMode ? "text-[#F0F0F0]" : "text-[#1a1a1a]"}`}>
+            <h2
+              className={`font-semibold text-sm ${isDarkMode ? "text-white/40" : "text-black/40"}`}
+            >
+              Try AssistX
+            </h2>
+            <h1
+              className={`text-4xl tracking-[-1.254px] font-medium ${isDarkMode ? "text-[#F0F0F0]" : "text-[#1a1a1a]"}`}
+            >
               Ask AssistX a question about the meeting
             </h1>
             <p className={`leading-6 ${isDarkMode ? "text-[#A0A0A0]" : "text-[#6B6B6D]"}`}>

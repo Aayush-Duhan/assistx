@@ -1,37 +1,45 @@
-import React from 'react';
-import logoSvg from '../../assets/logo.svg';
+import React from "react";
+import logoImg from "@/assets/logo.png";
+import { cn } from "@/lib/utils";
 
 interface LogoProps {
+  /**
+   * The size of the logo in pixels if a number is provided,
+   * or any valid CSS dimension string. Defaults to 32.
+   */
+  size?: number | string;
+  /**
+   * Additional CSS classes for the container.
+   */
   className?: string;
+  /**
+   * Whether to enable hover/active animations. Defaults to true.
+   */
+  animate?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className = '' }) => {
+/**
+ * A reusable component for the AssistX application logo.
+ * Uses the high-resolution PNG source and supports flexible sizing.
+ */
+export const Logo: React.FC<LogoProps> = ({ size = 32, className = "", animate = true }) => {
+  const sizeValue = typeof size === "number" ? `${size}px` : size;
+
   return (
-    <div className={`inline-flex items-center justify-center leading-none overflow-hidden ${className}`}>
-      <div className="relative group">
-        {/* Main logo with hover animations */}
-        <img 
-          src={logoSvg} 
-          className="block w-32 h-32 transition-all duration-300 ease-in-out
-                     group-hover:scale-110 group-hover:rotate-6
-                     drop-shadow-lg group-hover:drop-shadow-xl
-                     filter group-hover:brightness-110"
-        />
-        
-        {/* Animated background glow */}
-        <div className="absolute inset-0 -z-10 rounded-full 
-                        bg-gradient-to-r from-blue-500/20 to-purple-500/20
-                        blur-xl scale-75 opacity-0
-                        group-hover:opacity-100 group-hover:scale-100
-                        transition-all duration-500 ease-out" />
-        
-        {/* Pulse animation ring */}
-        <div className="absolute inset-0 -z-20 rounded-full
-                        border-2 border-blue-400/30 scale-100 opacity-0
-                        group-hover:scale-125 group-hover:opacity-100
-                        transition-all duration-700 ease-out
-                        animate-pulse" />
-      </div>
+    <div
+      className={cn(
+        "inline-flex items-center justify-center overflow-hidden shrink-0 select-none",
+        animate && "transition-all duration-300 hover:scale-110 active:scale-95",
+        className,
+      )}
+      style={{ width: sizeValue, height: sizeValue }}
+    >
+      <img
+        src={logoImg}
+        alt="AssistX Logo"
+        className="w-full h-full object-contain"
+        draggable={false}
+      />
     </div>
   );
-}; 
+};

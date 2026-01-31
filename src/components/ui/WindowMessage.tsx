@@ -7,5 +7,5 @@ interface WindowMessageProps {
 }
 
 export const WindowMessage = ({ className, children }: WindowMessageProps) => {
-  return <div className={cn('px-4 text-white/90 text-sm', className)}>{children}</div>;
+  return <div className={cn("px-4 text-white/90 text-sm", className)}>{children}</div>;
 };

@@ -1,5 +1,10 @@
 import type z from "zod";
-import type { ipcToMainEvents, IpcToRendererEvents, ipcInvokeEvents, BroadcastToAllWindowsPayload } from "./ipcEvents";
+import type {
+  ipcToMainEvents,
+  IpcToRendererEvents,
+  ipcInvokeEvents,
+  BroadcastToAllWindowsPayload,
+} from "./ipcEvents";
 
 export function sendToIpcMain<T extends keyof typeof ipcToMainEvents>(
   channel: T,

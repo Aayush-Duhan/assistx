@@ -12,6 +12,14 @@ export type ElectronAPI = {
       NODE_ENV: string | undefined;
     };
   };
+  mcp: {
+    listClients: () => Promise<import("./mcp").MCPClientInfo[]>;
+    refreshClient: (id: string) => Promise<void>;
+    toggleClient: (id: string, status: "connected" | "disconnected") => Promise<void>;
+    callTool: (id: string, toolName: string, input: unknown) => Promise<unknown>;
+    removeClient: (id: string) => Promise<void>;
+    setAllowedTools: (id: string, allowedTools: string[]) => Promise<void>;
+  };
 };
 
 declare global {

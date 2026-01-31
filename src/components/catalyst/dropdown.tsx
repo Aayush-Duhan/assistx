@@ -59,8 +59,7 @@ export function DropdownItem({
     "[&>svg]:text-zinc-500 dark:[&>svg]:text-zinc-400 data-focus:[&>svg]:text-black dark:data-focus:[&>svg]:text-white",
     danger &&
       "text-red-400! data-focus:bg-red-500! data-focus:text-white! data-focus:[&>svg]:text-white!",
-    warn &&
-      "data-focus:bg-red-500! data-focus:text-white! data-focus:[&>svg]:text-white!",
+    warn && "data-focus:bg-red-500! data-focus:text-white! data-focus:[&>svg]:text-white!",
   );
 
   return <Headless.MenuItem as="button" type="button" {...props} className={classes} />;
@@ -128,13 +127,7 @@ export function DropdownDivider({
 }
 
 export function DropdownLabel({ className, ...props }: React.ComponentPropsWithoutRef<"span">) {
-  return (
-    <span
-      {...props}
-      data-slot="label"
-      className={clsx(className, "truncate")}
-    />
-  );
+  return <span {...props} data-slot="label" className={clsx(className, "truncate")} />;
 }
 
 export function DropdownDescription({

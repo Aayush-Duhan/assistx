@@ -2,96 +2,104 @@
 @import "tailwindcss";
 
 :root {
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    line-height: 1.5;
-    font-weight: 400;
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: transparent;
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: transparent;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html,
 body,
 #root {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 body {
-    min-width: 320px;
-    background-color: transparent;
-    user-select: none;
+  min-width: 320px;
+  background-color: transparent;
+  user-select: none;
 }
 
 /* Primary Button Styles */
 .ob-primary-button {
-    cursor: pointer;
-    color: #111111;
-    font-weight: 600;
-    background: radial-gradient(114.65% 114.65% at 9.73% 17.27%,
-            #cc8a27,
-            #d6a03b);
-    border: 1.5px solid #ffffff80;
-    position: relative;
-    box-shadow: 0 4px 9px #009dff1a;
+  cursor: pointer;
+  color: #111111;
+  font-weight: 600;
+  background: radial-gradient(114.65% 114.65% at 9.73% 17.27%, #cc8a27, #d6a03b);
+  border: 1.5px solid #ffffff80;
+  position: relative;
+  box-shadow: 0 4px 9px #009dff1a;
 }
 
 .ob-primary-button:after {
-    content: "";
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0.6;
-    mix-blend-mode: overlay;
-    background: radial-gradient(100% 100% at 65.61% 81.79%, #fff, #fff0);
-    transition: opacity 0.3s ease-out;
-    position: absolute;
-    inset: 0;
+  content: "";
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.6;
+  mix-blend-mode: overlay;
+  background: radial-gradient(100% 100% at 65.61% 81.79%, #fff, #fff0);
+  transition: opacity 0.3s ease-out;
+  position: absolute;
+  inset: 0;
 }
 
 .ob-primary-button:hover:after {
-    opacity: 0.9;
+  opacity: 0.9;
 }
 
 .ob-primary-button:disabled:after {
-    opacity: 0;
+  opacity: 0;
 }
 
 .ob-primary-button:disabled {
-    box-shadow: none;
-    background: 0 0;
+  box-shadow: none;
+  background: 0 0;
 }
 
 /* Custom CSS Properties for Onboarding */
 :root {
-    --color-ob3-foreground: #19191d;
-    --ob3-gradient-primary: radial-gradient(94.53% 94.53% at 55.79% 65.24%, #ffb366 0%, #e8913f 100%);
-    --ob3-gradient-secondary: linear-gradient(to right, var(--color-ob3-foreground), #717183);
+  --color-ob3-foreground: #19191d;
+  --ob3-gradient-primary: radial-gradient(94.53% 94.53% at 55.79% 65.24%, #ffb366 0%, #e8913f 100%);
+  --ob3-gradient-secondary: linear-gradient(to right, var(--color-ob3-foreground), #717183);
 }
 
 /* Onboarding Header Styles */
 .ob3-primary-header {
-    background: var(--ob3-gradient-primary);
-    -webkit-text-fill-color: transparent;
-    -moz-text-fill-color: transparent;
-    -webkit-background-clip: text;
-    background-clip: text;
+  background: var(--ob3-gradient-primary);
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .ob3-secondary-header {
-    background: var(--ob3-gradient-secondary);
-    -webkit-text-fill-color: transparent;
-    -moz-text-fill-color: transparent;
-    -webkit-background-clip: text;
-    background-clip: text;
+  background: var(--ob3-gradient-secondary);
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 /* Onboarding Foreground Color */
 .text-ob3-foreground {
-    color: var(--color-ob3-foreground);
+  color: var(--color-ob3-foreground);
 }

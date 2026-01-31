@@ -1,14 +1,12 @@
-import { updateState, useSharedState } from "@/shared/shared";
 import { useGlobalShortcut } from "./useGlobalShortcut";
 import { useKeybindings } from "./useKeybindings";
+import { useToggleShowHide } from "@/apps/widgetApp/hooks/useToggleShowHide";
 
 export function useHideWindowShortcut() {
-  const { windowHidden } = useSharedState();
-
-  const shortcutEnabled = true;
   const keybindings = useKeybindings();
+  const { toggleShowHide } = useToggleShowHide();
 
-  useGlobalShortcut(keybindings.hide, () => updateState({ windowHidden: !windowHidden }), {
-    enable: shortcutEnabled,
+  useGlobalShortcut(keybindings.hide, toggleShowHide, {
+    enable: true,
   });
 }

@@ -1,9 +1,6 @@
 import { animate, motion, type Transition, useDragControls, useMotionValue } from "framer-motion";
 import { useCallback, useEffect, useRef } from "react";
-import {
-  CHAT_HEADER_CONTAINER_ID,
-  CHAT_INPUT_CONTAINER_ID,
-} from "../chat/chatContent";
+import { CHAT_INPUT_CONTAINER_ID } from "../chat/chatContent";
 import { useResizeObserver } from "../hooks/useObserver";
 import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 import { WIDGET_LOCAL_STORAGE_KEYS } from "@/state/settings";
@@ -42,13 +39,9 @@ export function VerticalResizeContainer({
       }
       height.set(curHeight);
 
-      const chatHeaderHeight = getChatHeaderHeight();
       const chatInputHeight = getChatInputHeight();
       if (containerRef.current) {
-        containerRef.current.style.setProperty(
-          "--height",
-          `${curHeight - chatHeaderHeight - chatInputHeight - 7}px`,
-        );
+        containerRef.current.style.setProperty("--height", `${curHeight - chatInputHeight - 7}px`);
       }
       localStorage.setItem(WIDGET_LOCAL_STORAGE_KEYS.HEIGHT, curHeight.toString());
     },
@@ -77,7 +70,7 @@ export function VerticalResizeContainer({
       {children}
       {allowResize && (
         <motion.div
-          className="absolute top-0 left-0 right-0 h-5 mt-1"
+          className="absolute top-0 left-0 right-0 h-5 mt-1 group/verticalresize"
           style={{
             y: height,
             x: 0,
@@ -97,7 +90,9 @@ export function VerticalResizeContainer({
           {/* the 1px vertical padding is needed because the cursor only shows when the
           mouse is already being captured before entering the bounding box */}
           <CaptureMouseEventsWrapper className="w-full h-full py-px">
-            <div className="w-full h-full cursor-ns-resize" />
+            <div className="w-full h-full cursor-ns-resize flex flex-col items-center justify-start">
+              <div className="rounded-full bg-neutral-500/50 h-1.5 w-[50px] opacity-0 group-hover/verticalresize:opacity-100 transition-opacity duration-150 mt-2" />
+            </div>
           </CaptureMouseEventsWrapper>
         </motion.div>
       )}
@@ -108,11 +103,6 @@ export function VerticalResizeContainer({
 function getStoredHeight() {
   const strHeight = localStorage.getItem(WIDGET_LOCAL_STORAGE_KEYS.HEIGHT);
   return strHeight ? Number(strHeight) : null;
-}
-
-function getChatHeaderHeight() {
-  const chatHeader = document.getElementById(CHAT_HEADER_CONTAINER_ID);
-  return chatHeader ? chatHeader.clientHeight : 0;
 }
 
 function getChatInputHeight() {

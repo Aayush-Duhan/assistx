@@ -1,10 +1,11 @@
-import type { MCPServerConfig, McpServerSchemaSelect, McpServerSchemaInsert } from "../../../types/mcp";
+import type {
+  MCPServerConfig,
+  McpServerSchemaSelect,
+  McpServerSchemaInsert,
+} from "../../../types/mcp";
 import { dirname } from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
-import type {
-  MCPClientsManager,
-  MCPConfigStorage,
-} from "./create-mcp-clients-manager";
+import type { MCPClientsManager, MCPConfigStorage } from "./create-mcp-clients-manager";
 import chokidar from "chokidar";
 import type { FSWatcher } from "chokidar";
 import { createDebounce } from "../../utils";
@@ -20,9 +21,7 @@ const logger = defaultLogger.withDefaults({
 /**
  * Creates a file-based implementation of MCPServerStorage
  */
-export function createFileBasedMCPConfigsStorage(
-  path?: string,
-): MCPConfigStorage {
+export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorage {
   const configPath = path || MCP_CONFIG_PATH;
   let watcher: FSWatcher | null = null;
   let manager: MCPClientsManager;
@@ -31,9 +30,7 @@ export function createFileBasedMCPConfigsStorage(
   /**
    * Reads config from file
    */
-  async function readConfigFile(): Promise<
-    McpServerSchemaSelect[]
-  > {
+  async function readConfigFile(): Promise<McpServerSchemaSelect[]> {
     try {
       const configText = await readFile(configPath, { encoding: "utf-8" });
       const config = JSON.parse(configText ?? "{}") as {
@@ -44,9 +41,7 @@ export function createFileBasedMCPConfigsStorage(
       if (err.code === "ENOENT") {
         return [];
       } else if (err instanceof SyntaxError) {
-        throw new Error(
-          `Config file ${configPath} has invalid JSON: ${err.message}`,
-        );
+        throw new Error(`Config file ${configPath} has invalid JSON: ${err.message}`);
       } else {
         throw err;
       }
@@ -56,9 +51,7 @@ export function createFileBasedMCPConfigsStorage(
   /**
    * Writes config to file
    */
-  async function writeConfigFile(
-    config: Record<string, MCPServerConfig>,
-  ): Promise<void> {
+  async function writeConfigFile(config: Record<string, MCPServerConfig>): Promise<void> {
     const dir = dirname(configPath);
     await mkdir(dir, { recursive: true });
     await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
@@ -81,9 +74,7 @@ export function createFileBasedMCPConfigsStorage(
             config: client.getInfo().config,
           })),
         )
-        .then((configs) =>
-          configs.sort((a, b) => a.name.localeCompare(b.name)),
-        );
+        .then((configs) => configs.sort((a, b) => a.name.localeCompare(b.name)));
 
       let shouldRefresh = false;
       if (fileConfigs.length !== managerConfigs.length) {
@@ -93,19 +84,17 @@ export function createFileBasedMCPConfigsStorage(
       }
 
       if (shouldRefresh) {
-        const refreshPromises = fileConfigs.map(
-          async ({ id, name, config }) => {
-            const managerConfig = await manager.getClient(id);
-            if (!managerConfig) {
-              logger.debug(`Adding MCP client ${id}`);
-              return manager.addClient(id, name, config);
-            }
-            if (!equal(managerConfig.client.getInfo().config, config)) {
-              logger.debug(`Refreshing MCP client ${id}`);
-              return manager.refreshClient(id);
-            }
-          },
-        );
+        const refreshPromises = fileConfigs.map(async ({ id, name, config }) => {
+          const managerConfig = await manager.getClient(id);
+          if (!managerConfig) {
+            logger.debug(`Adding MCP client ${id}`);
+            return manager.addClient(id, name, config);
+          }
+          if (!equal(managerConfig.client.getInfo().config, config)) {
+            logger.debug(`Refreshing MCP client ${id}`);
+            return manager.refreshClient(id);
+          }
+        });
         const deletePromises = managerConfigs
           .filter((c) => {
             const fileConfig = fileConfigs.find((c2) => c2.id === c.id);
@@ -187,9 +176,7 @@ export function createFileBasedMCPConfigsStorage(
   };
 }
 
-function fillMcpServerSchema(
-  server: McpServerSchemaInsert,
-): McpServerSchemaSelect {
+function fillMcpServerSchema(server: McpServerSchemaInsert): McpServerSchemaSelect {
   return {
     ...server,
     id: server.name,
@@ -199,9 +186,7 @@ function fillMcpServerSchema(
   };
 }
 
-function toMcpServerArray(
-  config: Record<string, MCPServerConfig>,
-): McpServerSchemaSelect[] {
+function toMcpServerArray(config: Record<string, MCPServerConfig>): McpServerSchemaSelect[] {
   return Object.entries(config).map(([name, config]) =>
     fillMcpServerSchema({
       id: name,
@@ -211,9 +196,7 @@ function toMcpServerArray(
   );
 }
 
-function toMcpServerRecord(
-  servers: McpServerSchemaSelect[],
-): Record<string, MCPServerConfig> {
+function toMcpServerRecord(servers: McpServerSchemaSelect[]): Record<string, MCPServerConfig> {
   return servers.reduce(
     (acc, server) => {
       acc[server.name] = server.config;

@@ -60,8 +60,25 @@ export default defineConfig({
           },
           build: {
             rollupOptions: {
-              // Externalize native module so Rollup doesn't try to bundle/parse .node binaries
-              external: ['electron-app-universal-protocol-client'],
+              // Externalize native modules and server dependencies so Rollup doesn't try to bundle them
+              // These will be loaded at runtime from node_modules
+              external: [
+                'electron-app-universal-protocol-client',
+                // Native modules - cannot be bundled
+                'better-sqlite3',
+                // ORM uses native modules
+                'drizzle-orm',
+                // Server dependencies - load at runtime, not bundled
+                'ws',
+                'bufferutil',
+                'utf-8-validate',
+                '@deepgram/sdk',
+                '@fastify/websocket',
+                '@fastify/cors',
+                'fastify',
+                'pino',
+                'pino-pretty',
+              ],
             },
           },
         },

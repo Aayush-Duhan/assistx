@@ -108,7 +108,9 @@ export const jsonMcpOAuthRepository: McpOAuthRepository = {
       const store = await readStore();
       const idx = store.sessions.findIndex((s) => s.state === state);
       if (idx === -1) {
-        throw new Error(`OAuth session with state '${state}' not found. This may indicate an expired or invalid authorization session.`);
+        throw new Error(
+          `OAuth session with state '${state}' not found. This may indicate an expired or invalid authorization session.`,
+        );
       }
       const now = new Date();
       const updated: McpOAuthSession = {
@@ -131,7 +133,9 @@ export const jsonMcpOAuthRepository: McpOAuthRepository = {
       const store = await readStore();
       const idx = store.sessions.findIndex((s) => s.state === state);
       if (idx === -1) {
-        throw new Error(`OAuth session with state '${state}' not found. This may indicate an expired or invalid authorization session.`);
+        throw new Error(
+          `OAuth session with state '${state}' not found. This may indicate an expired or invalid authorization session.`,
+        );
       }
       const updated: McpOAuthSession = {
         ...store.sessions[idx],

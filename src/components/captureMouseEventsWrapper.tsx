@@ -47,11 +47,11 @@ export function CaptureMouseEventsWrapper({
 
       setCaptureMouseEvents(
         shouldCaptureMouse &&
-        !!lastPos &&
-        lastPos.x >= rect.left &&
-        lastPos.x <= rect.right &&
-        lastPos.y >= rect.top &&
-        lastPos.y <= rect.bottom,
+          !!lastPos &&
+          lastPos.x >= rect.left &&
+          lastPos.x <= rect.right &&
+          lastPos.y >= rect.top &&
+          lastPos.y <= rect.bottom,
       );
     };
 

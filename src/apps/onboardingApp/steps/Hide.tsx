@@ -19,11 +19,7 @@ import {
 import { Command, Slash } from "../components/icons";
 // import Meeting from "../components/meeting";
 import OnboardingButton from "../components/ob-button";
-import {
-  OnboardingDemo,
-  OnboardingForm,
-  OnboardingPage,
-} from "../components/onboarding-page";
+import { OnboardingDemo, OnboardingForm, OnboardingPage } from "../components/onboarding-page";
 import { GradientShimmer } from "../steps/Submit";
 import { IS_MAC } from "@/shared/constants";
 
@@ -55,7 +51,11 @@ export default function Hide() {
         <div />
         <div className="flex flex-col gap-10 items-center text-center">
           <div className="flex flex-col gap-4">
-            <h2 className={`font-semibold text-sm ${isDarkMode ? "text-white/40" : "text-black/40"}`}>Try AssistX</h2>
+            <h2
+              className={`font-semibold text-sm ${isDarkMode ? "text-white/40" : "text-black/40"}`}
+            >
+              Try AssistX
+            </h2>
             <h1>
               <AnimatePresence initial={false} mode="wait">
                 <motion.span
@@ -82,7 +82,9 @@ export default function Hide() {
                 </motion.span>
               </AnimatePresence>
             </h1>
-            <p className={isDarkMode ? "text-[#A0A0A0]" : "text-[#6B6B6D]"}>Press the keyboard shortcut to try hiding AssistX.</p>
+            <p className={isDarkMode ? "text-[#A0A0A0]" : "text-[#6B6B6D]"}>
+              Press the keyboard shortcut to try hiding AssistX.
+            </p>
           </div>
           <div className="flex gap-2">
             <Shortcuts />

@@ -8,8 +8,9 @@ import { CopyIconButton } from "../components/copy";
 import { ScrollingContainer } from "../components/scrollingContainer";
 import { kit } from "@/components/kit";
 import { useMicDeviceName } from "@/lib/audio/mic";
-import { isMac } from "@/lib/platform";
+import { IS_MAC } from "@/shared/constants";
 import { useGlobalServices } from "@/services/GlobalServicesContextProvider";
+import { observer } from "mobx-react-lite";
 
 type ParagraphTranscripts = {
   transcripts: Array<{ createdAt: Date; role: string; text: string }>;
@@ -24,9 +25,14 @@ type TranscriptEntry = {
   text: string;
 };
 
-export function TranscriptContent({ mode }: { mode: "chat" | "transcript" }) {
-  const { contextService } = useGlobalServices();
-  const paragraphTranscripts: ParagraphTranscripts = contextService.fullContext.paragraphTranscripts;
+export const TranscriptContent = observer(function TranscriptContent({
+  mode,
+}: {
+  mode: "chat" | "transcript";
+}) {
+  const { contextService, micAudioCaptureService, systemAudioCaptureService } = useGlobalServices();
+  const paragraphTranscripts: ParagraphTranscripts =
+    contextService.fullContext.paragraphTranscripts;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -47,17 +53,22 @@ export function TranscriptContent({ mode }: { mode: "chat" | "transcript" }) {
     }
   }, [mode]);
 
-  const partialMic = paragraphTranscripts.remainingMicText;
-  const partialSystem = paragraphTranscripts.remainingSystemText;
-  const hasContent =
-    paragraphTranscripts.transcripts.length > 0 || !!partialMic || !!partialSystem;
+  // Get real-time interim text from transcription service buffers
+  const livePartialMic = micAudioCaptureService.transcriptionService?.buffer?.partialText ?? "";
+  const livePartialSystem =
+    systemAudioCaptureService.transcriptionService?.buffer?.partialText ?? "";
+
+  // Combine accumulated remaining text with live partial text
+  const partialMic = `${paragraphTranscripts.remainingMicText} ${livePartialMic}`.trim();
+  const partialSystem = `${paragraphTranscripts.remainingSystemText} ${livePartialSystem}`.trim();
+  const hasContent = paragraphTranscripts.transcripts.length > 0 || !!partialMic || !!partialSystem;
 
   if (!hasContent) {
     return (
       <div className="my-1 text-sm px-3 pb-3 flex flex-col gap-2">
         <kit.HeadlessButton
           onClick={() => {
-            if (isMac) {
+            if (IS_MAC) {
               sendToIpcMain("mac-open-system-settings", {
                 section: "sound > input",
               });
@@ -83,7 +94,7 @@ export function TranscriptContent({ mode }: { mode: "chat" | "transcript" }) {
   return (
     <ScrollingContainer ref={scrollRef} className="space-y-1.5 px-3 pb-3" enableSnapToBottom>
       {paragraphTranscripts.transcripts.map((transcript, index) => (
-        <TranscriptionEntry
+        <TranscriptionEntryComponent
           key={`${transcript.createdAt.getTime()}-${transcript.role}-${index}`}
           transcription={{
             createdAt: transcript.createdAt.toISOString(),
@@ -110,9 +121,9 @@ export function TranscriptContent({ mode }: { mode: "chat" | "transcript" }) {
       )}
     </ScrollingContainer>
   );
-}
+});
 
-function TranscriptionEntry({
+function TranscriptionEntryComponent({
   transcription,
   skipAnimate,
 }: {
@@ -195,7 +206,7 @@ function SystemBubble({
     <div className="w-full justify-start flex group/message relative text-primary-foreground">
       <motion.div
         ref={contentRef}
-        className="pr-2 pl-2.5 py-2 w-fit max-w-72 rounded-xl rounded-bl-sm text-white/90 text-xs secondary-button !select-text cursor-pointer relative"
+        className="pr-2 pl-2.5 py-2 w-fit max-w-72 rounded-xl rounded-bl-sm text-white/90 text-xs session-secondary-button !select-text cursor-pointer relative"
         initial={skipAnimate ? false : { scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2, ease: "easeOut" }}

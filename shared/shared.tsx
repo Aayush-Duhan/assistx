@@ -9,42 +9,42 @@ import type { SharedState } from "./sharedState.ts";
 const Context = createContext<SharedState>(null as unknown as SharedState);
 
 export function SharedStateProvider({ children }: PropsWithChildren) {
-    console.log('[SharedStateProvider] Rendering');
-    const [state, setState] = useState<SharedState | null>(null);
+  console.log("[SharedStateProvider] Rendering");
+  const [state, setState] = useState<SharedState | null>(null);
 
-    useEffect(() => {
-        console.log('[SharedStateProvider] useEffect running');
-        // subscribe to shared state changes
-        addIpcRendererHandler("update-shared-state", (newState) => {
-            console.log('[SharedStateProvider] Received state update:', newState);
-            setState(newState);
-        });
+  useEffect(() => {
+    console.log("[SharedStateProvider] useEffect running");
+    // subscribe to shared state changes
+    addIpcRendererHandler("update-shared-state", (newState) => {
+      console.log("[SharedStateProvider] Received state update:", newState);
+      setState(newState);
+    });
 
-        // grab initial state
-        console.log('[SharedStateProvider] Invoking get-shared-state');
-        void invokeIpcMain("get-shared-state", null)
-            .then((result) => {
-                console.log('[SharedStateProvider] Got initial state:', result);
-                setState(result);
-            })
-            .catch((err) => {
-                console.error('[SharedStateProvider] Error getting shared state:', err);
-            });
-    }, []);
+    // grab initial state
+    console.log("[SharedStateProvider] Invoking get-shared-state");
+    void invokeIpcMain("get-shared-state", null)
+      .then((result) => {
+        console.log("[SharedStateProvider] Got initial state:", result);
+        setState(result);
+      })
+      .catch((err) => {
+        console.error("[SharedStateProvider] Error getting shared state:", err);
+      });
+  }, []);
 
-    console.log('[SharedStateProvider] Current state:', state);
-    if (!state) {
-        console.log('[SharedStateProvider] State is null, returning null');
-        return null;
-    }
+  console.log("[SharedStateProvider] Current state:", state);
+  if (!state) {
+    console.log("[SharedStateProvider] State is null, returning null");
+    return null;
+  }
 
-    console.log('[SharedStateProvider] Rendering children');
-    return <Context value={state}>{children}</Context>;
+  console.log("[SharedStateProvider] Rendering children");
+  return <Context value={state}>{children}</Context>;
 }
 
 export const useSharedState = () => useContext(Context);
 
 // update shared state by doing a round trip through main
 export function updateState(update: Partial<SharedState>) {
-    sendToIpcMain("update-shared-state", update);
+  sendToIpcMain("update-shared-state", update);
 }

@@ -1,5 +1,5 @@
-import { screen, BrowserWindow } from 'electron';
-import { isWindows } from './platform';
+import { screen, BrowserWindow } from "electron";
+import { IS_WINDOWS } from "../../shared/constants";
 
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -9,7 +9,7 @@ export function animateWindowResize(
   browserWindow: BrowserWindow,
   targetWidth: number,
   targetHeight: number,
-  duration: number
+  duration: number,
 ): { cancel: () => void } {
   targetWidth = Math.floor(targetWidth);
   targetHeight = Math.floor(targetHeight);
@@ -52,9 +52,9 @@ export function animateWindowResize(
         x: newX,
         y: newY,
         width: newWidth,
-        height: newHeight
+        height: newHeight,
       };
-      if (isWindows) {
+      if (IS_WINDOWS) {
         const boundsNow = browserWindow.getBounds();
         if (
           Math.abs(boundsNow.width - newWidth) >= 1 ||
@@ -93,6 +93,6 @@ export function animateWindowResize(
       }
       browserWindow.setBounds({ x: targetX, y: targetY, width: targetWidth, height: targetHeight });
       browserWindow.setResizable(wasResizable);
-    }
+    },
   };
 }

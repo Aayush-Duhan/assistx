@@ -1,12 +1,9 @@
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-import {
-  OAuthClientInformationFull,
-  OAuthTokens,
-} from "@modelcontextprotocol/sdk/shared/auth.js";
+import { OAuthClientInformationFull, OAuthTokens } from "@modelcontextprotocol/sdk/shared/auth.js";
 import { Tool } from "ai";
 import { tag } from "../lib/tag";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 export const MCPRemoteConfigZodSchema = z.object({
   url: z.string().url().describe("The URL of the SSE endpoint"),
@@ -47,17 +44,20 @@ export type MCPServerInfo = {
   error?: unknown;
   status: "connected" | "disconnected" | "loading" | "authorizing";
   toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
 };
 
 export type McpServerInsert = {
   name: string;
   config: MCPServerConfig;
   id?: string;
+  allowedTools?: string[];
 };
 export type McpServerSelect = {
   name: string;
   config: MCPServerConfig;
   id: string;
+  allowedTools?: string[];
 };
 
 export type VercelAIMcpTool = Tool & {
@@ -101,9 +101,7 @@ export type McpToolCustomizationRepository = {
     userId: string;
     mcpServerId: string;
   }) => Promise<McpToolCustomization[]>;
-  selectByUserId: (
-    userId: string,
-  ) => Promise<(McpToolCustomization & { serverName: string })[]>;
+  selectByUserId: (userId: string) => Promise<(McpToolCustomization & { serverName: string })[]>;
   upsertToolCustomization: (
     data: PartialBy<McpToolCustomization, "id">,
   ) => Promise<McpToolCustomization>;
@@ -131,9 +129,7 @@ export type McpServerCustomizationRepository = {
     userId: string;
     mcpServerId: string;
   }) => Promise<(McpServerCustomization & { serverName: string }) | null>;
-  selectByUserId: (
-    userId: string,
-  ) => Promise<(McpServerCustomization & { serverName: string })[]>;
+  selectByUserId: (userId: string) => Promise<(McpServerCustomization & { serverName: string })[]>;
   upsertMcpServerCustomization: (
     data: PartialBy<McpServerCustomization, "id">,
   ) => Promise<McpServerCustomization>;
@@ -235,9 +231,7 @@ export type McpOAuthRepository = {
   // 1. Query methods
 
   // Get session with valid tokens (authenticated)
-  getAuthenticatedSession(
-    mcpServerId: string,
-  ): Promise<McpOAuthSession | undefined>;
+  getAuthenticatedSession(mcpServerId: string): Promise<McpOAuthSession | undefined>;
 
   // Get session by OAuth state (for callback handling)
   getSessionByState(state: string): Promise<McpOAuthSession | undefined>;
@@ -245,16 +239,10 @@ export type McpOAuthRepository = {
   // 2. Create/Update methods
 
   // Create new OAuth session
-  createSession(
-    mcpServerId: string,
-    data: Partial<McpOAuthSession>,
-  ): Promise<McpOAuthSession>;
+  createSession(mcpServerId: string, data: Partial<McpOAuthSession>): Promise<McpOAuthSession>;
 
   // Update existing session by state
-  updateSessionByState(
-    state: string,
-    data: Partial<McpOAuthSession>,
-  ): Promise<McpOAuthSession>;
+  updateSessionByState(state: string, data: Partial<McpOAuthSession>): Promise<McpOAuthSession>;
 
   // Save tokens and cleanup incomplete sessions
   saveTokensAndCleanup(

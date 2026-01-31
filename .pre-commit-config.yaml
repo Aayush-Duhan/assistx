@@ -1,0 +1,40 @@
+# Pre-commit hooks for AssistX
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# See https://pre-commit.com for more information
+
+repos:
+  # Basic file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '^(dist/|dist-electron/|node_modules/|\.pnpm-store/|.*\.snap$|extraResources/)'
+      - id: end-of-file-fixer
+        exclude: '^(dist/|dist-electron/|node_modules/|\.pnpm-store/|.*\.snap$|extraResources/)'
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-added-large-files
+        args: [--maxkb=2000]
+      - id: check-merge-conflict
+      # Skip check-json as tsconfig.json has comments
+
+  # Project checks (same commands as CI)
+  - repo: local
+    hooks:
+      # oxlint
+      - id: oxlint
+        name: oxlint
+        entry: pnpm exec oxlint src electron shared server
+        language: system
+        pass_filenames: false
+        types_or: [javascript, jsx, ts, tsx]
+
+      # oxfmt --check
+      - id: oxfmt
+        name: oxfmt
+        entry: pnpm exec oxfmt --check src electron shared server
+        language: system
+        pass_filenames: false
+        types_or: [javascript, jsx, ts, tsx]

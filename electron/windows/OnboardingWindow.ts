@@ -1,5 +1,5 @@
-import { Display } from 'electron';
-import { CenteredWindow } from './CenteredWindow';
+import { Display } from "electron";
+import { CenteredWindow } from "./CenteredWindow";
 
 /**
  * Represents the onboarding window shown to new users.

@@ -1,9 +1,9 @@
-import { desktopCapturer } from 'electron';
-import { Buffer } from 'node:buffer';
-import { isMac } from '../utils/platform';
-import { windowManager } from '../windows/WindowManager';
-import { loadOnboardingState } from '../utils/utils';
-import { updateSharedState } from '../utils/shared/stateManager';
+import { desktopCapturer } from "electron";
+import { Buffer } from "node:buffer";
+import { IS_MAC } from "../../shared/constants";
+import { windowManager } from "../windows/WindowManager";
+import { loadOnboardingState } from "../utils/utils";
+import { updateSharedState } from "../utils/shared/stateManager";
 
 /**
  * Reset onboarding state
@@ -19,7 +19,7 @@ function resetOnboarding(): void {
 
 interface Screenshot {
   data: Buffer;
-  contentType: 'image/png';
+  contentType: "image/png";
 }
 
 /**
@@ -30,20 +30,20 @@ export async function captureScreenshot(): Promise<Screenshot> {
   const currentDisplay = windowManager.getTargetDisplay();
   try {
     const sources = await desktopCapturer.getSources({
-      types: ['screen'],
+      types: ["screen"],
       thumbnailSize: {
         width: currentDisplay.bounds.width,
-        height: currentDisplay.bounds.height
-      }
+        height: currentDisplay.bounds.height,
+      },
     });
 
     const source = sources.find((s) => s.display_id === currentDisplay.id.toString());
     if (!source) {
-      throw new Error('Unable to capture screenshot: no display source found');
+      throw new Error("Unable to capture screenshot: no display source found");
     }
-    return { data: source.thumbnail.toPNG(), contentType: 'image/png' };
+    return { data: source.thumbnail.toPNG(), contentType: "image/png" };
   } catch (error) {
-    if (isMac) {
+    if (IS_MAC) {
       resetOnboarding();
     }
     throw error;

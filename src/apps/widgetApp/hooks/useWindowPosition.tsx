@@ -1,4 +1,4 @@
-import { invokeIpcMain } from "@/shared";
+import { invokeIpcMain, useIpcRendererHandler } from "@/shared";
 import {
   animate,
   type DragControls,
@@ -10,24 +10,16 @@ import {
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useGlobalShortcut } from "@/hooks/useGlobalShortcut";
 import { useKeybindings } from "@/hooks/useKeybindings";
-import { IS_WINDOWS } from "@/shared";
+import { isWin } from "@/lib/platform";
 import { WIDGET_LOCAL_STORAGE_KEYS } from "@/state/settings";
 
 type WindowPositionContext = {
   x: MotionValue<number>;
   y: MotionValue<number>;
-  /**
-   * Set the position of the window immediately
-   */
-  setPosition: (newX: number, newY: number) => void;
-  /**
-   * Tween to the position of the window
-   */
-  tweenToPosition: (newX: number, newY: number, transition?: Transition) => void;
-  tweenToInitialPosition: (transition?: Transition) => void;
   handleDragStart: () => void;
   handleDragEnd: () => void;
   dragControls: DragControls;
+  isDragging: boolean;
 };
 
 const INITIAL_X = 0;
@@ -120,7 +112,7 @@ export function WindowPositionProvider({
 
     const maxHeight = window.innerHeight - content.clientHeight;
     const topLimit = 0;
-    const bottomLimit = maxHeight - (IS_WINDOWS ? 0 : 25);
+    const bottomLimit = maxHeight - (isWin ? 0 : 25);
 
     return {
       minX: leftLimit,
@@ -179,28 +171,16 @@ export function WindowPositionProvider({
     }
   }, [isDragging, enforceBoundsAndSave]);
 
+  useIpcRendererHandler("reset-widget-position", () => {
+    x.set(INITIAL_X);
+    y.set(INITIAL_Y);
+    saveXY(INITIAL_X, INITIAL_Y);
+  });
+
   const value: WindowPositionContext = useMemo(
     () => ({
       x,
       y,
-      setPosition: (newX: number, newY: number) => {
-        x.set(newX);
-        y.set(newY);
-      },
-      tweenToPosition: (
-        newX: number,
-        newY: number,
-        transition: Transition = DEFAULT_TRANSITION,
-      ) => {
-        animate(x, newX, transition);
-        animate(y, newY, transition);
-        saveXY(newX, newY);
-      },
-      tweenToInitialPosition: (transition: Transition = DEFAULT_TRANSITION) => {
-        animate(x, INITIAL_X, transition);
-        animate(y, INITIAL_Y, transition);
-        saveXY(INITIAL_X, INITIAL_Y);
-      },
       handleDragStart: () => {
         setIsDragging(true);
       },
@@ -208,8 +188,9 @@ export function WindowPositionProvider({
         setIsDragging(false);
       },
       dragControls,
+      isDragging,
     }),
-    [x, y, dragControls],
+    [x, y, dragControls, isDragging],
   );
 
   return <WindowPositionContext.Provider value={value}>{children}</WindowPositionContext.Provider>;

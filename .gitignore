@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.pnpm-store
 dist
 dist-ssr
 dist-electron
@@ -32,3 +33,10 @@ package-lock.json
 
 release/*
 release/**/*
+
+re-audio-capturer/*
+
+# Binary files (large)
+extraResources/*.node
+src/assets/logo.png
+.secrets.baseline

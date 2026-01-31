@@ -1,17 +1,22 @@
-import { describe, expect, it } from 'vitest';
-import * as fc from 'fast-check';
-import { onboardingStateSchema, DEFAULT_ONBOARDING_STATE } from '../onboardingState';
+import { describe, expect, it } from "vitest";
+import * as fc from "fast-check";
+import { onboardingStateSchema, DEFAULT_ONBOARDING_STATE } from "../onboardingState";
 
 /**
  * **Feature: landing-page-shared-state, Property 2: Onboarding state serialization round-trip**
  * **Validates: Requirements 2.1**
- * 
- * For any valid onboarding state object, serializing to JSON and deserializing 
+ *
+ * For any valid onboarding state object, serializing to JSON and deserializing
  * should produce an equivalent object with didCompleteLanding preserved.
  */
-describe('onboardingState', () => {
+describe("onboardingState", () => {
   // Arbitrary for generating valid onboarding states
-  const onboardingModeArb = fc.constantFrom('student', 'professional', 'curious', 'looking-for-a-job');
+  const onboardingModeArb = fc.constantFrom(
+    "student",
+    "professional",
+    "curious",
+    "looking-for-a-job",
+  );
 
   const onboardingStateArb = fc.record({
     permissions: fc.record({
@@ -33,7 +38,7 @@ describe('onboardingState', () => {
     completed: fc.boolean(),
   });
 
-  it('Property 2: serialization round-trip preserves didCompleteLanding', () => {
+  it("Property 2: serialization round-trip preserves didCompleteLanding", () => {
     fc.assert(
       fc.property(onboardingStateArb, (state) => {
         // Serialize to JSON
@@ -48,15 +53,15 @@ describe('onboardingState', () => {
         // Full object should be equivalent
         expect(parsed).toEqual(state);
       }),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
   });
 
-  it('DEFAULT_ONBOARDING_STATE has didCompleteLanding set to false', () => {
+  it("DEFAULT_ONBOARDING_STATE has didCompleteLanding set to false", () => {
     expect(DEFAULT_ONBOARDING_STATE.didCompleteLanding).toBe(false);
   });
 
-  it('schema validates DEFAULT_ONBOARDING_STATE', () => {
+  it("schema validates DEFAULT_ONBOARDING_STATE", () => {
     const result = onboardingStateSchema.safeParse(DEFAULT_ONBOARDING_STATE);
     expect(result.success).toBe(true);
   });
@@ -64,11 +69,11 @@ describe('onboardingState', () => {
   /**
    * **Feature: landing-page-shared-state, Property 1: Landing page visibility is determined by didCompleteLanding**
    * **Validates: Requirements 1.4, 1.5**
-   * 
-   * For any onboarding state, the landing page should be displayed if and only if 
+   *
+   * For any onboarding state, the landing page should be displayed if and only if
    * didCompleteLanding is false.
    */
-  it('Property 1: landing page visibility is determined by didCompleteLanding', () => {
+  it("Property 1: landing page visibility is determined by didCompleteLanding", () => {
     fc.assert(
       fc.property(fc.boolean(), (didCompleteLanding) => {
         // The logic: show landing page when didCompleteLanding is false
@@ -81,17 +86,17 @@ describe('onboardingState', () => {
           expect(shouldShowLanding).toBe(true); // Landing SHOULD be shown
         }
       }),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
   });
 
   /**
    * **Feature: landing-page-shared-state, Property 3: Reset restores didCompleteLanding to default**
    * **Validates: Requirements 2.3**
-   * 
+   *
    * For any onboarding state, after reset, didCompleteLanding should be false.
    */
-  it('Property 3: reset restores didCompleteLanding to default', () => {
+  it("Property 3: reset restores didCompleteLanding to default", () => {
     fc.assert(
       fc.property(onboardingStateArb, (_state) => {
         // Simulate reset by using DEFAULT_ONBOARDING_STATE
@@ -100,7 +105,7 @@ describe('onboardingState', () => {
 
         expect(resetState.didCompleteLanding).toBe(false);
       }),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
   });
 });

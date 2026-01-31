@@ -1,13 +1,13 @@
 import { createConsola, LogLevels } from "consola";
-import { isDev } from "../utils/platform";
+import { IS_DEV } from "../../shared/constants";
 
 /**
  * Logger instance for the application.
- * 
+ *
  * This logger uses consola to provide logging capabilities with different log levels.
  * In development mode, it logs debug and above levels, while in production it logs
  * info and above levels only. All logs are tagged with "assistx" for easy identification.
- * 
+ *
  * @example
  * ```typescript
  * logger.info('This is an info message');
@@ -16,7 +16,7 @@ import { isDev } from "../utils/platform";
  * ```
  */
 const logger = createConsola({
-  level: isDev ? LogLevels.debug : LogLevels.info,
+  level: IS_DEV ? LogLevels.debug : LogLevels.info,
   defaults: {
     tag: "assistx",
   },

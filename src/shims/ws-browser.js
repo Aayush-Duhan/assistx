@@ -25,11 +25,11 @@
  */
 
 function WebSocketShim() {
-    // Throw an error immediately when an attempt is made to instantiate it.
-    throw new Error(
-      "The 'ws' package is for Node.js and does not work in a browser or Electron renderer. Use the native global WebSocket object instead."
-    );
-  }
-  
-  // Export the function as the default export to correctly mimic the 'ws' package's main export.
-  export default WebSocketShim;
+  // Throw an error immediately when an attempt is made to instantiate it.
+  throw new Error(
+    "The 'ws' package is for Node.js and does not work in a browser or Electron renderer. Use the native global WebSocket object instead.",
+  );
+}
+
+// Export the function as the default export to correctly mimic the 'ws' package's main export.
+export default WebSocketShim;

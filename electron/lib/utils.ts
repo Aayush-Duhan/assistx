@@ -4,10 +4,10 @@ import { twMerge } from "tailwind-merge";
 
 /**
  * Combines class names using clsx and tailwind-merge for handling Tailwind CSS conflicts.
- * 
+ *
  * @param inputs - Class values to be combined
  * @returns Merged class names with conflicts resolved
- * 
+ *
  * @example
  * ```tsx
  * <div className={cn("text-red-500", "text-blue-500")} />
@@ -20,12 +20,12 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Fetches data from a URL with enhanced error handling.
- * 
+ *
  * @param url - The URL to fetch data from
  * @param options - Fetch options to be passed to the fetch call
  * @returns Parsed JSON response
  * @throws Error with status and info properties when the request fails
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -63,10 +63,10 @@ export const fetcher = async (url: string, options?: RequestInit) => {
 
 /**
  * Creates an increment function that returns increasing numbers starting from the initial value.
- * 
+ *
  * @param i - The initial value to start incrementing from (default: 0)
  * @returns A function that when called returns the current value and increments it
- * 
+ *
  * @example
  * ```typescript
  * const getNextId = createIncrement(1);
@@ -87,25 +87,24 @@ export const noop = () => {};
 
 /**
  * Creates a promise that resolves after a specified delay.
- * 
+ *
  * @param delay - The delay in milliseconds (default: 0)
  * @returns A promise that resolves after the specified delay
- * 
+ *
  * @example
  * ```typescript
  * await wait(1000); // Waits for 1 second
  * ```
  */
-export const wait = (delay = 0) =>
-  new Promise<void>((resolve) => setTimeout(resolve, delay));
+export const wait = (delay = 0) => new Promise<void>((resolve) => setTimeout(resolve, delay));
 
 /**
  * Generates a random integer within a specified range (inclusive).
- * 
+ *
  * @param min - The minimum value (inclusive)
  * @param max - The maximum value (inclusive)
  * @returns A random integer between min and max
- * 
+ *
  * @example
  * ```typescript
  * const randomNum = randomRange(1, 10); // Returns a number between 1 and 10
@@ -114,31 +113,27 @@ export const wait = (delay = 0) =>
 export const randomRange = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1) + min);
 
-
 /**
  * Type guard to check if a value is a function.
- * 
+ *
  * @param v - The value to check
  * @returns True if the value is a function, false otherwise
  */
-export const isFunction = <
-  T extends (...args: any[]) => any = (...args: any[]) => any,
->(
+export const isFunction = <T extends (...args: any[]) => any = (...args: any[]) => any>(
   v: unknown,
 ): v is T => typeof v === "function";
 
 /**
  * Type guard to check if a value is an object (and not null).
- * 
+ *
  * @param value - The value to check
  * @returns True if the value is an object, false otherwise
  */
-export const isObject = (value: any): value is Record<string, any> =>
-  Object(value) === value;
+export const isObject = (value: any): value is Record<string, any> => Object(value) === value;
 
 /**
  * Type guard to check if a value is null or undefined.
- * 
+ *
  * @param value - The value to check
  * @returns True if the value is null or undefined, false otherwise
  */
@@ -146,7 +141,7 @@ export const isNull = (value: any): value is null | undefined => value == null;
 
 /**
  * Type guard to check if a value is Promise-like (has a then method).
- * 
+ *
  * @param x - The value to check
  * @returns True if the value is Promise-like, false otherwise
  */
@@ -155,7 +150,7 @@ export const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
 
 /**
  * Checks if a value is valid JSON (either a string that can be parsed or an object).
- * 
+ *
  * @param value - The value to check
  * @returns True if the value is valid JSON, false otherwise
  */
@@ -169,16 +164,16 @@ export const isJson = (value: any): value is Record<string, any> => {
       return true;
     }
     return false;
-  } catch (_e) {
+  } catch {
     return false;
   }
 };
 
 /**
  * Creates a debounced function that delays execution until after a certain delay has passed.
- * 
+ *
  * @returns A debounced function with a clear method
- * 
+ *
  * @example
  * ```typescript
  * const debounce = createDebounce();
@@ -199,15 +194,15 @@ export const createDebounce = () => {
     if (timeout) clearTimeout(timeout);
     timeout = null;
   };
-  
+
   return debounce;
 };
 
 /**
  * Creates a throttled function that limits execution to once per specified time period.
- * 
+ *
  * @returns A throttled function with a clear method
- * 
+ *
  * @example
  * ```typescript
  * const throttle = createThrottle();
@@ -252,12 +247,12 @@ export const createThrottle = () => {
 
 /**
  * Groups array elements by a key or using a getter function.
- * 
+ *
  * @typeParam T - The type of items in the array
  * @param arr - The array to group
  * @param getter - The key to group by or a function that returns the grouping key
  * @returns An object with keys representing groups and values as arrays of grouped items
- * 
+ *
  * @example
  * ```typescript
  * const users = [{ name: "John", department: "IT" }, { name: "Jane", department: "HR" }];
@@ -268,8 +263,7 @@ export const createThrottle = () => {
 export const groupBy = <T>(arr: T[], getter: keyof T | ((item: T) => string)) =>
   arr.reduce(
     (prev, item) => {
-      const key: string =
-        getter instanceof Function ? getter(item) : (item[getter] as string);
+      const key: string = getter instanceof Function ? getter(item) : (item[getter] as string);
 
       if (!prev[key]) prev[key] = [];
       prev[key].push(item);
@@ -280,9 +274,9 @@ export const groupBy = <T>(arr: T[], getter: keyof T | ((item: T) => string)) =>
 
 /**
  * Creates a promise chain executor that ensures functions are executed sequentially.
- * 
+ *
  * @returns A function that accepts async functions and executes them in sequence
- * 
+ *
  * @example
  * ```typescript
  * const chain = PromiseChain();
@@ -301,10 +295,10 @@ export const PromiseChain = () => {
 
 /**
  * Creates a deferred promise that can be resolved or rejected externally.
- * 
+ *
  * @typeParam T - The type of the promise value
  * @returns An object with promise, resolve, and reject methods
- * 
+ *
  * @example
  * ```typescript
  * const deferred = Deferred<string>();
@@ -328,7 +322,7 @@ export const Deferred = <T = void>() => {
 };
 /**
  * A locking mechanism that allows waiting for a resource to be unlocked.
- * 
+ *
  * @example
  * ```typescript
  * const locker = new Locker();
@@ -343,7 +337,7 @@ export class Locker {
 
   /**
    * Checks if the locker is currently locked.
-   * 
+   *
    * @returns True if locked, false otherwise
    */
   get isLocked() {
@@ -358,7 +352,7 @@ export class Locker {
       this.resolve = resolve;
     });
   }
-  
+
   /**
    * Unlocks the resource.
    */
@@ -367,7 +361,7 @@ export class Locker {
     this.resolve?.();
     this.resolve = undefined;
   }
-  
+
   /**
    * Waits for the resource to be unlocked.
    */
@@ -378,11 +372,11 @@ export class Locker {
 
 /**
  * Safely parses a JSON string, returning a result object with success status.
- * 
+ *
  * @typeParam T - The expected type of the parsed value
  * @param json - The JSON string to parse
  * @returns An object with success status, and either the parsed value or error
- * 
+ *
  * @example
  * ```typescript
  * const result = safeJSONParse('{"name": "John"}');
@@ -422,9 +416,9 @@ export function safeJSONParse<T = unknown>(
 
 /**
  * Generates a random UUID v4 string.
- * 
+ *
  * @returns A UUID v4 string
- * 
+ *
  * @example
  * ```typescript
  * const id = generateUUID(); // "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -440,7 +434,7 @@ export function generateUUID(): string {
 
 /**
  * A type utility function that casts a value to any type.
- * 
+ *
  * @typeParam T - The input type
  * @param value - The value to cast
  * @returns The same value cast to any type
@@ -451,7 +445,7 @@ export function toAny<T>(value: T): any {
 
 /**
  * Converts an unknown error to a string representation.
- * 
+ *
  * @param error - The error to convert
  * @returns A string representation of the error
  */
@@ -473,11 +467,11 @@ export function errorToString(error: unknown): string {
 
 /**
  * Provides a fluent API for working with objects, similar to array methods.
- * 
+ *
  * @typeParam T - The type of the object
  * @param obj - The object to work with
  * @returns An object with methods for manipulating the object
- * 
+ *
  * @example
  * ```typescript
  * const obj = { a: 1, b: 2, c: 3 };
@@ -490,28 +484,24 @@ export function objectFlow<T extends Record<string, any>>(obj: T) {
   return {
     /**
      * Maps over the object values, transforming each value with the provided function.
-     * 
+     *
      * @typeParam R - The return type of the mapping function
      * @param fn - The mapping function
      * @returns A new object with transformed values
      */
-    map: <R>(
-      fn: (value: T[keyof T], key: keyof T) => R,
-    ): Record<keyof T, R> => {
+    map: <R>(fn: (value: T[keyof T], key: keyof T) => R): Record<keyof T, R> => {
       return Object.fromEntries(
         Object.entries(obj).map(([key, value]) => [key, fn(value, key)]),
       ) as Record<keyof T, R>;
     },
-    
+
     /**
      * Filters the object entries based on the provided predicate function.
-     * 
+     *
      * @param fn - The predicate function
      * @returns A new object with filtered entries
      */
-    filter: (
-      fn: (value: T[keyof T], key: keyof T) => boolean,
-    ): Record<keyof T, T[keyof T]> => {
+    filter: (fn: (value: T[keyof T], key: keyof T) => boolean): Record<keyof T, T[keyof T]> => {
       return Object.fromEntries(
         Object.entries(obj).filter(([key, value]) => fn(value, key)),
       ) as Record<keyof T, T[keyof T]>;
@@ -519,46 +509,46 @@ export function objectFlow<T extends Record<string, any>>(obj: T) {
 
     /**
      * Executes a function for each entry in the object.
-     * 
+     *
      * @param fn - The function to execute for each entry
      */
     forEach: (fn: (value: T[keyof T], key: keyof T) => void): void => {
       Object.entries(obj).forEach(([key, value]) => fn(value, key));
     },
-    
+
     /**
      * Tests whether at least one entry in the object passes the test implemented by the provided function.
-     * 
+     *
      * @param fn - The test function
      * @returns True if at least one entry passes the test, false otherwise
      */
     some: (fn: (value: T[keyof T], key: keyof T) => any): boolean => {
       return Object.entries(obj).some(([key, value]) => fn(value, key));
     },
-    
+
     /**
      * Tests whether all entries in the object pass the test implemented by the provided function.
-     * 
+     *
      * @param fn - The test function
      * @returns True if all entries pass the test, false otherwise
      */
     every: (fn: (value: T[keyof T], key: keyof T) => any): boolean => {
       return Object.entries(obj).every(([key, value]) => fn(value, key));
     },
-    
+
     /**
      * Returns the value of the first entry that satisfies the provided test function.
-     * 
+     *
      * @param fn - The test function
      * @returns The value of the first entry that satisfies the test, or undefined if no entry satisfies the test
      */
     find(fn: (value: T[keyof T], key: keyof T) => any): T | undefined {
       return Object.entries(obj).find(([key, value]) => fn(value, key))?.[1];
     },
-    
+
     /**
      * Gets a value from the object using a path array.
-     * 
+     *
      * @typeParam U - The expected return type
      * @param path - The path to the value as an array of keys
      * @returns The value at the specified path, or undefined if not found
@@ -571,10 +561,10 @@ export function objectFlow<T extends Record<string, any>>(obj: T) {
       });
       return result;
     },
-    
+
     /**
      * Sets a value in the object using a path array.
-     * 
+     *
      * @param path - The path to the value as an array of keys
      * @param value - The value to set
      * @returns The modified object
@@ -600,10 +590,10 @@ export function objectFlow<T extends Record<string, any>>(obj: T) {
 
 /**
  * Capitalizes the first letter of a string.
- * 
+ *
  * @param str - The string to capitalize
  * @returns The string with the first letter capitalized
- * 
+ *
  * @example
  * ```typescript
  * capitalizeFirstLetter("hello"); // "Hello"
@@ -616,11 +606,11 @@ export function capitalizeFirstLetter(str: string): string {
 
 /**
  * Truncates a string to a specified length and adds ellipsis if truncated.
- * 
+ *
  * @param str - The string to truncate
  * @param maxLength - The maximum length of the string
  * @returns The truncated string with ellipsis if needed
- * 
+ *
  * @example
  * ```typescript
  * truncateString("This is a long string", 10); // "This is a..."
@@ -633,7 +623,7 @@ export function truncateString(str: string, maxLength: number): string {
 
 /**
  * Waits for the next tick of the event loop.
- * 
+ *
  * @returns A promise that resolves on the next tick
  */
 export async function nextTick() {
@@ -642,7 +632,7 @@ export async function nextTick() {
 
 /**
  * Cleans a string to make it a valid variable name by removing invalid characters.
- * 
+ *
  * @param input - The string to clean (default: "")
  * @returns A cleaned string suitable for use as a variable name
  */
@@ -656,23 +646,20 @@ export function cleanVariableName(input: string = ""): string {
 
 /**
  * Creates a new object with specified keys omitted.
- * 
+ *
  * @typeParam T - The type of the input object
  * @typeParam K - The keys to omit
  * @param obj - The object to omit keys from
  * @param keys - Array of keys to omit
  * @returns A new object with the specified keys omitted
- * 
+ *
  * @example
  * ```typescript
  * const obj = { a: 1, b: 2, c: 3 };
  * const result = exclude(obj, ["b"]); // { a: 1, c: 3 }
  * ```
  */
-export function exclude<T extends object, K extends keyof T>(
-  obj: T,
-  keys: K[],
-): Omit<T, K> {
+export function exclude<T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> {
   return Object.fromEntries(
     Object.entries(obj).filter(([key]) => !keys.includes(key as K)),
   ) as Omit<T, K>;
@@ -680,7 +667,7 @@ export function exclude<T extends object, K extends keyof T>(
 
 /**
  * Validates a schema and its variable name.
- * 
+ *
  * @param key - The variable name to validate
  * @param schema - The JSON schema to validate
  * @returns True if the schema is valid
@@ -711,9 +698,9 @@ export function validateSchema(key: string, schema: JSONSchema7): boolean {
 
 /**
  * Creates an event emitter for string values.
- * 
+ *
  * @returns An object with on, off, and emit methods
- * 
+ *
  * @example
  * ```typescript
  * const emitter = createEmitter();
@@ -727,7 +714,7 @@ export const createEmitter = () => {
   return {
     /**
      * Adds a listener to the emitter.
-     * 
+     *
      * @param listener - The listener function to add
      * @returns A function to unsubscribe the listener
      */
@@ -737,19 +724,19 @@ export const createEmitter = () => {
         listeners.delete(listener);
       };
     },
-    
+
     /**
      * Removes a listener from the emitter.
-     * 
+     *
      * @param listener - The listener function to remove
      */
     off: (listener: (value: string) => void) => {
       listeners.delete(listener);
     },
-    
+
     /**
      * Emits a value to all listeners.
-     * 
+     *
      * @param value - The value to emit to listeners
      */
     emit: (value: string) => {
@@ -760,12 +747,12 @@ export const createEmitter = () => {
 
 /**
  * Removes duplicate items from an array based on a specific key.
- * 
+ *
  * @typeParam T - The type of items in the array
  * @param arr - The array to deduplicate
  * @param key - The key to check for duplicates
  * @returns A new array with duplicates removed
- * 
+ *
  * @example
  * ```typescript
  * const users = [{ id: 1, name: "John" }, { id: 2, name: "Jane" }, { id: 1, name: "John" }];
@@ -788,12 +775,12 @@ export function deduplicateByKey<T>(arr: T[], key: keyof T): T[] {
 
 /**
  * Wraps a promise with a timeout that will reject if the promise doesn't resolve within the specified time.
- * 
+ *
  * @typeParam T - The type of the promise value
  * @param promise - The promise to wrap with a timeout
  * @param ms - The timeout in milliseconds
  * @returns A promise that resolves with the original value or rejects with a timeout error
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -824,10 +811,10 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 /**
  * Parses an environment variable as a boolean value.
- * 
+ *
  * @param value - The value to parse (can be string, boolean, or undefined)
  * @returns True if the value represents a truthy value, false otherwise
- * 
+ *
  * @example
  * ```typescript
  * parseEnvBoolean("true");  // true

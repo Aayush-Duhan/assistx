@@ -1,10 +1,10 @@
 import { globalShortcut } from "electron";
-import { isDev } from "../utils/platform";
+import { IS_DEV } from "../../shared/constants";
 import { windowManager } from "../windows/WindowManager";
 import { updateSharedState, getSharedState } from "../utils/shared/stateManager";
 
 /** Whether dev shortcuts are enabled */
-let devShortcutsEnabled = isDev;
+let devShortcutsEnabled = IS_DEV;
 
 /** Set of registered global shortcuts */
 const registeredShortcuts = new Set<string>();

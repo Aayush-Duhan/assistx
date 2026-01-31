@@ -1,4 +1,4 @@
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 import { mcpClientsManager } from "./mcp-manager";
 import { jsonMcpOAuthRepository as mcpOAuthRepository } from "../../db/json/mcp-oauth-repository.json";
 import type { McpServerInsert } from "../../../types/mcp";
@@ -28,8 +28,7 @@ export async function saveMcpClientAction(server: McpServerInsert) {
   }
 
   const nameSchema = z.string().regex(/^[a-zA-Z0-9]+$/, {
-    message:
-      "Name must contain only alphanumeric characters (A-Z, a-z, 0-9) and hyphens (-)",
+    message: "Name must contain only alphanumeric characters (A-Z, a-z, 0-9) and hyphens (-)",
   });
 
   const result = nameSchema.safeParse(server.name);
@@ -73,7 +72,10 @@ export async function authorizeMcpClientAction(id: string) {
   return client.client.getAuthorizationUrl()?.toString();
 }
 
-export async function toggleMcpClientConnectionAction(id: string, status: "connected" | "disconnected" | "loading" | "authorizing") {
+export async function toggleMcpClientConnectionAction(
+  id: string,
+  status: "connected" | "disconnected" | "loading" | "authorizing",
+) {
   const entry = await mcpClientsManager.getClient(id);
   if (!entry) {
     throw new Error(`Client ${id} not found`);
@@ -93,11 +95,7 @@ export async function checkTokenMcpClientAction(id: string) {
   return !!session?.tokens;
 }
 
-export async function callMcpToolAction(
-  id: string,
-  toolName: string,
-  input: unknown,
-) {
+export async function callMcpToolAction(id: string, toolName: string, input: unknown) {
   return mcpClientsManager.toolCall(id, toolName, input);
 }
 

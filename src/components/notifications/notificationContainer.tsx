@@ -8,7 +8,6 @@ import { NotificationsPortal } from "./portal";
 
 export default function NotificationContainer({
   className,
-  style,
   show,
   onDismiss,
   onClose,
@@ -76,7 +75,11 @@ export default function NotificationContainer({
                     boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.15)",
                   }}
                   onClick={() => {
-                    onClose ? onClose() : onDismiss?.();
+                    if (onClose) {
+                      onClose();
+                    } else {
+                      onDismiss?.();
+                    }
                   }}
                 >
                   <LuX className="size-3 text-[#9E9E9E] dark:text-[#A5A7AC]" />

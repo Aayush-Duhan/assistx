@@ -4,7 +4,17 @@
 @source "../node_modules/streamdown/dist/index.js";
 
 :root {
-  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark;
@@ -29,13 +39,11 @@ body {
   user-select: none;
 }
 
-
 .spinner {
   font-size: 1.2rem;
   color: white;
   font-weight: 500;
 }
-
 
 /* Custom scrollbar styling */
 .custom-scrollbar {
@@ -88,12 +96,15 @@ body {
 }
 
 .shadow-pane {
-  --tw-shadow: 0 0 0 1px var(--tw-shadow-color, #cfe2ff3d), 0 -.5px 0 0 var(--tw-shadow-color, #fffc);
-  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)
+  --tw-shadow:
+    0 0 0 1px var(--tw-shadow-color, #cfe2ff3d), 0 -0.5px 0 0 var(--tw-shadow-color, #fffc);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
 }
 
 .bg-surface-opaque {
-  background-color: var(--color-surface-opaque)
+  background-color: var(--color-surface-opaque);
 }
 
 @font-face {
@@ -122,83 +133,136 @@ body {
 
 .primary-button {
   background: linear-gradient(#c24e0a, #6f260d);
-  transition: transform .16s ease-out, background .16s ease-out, box-shadow .16s ease-out, filter .16s ease-out;
+  transition:
+    transform 0.16s ease-out,
+    background 0.16s ease-out,
+    box-shadow 0.16s ease-out,
+    filter 0.16s ease-out;
   filter: saturate(1.05);
-  box-shadow: 0 0 0 .5px #a3470a, 0 24px 18px #00000010, 0 10px 14px #00000014, 0 4px 8px #00000021, 0 1px 3px #00000029, inset 0 -1px #6f260d, inset 0 .5px #ffd5ad
+  box-shadow:
+    0 0 0 0.5px #a3470a,
+    0 24px 18px #00000010,
+    0 10px 14px #00000014,
+    0 4px 8px #00000021,
+    0 1px 3px #00000029,
+    inset 0 -1px #6f260d,
+    inset 0 0.5px #ffd5ad;
 }
 
 button.primary-button:hover {
   background: linear-gradient(#c65a14, #8f3412);
   transform: scale(1.03);
   filter: saturate(1.02);
-  box-shadow: 0 0 0 .5px #b24a0c, 0 32px 18px #00000014, 0 16px 16px #00000019, 0 6px 10px #00000026, inset 0 -1px #8f3412, inset 0 .5px #f2c9a6
+  box-shadow:
+    0 0 0 0.5px #b24a0c,
+    0 32px 18px #00000014,
+    0 16px 16px #00000019,
+    0 6px 10px #00000026,
+    inset 0 -1px #8f3412,
+    inset 0 0.5px #f2c9a6;
 }
 
 button.primary-button:active {
   background: linear-gradient(#9a3a0c, #5a1b08);
-  transform: scale(.97);
+  transform: scale(0.97);
   filter: saturate(1);
-  box-shadow: 0 0 0 .5px #8c330a, 0 8px 10px #00000026, 0 3px 6px #00000033, inset 0 1px #00000040, inset 0 -1px #5a1b08
+  box-shadow:
+    0 0 0 0.5px #8c330a,
+    0 8px 10px #00000026,
+    0 3px 6px #00000033,
+    inset 0 1px #00000040,
+    inset 0 -1px #5a1b08;
 }
 
 button.primary-button:focus-visible {
   outline: 2px solid #f59e0b;
-  outline-offset: 2px
+  outline-offset: 2px;
 }
 
 .secondary-button {
   background: #fff6;
-  transition: box-shadow .16s ease-out;
-  box-shadow: 0 1px 3px #00000040, 0 0 0 .5px #cfcfcf, inset 0 -.5px #cecece, inset 0 3px #fff
+  transition: box-shadow 0.16s ease-out;
+  box-shadow:
+    0 1px 3px #00000040,
+    0 0 0 0.5px #cfcfcf,
+    inset 0 -0.5px #cecece,
+    inset 0 3px #fff;
 }
 
 .dark .secondary-button {
   background: linear-gradient(#2e3039, #272a31);
-  box-shadow: 0 85px 34px #00000005, 0 48px 29px #00000014, 0 21px 21px #00000021, 0 5px 12px #00000029, inset 0 -1px #16171a, inset 0 .5px #afb3c4
+  box-shadow:
+    0 85px 34px #00000005,
+    0 48px 29px #00000014,
+    0 21px 21px #00000021,
+    0 5px 12px #00000029,
+    inset 0 -1px #16171a,
+    inset 0 0.5px #afb3c4;
+}
+
+.session-secondary-button {
+  background: linear-gradient(#2e3039, #272a31);
+  box-shadow:
+    0 85px 34px #00000005,
+    0 48px 29px #00000014,
+    0 21px 21px #00000021,
+    0 5px 12px #00000029,
+    inset 0 -1px #16171a,
+    inset 0 0.5px #afb3c4;
 }
 
 .secondary-button.disabled {
   box-shadow: none;
-  background: #32343c
+  background: #32343c;
 }
 
 button.secondary-button:hover {
   background: #ffffff1a;
-  box-shadow: 0 1px 3px #00000026, 0 0 0 .5px #b3b3b3, inset 0 -.5px #cecece99, inset 0 3px #ffffff80
+  box-shadow:
+    0 1px 3px #00000026,
+    0 0 0 0.5px #b3b3b3,
+    inset 0 -0.5px #cecece99,
+    inset 0 3px #ffffff80;
 }
 
 .dark button.secondary-button:hover {
   background: linear-gradient(#3a3d49, #343841);
   transform: scale(1.03);
-  box-shadow: 0 85px 34px #00000005, 0 48px 29px #00000014, 0 21px 21px #00000021, 0 5px 12px #00000029, inset 0 -1px #393b42, inset 0 .5px #d3d6e3
+  box-shadow:
+    0 85px 34px #00000005,
+    0 48px 29px #00000014,
+    0 21px 21px #00000021,
+    0 5px 12px #00000029,
+    inset 0 -1px #393b42,
+    inset 0 0.5px #d3d6e3;
 }
 
 button.secondary-button:active {
-  transform: scale(.97)
+  transform: scale(0.97);
 }
 
 .text-secondary-foreground {
-  color: var(--color-secondary-foreground)
+  color: var(--color-secondary-foreground);
 }
 
 .text-primary-foreground {
-  color: var(--color-primary-foreground)
+  color: var(--color-primary-foreground);
 }
 
 .bg-surface-action {
-  background-color: var(--color-surface-action)
+  background-color: var(--color-surface-action);
 }
 
 .bg-surface-chat-footer {
-  background-color: var(--color-surface-chat-footer)
+  background-color: var(--color-surface-chat-footer);
 }
 
 .bg-surface-opaque {
-  background-color: var(--color-surface-opaque)
+  background-color: var(--color-surface-opaque);
 }
 
 .bg-transparent {
-  background-color: #0000
+  background-color: #0000;
 }
 
 @theme {
@@ -237,11 +301,11 @@ button.secondary-button:active {
 
 @layer components {
   .undetectable .window {
-    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' rx='24' ry='24' fill='none' stroke='rgb(68, 71, 84)' stroke-width='4' stroke-dasharray='8%2c8' stroke-dashoffset='4' stroke-linecap='butt'/%3e%3c/svg%3e")
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' rx='24' ry='24' fill='none' stroke='rgb(68, 71, 84)' stroke-width='4' stroke-dasharray='8%2c8' stroke-dashoffset='4' stroke-linecap='butt'/%3e%3c/svg%3e");
   }
 }
 
 .undetectable {
   --color-surface-opaque: #18171c80;
-  --color-surface-action: #18171c66
+  --color-surface-action: #18171c66;
 }

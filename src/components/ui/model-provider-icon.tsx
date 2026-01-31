@@ -9,7 +9,10 @@ import { OpenRouterIcon } from "./open-router-icon.tsx";
 export function ModelProviderIcon({
   provider,
   className,
-}: { provider: string; className?: string }) {
+}: {
+  provider: string;
+  className?: string;
+}) {
   return provider === "openai" ? (
     <OpenAIIcon className={className} />
   ) : provider === "xai" ? (

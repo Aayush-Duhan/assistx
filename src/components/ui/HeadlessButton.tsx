@@ -26,7 +26,7 @@ export const HeadlessButton = forwardRef<HTMLButtonElement, HeadlessButtonProps>
         {...props}
       />
     );
-  }
+  },
 );
 
-HeadlessButton.displayName = 'HeadlessButton';
+HeadlessButton.displayName = "HeadlessButton";

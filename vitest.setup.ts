@@ -18,5 +18,3 @@ vi.mock('electron', () => {
     },
   } as any;
 });
-
-

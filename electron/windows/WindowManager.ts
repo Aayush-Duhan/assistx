@@ -1,11 +1,11 @@
-import { app, Display, screen, nativeTheme } from 'electron';
-import { isMac } from '../utils/platform';
-import { AppWindow } from './AppWindow';
-import { OnboardingWindow } from './OnboardingWindow';
-import { DashboardWindow } from './DashBoardWindow';
-import { OfflineWindow } from './OfflineWindow';
-import { getSharedState, updateSharedState } from '../utils/shared/stateManager';
-import { clearAllShortcuts } from '../features/shortcuts';
+import { app, Display, screen, nativeTheme } from "electron";
+import { IS_MAC } from "../../shared/constants";
+import { AppWindow } from "./AppWindow";
+import { OnboardingWindow } from "./OnboardingWindow";
+import { DashboardWindow } from "./DashBoardWindow";
+import { OfflineWindow } from "./OfflineWindow";
+import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
+import { clearAllShortcuts } from "../features/shortcuts";
 
 /**
  * Get current view based on state
@@ -55,7 +55,7 @@ class WindowManager {
   }
 
   handleDockIcon(): void {
-    if (!isMac) return;
+    if (!IS_MAC) return;
     const { undetectabilityEnabled } = getSharedState();
     const shouldShowDock = !undetectabilityEnabled;
     const isDockVisible = app.dock?.isVisible() ?? false;
@@ -153,8 +153,8 @@ class WindowManager {
   }
 
   /**
-     * Restore undetectability settings on all windows
-     */
+   * Restore undetectability settings on all windows
+   */
   restoreUndetectability(): void {
     this.appWindow?.restoreUndetectability();
     this.dashboardWindow?.restoreUndetectability();

@@ -4,10 +4,7 @@ import type {
   OAuthClientMetadata,
   OAuthClientInformation,
 } from "@modelcontextprotocol/sdk/shared/auth.js";
-import {
-  OAuthClientProvider,
-  UnauthorizedError,
-} from "@modelcontextprotocol/sdk/client/auth.js";
+import { OAuthClientProvider, UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 
 import globalLogger from "../../logger";
 import { colorize } from "consola/utils";
@@ -37,10 +34,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
     },
   ) {
     this.logger = globalLogger.withDefaults({
-      message: colorize(
-        "dim",
-        `[MCP OAuth Provider ${this.config.name}-${uuidv7().slice(0, 4)}] `,
-      ),
+      message: colorize("dim", `[MCP OAuth Provider ${this.config.name}-${uuidv7().slice(0, 4)}] `),
     });
   }
 
@@ -48,9 +42,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
     if (this.initialized) return;
     // 0. If a constructor state was provided (callback/hand-off), adopt it first
     if (this.config.state) {
-      const session = await jsonMcpOAuthRepository.getSessionByState(
-        this.config.state,
-      );
+      const session = await jsonMcpOAuthRepository.getSessionByState(this.config.state);
       if (session && session.mcpServerId === this.config.mcpServerId) {
         this.currentOAuthState = session.state || "";
         this.cachedAuthData = session;
@@ -73,13 +65,10 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
 
     // 2. Always create a new in-progress session when not authenticated
     this.currentOAuthState = uuidv7();
-    this.cachedAuthData = await jsonMcpOAuthRepository.createSession(
-      this.config.mcpServerId,
-      {
-        state: this.currentOAuthState,
-        serverUrl: this.config.serverUrl,
-      },
-    );
+    this.cachedAuthData = await jsonMcpOAuthRepository.createSession(this.config.mcpServerId, {
+      state: this.currentOAuthState,
+      serverUrl: this.config.serverUrl,
+    });
     this.initialized = true;
     this.logger.info("Created new OAuth session");
   }
@@ -117,10 +106,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
     const authData = await this.getAuthData();
     if (authData?.clientInfo) {
       // Check if redirect URI matches (security check)
-      if (
-        !authData.tokens &&
-        authData.clientInfo.redirect_uris[0] != this.redirectUrl
-      ) {
+      if (!authData.tokens && authData.clientInfo.redirect_uris[0] != this.redirectUrl) {
         // Security guard: redirect URI mismatch → drop only this mismatched session by state
         if (authData.state) {
           await jsonMcpOAuthRepository.deleteByState(authData.state);
@@ -135,9 +121,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
     return undefined;
   }
 
-  async saveClientInformation(
-    clientCredentials: OAuthClientInformationFull,
-  ): Promise<void> {
+  async saveClientInformation(clientCredentials: OAuthClientInformationFull): Promise<void> {
     await this.updateAuthData({
       clientInfo: clientCredentials,
     });
@@ -179,7 +163,9 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
   async codeVerifier(): Promise<string> {
     const authData = await this.getAuthData();
     if (!authData?.codeVerifier) {
-      throw new UnauthorizedError("OAuth code verifier is missing. Please restart the authorization process.");
+      throw new UnauthorizedError(
+        "OAuth code verifier is missing. Please restart the authorization process.",
+      );
     }
     return authData.codeVerifier;
   }

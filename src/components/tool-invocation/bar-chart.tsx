@@ -8,13 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -87,8 +81,7 @@ export function BarChart(props: BarChartProps) {
   }, [data]);
 
   // Get series names from the first data item (assuming all items have the same series)
-  const seriesNames =
-    deduplicateData[0]?.series.map((item) => item.seriesName) || [];
+  const seriesNames = deduplicateData[0]?.series.map((item) => item.seriesName) || [];
 
   // Generate chart configuration dynamically
   const chartConfig = React.useMemo(() => {
@@ -146,12 +139,7 @@ export function BarChart(props: BarChartProps) {
             <ResponsiveContainer width="100%" height="400px">
               <RechartsBarChart data={chartData}>
                 <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                />
+                <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
@@ -166,10 +154,7 @@ export function BarChart(props: BarChartProps) {
                       : undefined
                   }
                 />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dashed" />}
-                />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
                 {seriesNames.map((seriesName, index) => {
                   return (
                     <Bar

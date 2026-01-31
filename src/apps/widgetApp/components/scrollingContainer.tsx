@@ -90,7 +90,6 @@ export function ScrollingContainer({
   onScrollPastTop?: () => void;
   children?: React.ReactNode;
 }) {
-
   const divRef = useRef<HTMLDivElement>(null);
 
   const { isNearTop, isNearBottom, bottomEdgeDistance, notifyContentUpdated } = useScroll(divRef);

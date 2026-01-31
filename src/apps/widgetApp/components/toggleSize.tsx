@@ -11,7 +11,6 @@ type Props = {
 };
 
 export function ToggleSize({ setMode }: Props) {
-
   const { aiResponsesService } = useGlobalServices();
   const {
     ignoreCurrentConversation,
@@ -23,9 +22,7 @@ export function ToggleSize({ setMode }: Props) {
   } = aiResponsesService;
 
   const hasConversationContent =
-    conversation.responses.length > 0 ||
-    conversation.pendingResponse !== null ||
-    !!triggerAiState;
+    conversation.responses.length > 0 || conversation.pendingResponse !== null || !!triggerAiState;
 
   if (!hasConversationContent) {
     return null;

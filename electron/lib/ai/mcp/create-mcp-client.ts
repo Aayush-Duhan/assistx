@@ -1,5 +1,8 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
+import {
+  StdioClientTransport,
+  getDefaultEnvironment,
+} from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
@@ -14,13 +17,7 @@ import { isMaybeRemoteConfig, isMaybeStdioConfig } from "./is-mcp-config";
 import logger from "../../logger";
 import type { ConsolaInstance } from "consola";
 import { colorize } from "consola/utils";
-import {
-  createDebounce,
-  errorToString,
-  isNull,
-  Locker,
-  withTimeout,
-} from "../../utils";
+import { createDebounce, errorToString, isNull, Locker, withTimeout } from "../../utils";
 
 import { safe } from "ts-safe";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
@@ -34,7 +31,7 @@ type ClientOptions = {
   autoDisconnectSeconds?: number;
 };
 
-const CONNET_TIMEOUT =  120000;
+const CONNET_TIMEOUT = 120000;
 const MCP_MAX_TOTAL_TIMEOUT = process.env.MCP_MAX_TOTAL_TIMEOUT
   ? parseInt(process.env.MCP_MAX_TOTAL_TIMEOUT, 10)
   : undefined;
@@ -65,10 +62,7 @@ export class MCPClient {
     private options: ClientOptions = {},
   ) {
     this.logger = logger.withDefaults({
-      message: colorize(
-        "cyan",
-        `[${this.id.slice(0, 4)}] MCP Client ${this.name}: `,
-      ),
+      message: colorize("cyan", `[${this.id.slice(0, 4)}] MCP Client ${this.name}: `),
     });
     this.ensureProtocolSubscription();
   }
@@ -100,8 +94,7 @@ export class MCPClient {
         await this.connect(state);
       }
     }
-    const finish = (this.transport as StreamableHTTPClientTransport)
-      ?.finishAuth;
+    const finish = (this.transport as StreamableHTTPClientTransport)?.finishAuth;
 
     if (!finish) throw new Error("Not Found finishAuth");
 
@@ -142,16 +135,12 @@ export class MCPClient {
           response_types: ["code"],
           token_endpoint_auth_method: "none", // PKCE flow
           scope: "mcp:tools",
-          redirect_uris: [
-            `${process.env.ASSISTX_PROTOCOL || "assistx"}://mcp/oauth/callback`,
-          ],
+          redirect_uris: [`${process.env.ASSISTX_PROTOCOL || "assistx"}://mcp/oauth/callback`],
           software_id: "assistx",
           software_version: "1.0.0",
         },
         onRedirectToAuthorization: async (authorizationUrl: URL) => {
-          this.logger.info(
-            "OAuth authorization required - user interaction needed",
-          );
+          this.logger.info("OAuth authorization required - user interaction needed");
           this.authorizationUrl = authorizationUrl;
           try {
             await shell.openExternal(authorizationUrl.toString());
@@ -206,7 +195,6 @@ export class MCPClient {
 
       // Create appropriate transport based on server config type
       if (isMaybeStdioConfig(this.serverConfig)) {
-
         const config = MCPStdioConfigZodSchema.parse(this.serverConfig);
         const defaultEnv = getDefaultEnvironment();
         this.transport = new StdioClientTransport({
@@ -253,9 +241,7 @@ export class MCPClient {
         } catch (streamableHttpError: any) {
           // Check if it's OAuth error and we haven't tried OAuth yet
           if (isUnauthorized(streamableHttpError) && !this.needOauthProvider) {
-            this.logger.info(
-              "OAuth authentication required, retrying with OAuth provider",
-            );
+            this.logger.info("OAuth authentication required, retrying with OAuth provider");
             this.needOauthProvider = true;
             this.locker.unlock();
             await this.disconnect();
@@ -371,7 +357,9 @@ export class MCPClient {
     const execute = async () => {
       const client = await this.connect();
       if (this.status === "authorizing") {
-        throw new Error("OAuth authorization required. Please refresh the MCP client to initiate the authorization flow.");
+        throw new Error(
+          "OAuth authorization required. Please refresh the MCP client to initiate the authorization flow.",
+        );
       }
       return client?.callTool({
         name: toolName,
@@ -397,19 +385,13 @@ export class MCPClient {
       })
       .ifOk(() => this.scheduleAutoDisconnect())
       .watch(() => {
-        this.inProgressToolCallIds = this.inProgressToolCallIds.filter(
-          (toolId) => toolId !== id,
-        );
+        this.inProgressToolCallIds = this.inProgressToolCallIds.filter((toolId) => toolId !== id);
       })
       .watch((status: any) => {
         if (!status.isOk) {
           this.logger.error("Tool call failed", toolName, status.error);
         } else if (status.value?.isError) {
-          this.logger.error(
-            "Tool call failed content",
-            toolName,
-            status.value.content,
-          );
+          this.logger.error("Tool call failed content", toolName, status.value.content);
         }
       })
       .ifFail((err: any) => {

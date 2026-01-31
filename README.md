@@ -4,7 +4,7 @@ An Electron application with React and TypeScript that provides AI-powered scree
 
 ## Features
 
-- **Screenshot Capture**: Automatic screen capture when triggered  
+- **Screenshot Capture**: Automatic screen capture when triggered
 - **Real-time AI Streaming**: Powered by Vercel AI SDK with Google Gemini
 - **Multiple Display Support**: Works across multiple monitors
 - **Modern UI**: Clean, responsive interface built with React and Tailwind CSS

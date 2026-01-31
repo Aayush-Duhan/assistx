@@ -36,11 +36,7 @@ export const NotificationWindow = ({
     <Portal>
       <AnimatePresence>
         {show && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <InlineWindow layoutTransition width={350} {...props}>
               <WindowTitle>{title}</WindowTitle>
               <WindowMessage>{message}</WindowMessage>

@@ -5,39 +5,39 @@ import { registerGlobalShortcut, unregisterGlobalShortcut } from "@/lib/globalSh
 
 /** Defaults to enable = "onlyWhenVisible", unless specified. */
 export function useGlobalShortcut(
-    accelerator?: string,
-    callback?: () => void,
-    options?: { enable?: boolean | "onlyWhenVisible" },
+  accelerator?: string,
+  callback?: () => void,
+  options?: { enable?: boolean | "onlyWhenVisible" },
 ) {
-    const enable = options?.enable ?? "onlyWhenVisible";
+  const enable = options?.enable ?? "onlyWhenVisible";
 
-    const stableCallback = useEventCallback(() => {
-        callback?.();
-    });
+  const stableCallback = useEventCallback(() => {
+    callback?.();
+  });
 
-    const { windowHidden, recordingKeybinding } = useSharedState();
+  const { windowHidden, recordingKeybinding } = useSharedState();
 
-    const resolvedEnable = recordingKeybinding
-        ? false
-        : enable === "onlyWhenVisible"
-            ? !windowHidden
-            : enable;
+  const resolvedEnable = recordingKeybinding
+    ? false
+    : enable === "onlyWhenVisible"
+      ? !windowHidden
+      : enable;
 
-    const hasCallback = !!callback;
+  const hasCallback = !!callback;
 
-    useEffect(() => {
-        if (resolvedEnable && accelerator && stableCallback && hasCallback) {
-            // delay the registration by a tick to ensure rapid state changes get
-            // batched together
-            const timeout = setTimeout(() => {
-                registerGlobalShortcut(accelerator, stableCallback);
-            }, 0);
+  useEffect(() => {
+    if (resolvedEnable && accelerator && stableCallback && hasCallback) {
+      // delay the registration by a tick to ensure rapid state changes get
+      // batched together
+      const timeout = setTimeout(() => {
+        registerGlobalShortcut(accelerator, stableCallback);
+      }, 0);
 
-            return () => {
-                clearTimeout(timeout);
-                // no-ops if stableCallback is not registered
-                unregisterGlobalShortcut(accelerator, stableCallback);
-            };
-        }
-    }, [accelerator, stableCallback, hasCallback, resolvedEnable]);
+      return () => {
+        clearTimeout(timeout);
+        // no-ops if stableCallback is not registered
+        unregisterGlobalShortcut(accelerator, stableCallback);
+      };
+    }
+  }, [accelerator, stableCallback, hasCallback, resolvedEnable]);
 }
