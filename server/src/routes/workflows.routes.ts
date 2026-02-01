@@ -76,7 +76,7 @@ const handleRouteError = (
   request: FastifyRequest,
   reply: FastifyReply,
   logEvent: string,
-  message: string
+  message: string,
 ) => {
   request.ctx?.logger.error(
     error instanceof Error ? error : new Error(String(error)),
@@ -93,7 +93,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       const workflows = listWorkflows();
       return reply.send(workflows);
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.list.error", "Failed to list workflows");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.list.error",
+        "Failed to list workflows",
+      );
     }
   });
 
@@ -109,7 +115,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
 
       return reply.send(workflow);
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.get.error", "Failed to get workflow");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.get.error",
+        "Failed to get workflow",
+      );
     }
   });
 
@@ -125,7 +137,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
 
       return reply.send(workflow);
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.getStructure.error", "Failed to get workflow structure");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.getStructure.error",
+        "Failed to get workflow structure",
+      );
     }
   });
 
@@ -141,7 +159,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       const result = createWorkflow({ name, description, icon });
       return reply.status(201).send(result);
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.create.error", "Failed to create workflow");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.create.error",
+        "Failed to create workflow",
+      );
     }
   });
 
@@ -154,7 +178,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       updateWorkflow(id, data);
       return reply.status(204).send();
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.update.error", "Failed to update workflow");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.update.error",
+        "Failed to update workflow",
+      );
     }
   });
 
@@ -169,7 +199,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
         saveWorkflowStructure(id, { nodes, edges, deleteNodes, deleteEdges });
         return reply.status(204).send();
       } catch (error) {
-        return handleRouteError(error, request, reply, "workflows.saveStructure.error", "Failed to save workflow structure");
+        return handleRouteError(
+          error,
+          request,
+          reply,
+          "workflows.saveStructure.error",
+          "Failed to save workflow structure",
+        );
       }
     },
   );
@@ -181,7 +217,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       deleteWorkflow(id);
       return reply.status(204).send();
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.delete.error", "Failed to delete workflow");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.delete.error",
+        "Failed to delete workflow",
+      );
     }
   });
 
@@ -198,7 +240,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       updateWorkflow(id, { isPublished: !workflow.isPublished });
       return reply.status(204).send();
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.publish.error", "Failed to toggle publish status");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.publish.error",
+        "Failed to toggle publish status",
+      );
     }
   });
 
@@ -208,7 +256,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       const workflows = listWorkflows().filter((w) => w.isPublished);
       return reply.send(workflows);
     } catch (error) {
-      return handleRouteError(error, request, reply, "workflows.published.error", "Failed to list published workflows");
+      return handleRouteError(
+        error,
+        request,
+        reply,
+        "workflows.published.error",
+        "Failed to list published workflows",
+      );
     }
   });
 
@@ -236,7 +290,13 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
 
         return reply.send(result);
       } catch (error) {
-        return handleRouteError(error, request, reply, "workflows.execute.error", "Failed to execute workflow");
+        return handleRouteError(
+          error,
+          request,
+          reply,
+          "workflows.execute.error",
+          "Failed to execute workflow",
+        );
       }
     },
   );

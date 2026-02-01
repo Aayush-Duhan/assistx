@@ -74,7 +74,7 @@ const workflowsApi = {
       edges: DBEdge[];
       deleteNodes?: string[];
       deleteEdges?: string[];
-    }
+    },
   ): Promise<void> => {
     const res = await fetch(`http://localhost:3000/api/workflows/${id}/structure`, {
       method: "POST",
@@ -111,7 +111,11 @@ const validateImportFile = (data: unknown): ImportFileData | null => {
       ? (data as { workflow: { name: string; description?: string; icon?: WorkflowIcon } }).workflow
       : (data as { name: string; description?: string; icon?: WorkflowIcon });
 
-  if (!workflowMeta?.name || !Array.isArray((data as { nodes?: unknown }).nodes) || !Array.isArray((data as { edges?: unknown }).edges)) {
+  if (
+    !workflowMeta?.name ||
+    !Array.isArray((data as { nodes?: unknown }).nodes) ||
+    !Array.isArray((data as { edges?: unknown }).edges)
+  ) {
     return null;
   }
 
@@ -128,29 +132,40 @@ const validateImportFile = (data: unknown): ImportFileData | null => {
 const transformImportedNodes = (
   nodes: unknown[],
   workflowId: string,
-  nodeIdMap: Map<string, string>
+  nodeIdMap: Map<string, string>,
 ): DBNode[] => {
   return nodes.map((n) => {
-    const originalId = typeof (n as { id?: unknown }).id === "string" ? (n as { id: string }).id : generateImportId();
+    const originalId =
+      typeof (n as { id?: unknown }).id === "string"
+        ? (n as { id: string }).id
+        : generateImportId();
     const newId = generateImportId();
     nodeIdMap.set(originalId, newId);
 
     const uiConfig =
-      (n as { uiConfig?: unknown }).uiConfig && typeof (n as { uiConfig: unknown }).uiConfig === "object"
+      (n as { uiConfig?: unknown }).uiConfig &&
+      typeof (n as { uiConfig: unknown }).uiConfig === "object"
         ? { ...(n as { uiConfig: Record<string, unknown> }).uiConfig }
         : {};
 
-    if (!uiConfig.position && (n as { position?: unknown }).position && typeof (n as { position: unknown }).position === "object") {
+    if (
+      !uiConfig.position &&
+      (n as { position?: unknown }).position &&
+      typeof (n as { position: unknown }).position === "object"
+    ) {
       uiConfig.position = (n as { position: { x: number; y: number } }).position;
     }
 
     let nodeConfig =
-      (n as { nodeConfig?: unknown }).nodeConfig && typeof (n as { nodeConfig: unknown }).nodeConfig === "object"
+      (n as { nodeConfig?: unknown }).nodeConfig &&
+      typeof (n as { nodeConfig: unknown }).nodeConfig === "object"
         ? { ...(n as { nodeConfig: Record<string, unknown> }).nodeConfig }
         : {};
 
     if (Array.isArray((nodeConfig as { outputData?: unknown }).outputData)) {
-      const outputData = (nodeConfig as { outputData: Array<{ source?: { nodeId?: string } }> }).outputData.map((item) => {
+      const outputData = (
+        nodeConfig as { outputData: Array<{ source?: { nodeId?: string } }> }
+      ).outputData.map((item) => {
         if (item && typeof item === "object" && item.source && typeof item.source === "object") {
           const sourceNodeId = item.source.nodeId;
           if (typeof sourceNodeId === "string" && nodeIdMap.has(sourceNodeId)) {
@@ -162,20 +177,33 @@ const transformImportedNodes = (
       nodeConfig = { ...nodeConfig, outputData };
     }
 
-    return { ...(n as Record<string, unknown>), id: newId, workflowId, nodeConfig, uiConfig } as DBNode;
+    return {
+      ...(n as Record<string, unknown>),
+      id: newId,
+      workflowId,
+      nodeConfig,
+      uiConfig,
+    } as DBNode;
   });
 };
 
 const transformImportedEdges = (
   edges: unknown[],
   workflowId: string,
-  nodeIdMap: Map<string, string>
+  nodeIdMap: Map<string, string>,
 ): DBEdge[] => {
   return edges.map((edge) => {
-    const sourceId = typeof (edge as { source?: unknown }).source === "string" ? (edge as { source: string }).source : "";
-    const targetId = typeof (edge as { target?: unknown }).target === "string" ? (edge as { target: string }).target : "";
+    const sourceId =
+      typeof (edge as { source?: unknown }).source === "string"
+        ? (edge as { source: string }).source
+        : "";
+    const targetId =
+      typeof (edge as { target?: unknown }).target === "string"
+        ? (edge as { target: string }).target
+        : "";
     const uiConfig =
-      (edge as { uiConfig?: unknown }).uiConfig && typeof (edge as { uiConfig: unknown }).uiConfig === "object"
+      (edge as { uiConfig?: unknown }).uiConfig &&
+      typeof (edge as { uiConfig: unknown }).uiConfig === "object"
         ? (edge as { uiConfig: Record<string, unknown> }).uiConfig
         : {};
 
@@ -217,15 +245,20 @@ interface ModalProps {
   className?: string;
 }
 
-const Modal = ({ isOpen, onClose, children, maxWidth = "max-w-md", className = "" }: ModalProps) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  children,
+  maxWidth = "max-w-md",
+  className = "",
+}: ModalProps) => {
   if (!isOpen) return null;
-  const containerClasses = className || `w-full ${maxWidth} bg-[#111] border border-zinc-800 rounded-xl p-6 shadow-xl`;
+  const containerClasses =
+    className || `w-full ${maxWidth} bg-[#111] border border-zinc-800 rounded-xl p-6 shadow-xl`;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative z-10 ${containerClasses}`}>
-        {children}
-      </div>
+      <div className={`relative z-10 ${containerClasses}`}>{children}</div>
     </div>
   );
 };
@@ -261,7 +294,7 @@ const WorkflowCard = ({
         "p-4 rounded-xl border transition-all duration-200 group",
         workflow.isPublished
           ? "bg-zinc-900/30 border-emerald-500/20"
-          : "bg-zinc-900/20 border-zinc-800/50 hover:border-zinc-700/50"
+          : "bg-zinc-900/20 border-zinc-800/50 hover:border-zinc-700/50",
       )}
     >
       {/* Card Header */}
@@ -313,7 +346,7 @@ const WorkflowCard = ({
               "p-2 rounded-md transition-all",
               workflow.isPublished
                 ? "text-emerald-500 hover:bg-emerald-500/10"
-                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800",
             )}
             title={workflow.isPublished ? "Unpublish" : "Publish as AI tool"}
           >
@@ -462,7 +495,7 @@ const WorkflowsPage = () => {
     try {
       await workflowsApi.togglePublish(id, !currentState);
       setWorkflows((prev) =>
-        prev.map((w) => (w.id === id ? { ...w, isPublished: !currentState } : w))
+        prev.map((w) => (w.id === id ? { ...w, isPublished: !currentState } : w)),
       );
     } catch (err) {
       console.error("Failed to toggle publish:", err);
@@ -483,10 +516,7 @@ const WorkflowsPage = () => {
   const filteredWorkflows = workflows.filter((w) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return (
-      w.name.toLowerCase().includes(query) ||
-      w.description?.toLowerCase().includes(query)
-    );
+    return w.name.toLowerCase().includes(query) || w.description?.toLowerCase().includes(query);
   });
 
   // If editing a workflow, show the editor
@@ -517,9 +547,7 @@ const WorkflowsPage = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-zinc-100">Workflows</h1>
-          <p className="text-sm text-zinc-500">
-            Build and automate multi-step AI workflows
-          </p>
+          <p className="text-sm text-zinc-500">Build and automate multi-step AI workflows</p>
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -566,7 +594,8 @@ const WorkflowsPage = () => {
           </div>
           <h3 className="font-semibold text-zinc-100 mb-1">No Workflows Yet</h3>
           <p className="text-sm text-zinc-500 max-w-xs mb-6">
-            Create visual workflows to automate multi-step AI tasks. Workflows can be published as tools for the AI agent.
+            Create visual workflows to automate multi-step AI tasks. Workflows can be published as
+            tools for the AI agent.
           </p>
           <button
             onClick={() => setIsCreateDialogOpen(true)}
@@ -595,7 +624,11 @@ const WorkflowsPage = () => {
       )}
 
       {/* Create Dialog */}
-      <Modal isOpen={isCreateDialogOpen} onClose={() => setIsCreateDialogOpen(false)} maxWidth="max-w-md">
+      <Modal
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        maxWidth="max-w-md"
+      >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-zinc-100">New Workflow</h2>
           <button
@@ -618,7 +651,9 @@ const WorkflowsPage = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">Description (optional)</label>
+            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+              Description (optional)
+            </label>
             <textarea
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
@@ -639,7 +674,11 @@ const WorkflowsPage = () => {
               disabled={isSaving || !newName.trim()}
               className="h-9 px-4 rounded-lg text-sm font-medium bg-white text-black hover:bg-zinc-200 disabled:opacity-50 transition-all flex items-center gap-2"
             >
-              {isSaving ? <LuRefreshCw className="w-4 h-4 animate-spin" /> : <LuCheck className="w-4 h-4" />}
+              {isSaving ? (
+                <LuRefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <LuCheck className="w-4 h-4" />
+              )}
               Create
             </button>
           </div>
@@ -662,7 +701,8 @@ const WorkflowsPage = () => {
           </div>
         </div>
         <p className="text-sm text-zinc-400 mb-5">
-          Are you sure you want to delete this workflow? All nodes and connections will be permanently removed.
+          Are you sure you want to delete this workflow? All nodes and connections will be
+          permanently removed.
         </p>
         <div className="flex justify-end gap-2">
           <button

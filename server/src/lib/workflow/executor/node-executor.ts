@@ -139,28 +139,30 @@ export const llmNodeExecutor: NodeExecutor<LLMNodeData> = async (ctx) => {
   const { node, processMentions, state } = ctx;
 
   // Build messages array from node configuration
-  const messages = (node.messages || []).map((msg) => {
-    const rawContent = msg.content as unknown;
-    let content: string;
-    
-    if (typeof rawContent === "string") {
-      content = rawContent;
-    } else if (rawContent) {
-      content = processMentions(rawContent as TipTapMentionJsonContent);
-    } else {
-      content = "";
-    }
-    
-    return {
-      role: msg.role,
-      content: content.trim(),
-    };
-  }).filter((msg) => msg.content);
+  const messages = (node.messages || [])
+    .map((msg) => {
+      const rawContent = msg.content as unknown;
+      let content: string;
+
+      if (typeof rawContent === "string") {
+        content = rawContent;
+      } else if (rawContent) {
+        content = processMentions(rawContent as TipTapMentionJsonContent);
+      } else {
+        content = "";
+      }
+
+      return {
+        role: msg.role,
+        content: content.trim(),
+      };
+    })
+    .filter((msg) => msg.content);
 
   // Build fallback messages from system prompt and workflow input
   const fallbackMessages = () => {
     const result: Array<{ role: "system" | "user"; content: string }> = [];
-    
+
     // Add system prompt if present
     const systemPrompt = (node as unknown as Record<string, unknown>).systemPrompt;
     if (typeof systemPrompt === "string" && systemPrompt.trim()) {
@@ -170,11 +172,12 @@ export const llmNodeExecutor: NodeExecutor<LLMNodeData> = async (ctx) => {
     // Add user input if present and non-empty
     const input = state.input;
     if (input === null || input === undefined) return result;
-    if (typeof input === "object" && Object.keys(input as Record<string, unknown>).length === 0) return result;
-    
+    if (typeof input === "object" && Object.keys(input as Record<string, unknown>).length === 0)
+      return result;
+
     const inputText = typeof input === "string" ? input : JSON.stringify(input, null, 2);
     result.push({ role: "user", content: inputText });
-    
+
     return result;
   };
 
@@ -184,10 +187,7 @@ export const llmNodeExecutor: NodeExecutor<LLMNodeData> = async (ctx) => {
   if (resolvedMessages.length === 0) {
     resolvedMessages = [{ role: "user", content: "Provide a response." }];
   } else if (!resolvedMessages.some((msg) => msg.role === "user")) {
-    resolvedMessages = [
-      ...resolvedMessages,
-      { role: "user", content: "Provide a response." },
-    ];
+    resolvedMessages = [...resolvedMessages, { role: "user", content: "Provide a response." }];
   }
 
   if (resolvedMessages.length === 0) {
