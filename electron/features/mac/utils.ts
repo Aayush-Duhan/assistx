@@ -1,7 +1,7 @@
 import { app } from "electron";
 import { join } from "node:path";
 import { ChildProcess, spawn } from "node:child_process";
-import { IS_DEV } from "../../../shared/constants";
+import { IS_DEV } from "@/shared/constants";
 
 const MACOS_MIN_VERSION = 13; // Ventura
 

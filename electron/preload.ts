@@ -1,6 +1,6 @@
 "use strict";
 import { contextBridge, ipcRenderer } from "electron";
-import type { ElectronAPI } from "../shared/electron";
+import type { ElectronAPI } from "@/shared/electron";
 
 const electronAPI: ElectronAPI = {
   ipcRenderer: {

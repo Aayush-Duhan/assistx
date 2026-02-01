@@ -10,6 +10,7 @@ import { agentsRoutes } from "./agents.routes";
 import { apiKeysRoutes } from "./api-keys.routes";
 import { modelsRoutes } from "./models.routes";
 import { mcpRoutes } from "./mcp.routes";
+import { workflowsRoutes } from "./workflows.routes";
 
 /**
  * Register all API routes
@@ -32,4 +33,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
 
   // MCP routes (Model Context Protocol server management)
   await fastify.register(mcpRoutes, { prefix: "/api/mcp" });
+
+  // Workflows routes (visual workflow builder)
+  await fastify.register(workflowsRoutes, { prefix: "/api/workflows" });
 }

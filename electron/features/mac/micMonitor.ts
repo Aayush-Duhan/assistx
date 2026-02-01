@@ -1,7 +1,7 @@
 import { app } from "electron";
 import { spawn, ChildProcess } from "child_process";
 import { EventEmitter } from "node:events";
-import { IS_MAC } from "../../../shared/constants";
+import { IS_MAC } from "@/shared/constants";
 import type { OnboardingWindow } from "../../windows/OnboardingWindow";
 import { AppWindow } from "../../windows/AppWindow";
 

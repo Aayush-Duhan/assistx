@@ -11,7 +11,7 @@ import { electronApp } from "@electron-toolkit/utils";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
-import { IS_DEV, IS_MAC, IS_WINDOWS } from "../shared/constants";
+import { IS_DEV, IS_MAC, IS_WINDOWS } from "@/shared/constants";
 import { windowManager } from "./windows/WindowManager";
 import { initializeIpcHandlers } from "./ipc/ipcHandlers";
 import { refreshGlobalShortcuts } from "./features/shortcuts";

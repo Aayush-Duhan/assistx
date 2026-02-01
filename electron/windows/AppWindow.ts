@@ -1,6 +1,6 @@
 import { Display } from "electron";
 import { BaseWindow } from "./baseWindow";
-import { IS_WINDOWS } from "../../shared/constants";
+import { IS_WINDOWS } from "@/shared/constants";
 import { isMacOsSequoia } from "../utils/utils";
 
 /**

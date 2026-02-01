@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, unlinkSync, writeFileSync } from "fs";
 import { app, systemPreferences } from "electron";
 import z from "zod";
-import { IS_DEV, IS_MAC } from "../../shared/constants";
+import { IS_DEV, IS_MAC } from "@/shared/constants";
 import os from "os";
 import { onboardingStateSchema } from "@/shared/onboardingState";
 import { STATE_FILES } from "./shared/stateManager";

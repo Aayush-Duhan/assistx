@@ -23,7 +23,8 @@ if (modulePath) {
 
 function postMessage(msg: OutgoingMessage) {
   if (parentPort) {
-    parentPort.postMessage(msg, parentPort.location.origin);
+    // eslint-disable-next-line unicorn/require-post-message-target-origin
+    parentPort.postMessage(msg);
   }
 }
 
@@ -75,10 +76,8 @@ function handleRequestSystemAudioPermission(useCoreAudio: boolean) {
 
   getNativeInstance().requestSystemAudioPermission(useCoreAudio, (granted) => {
     if (parentPort) {
-      parentPort.postMessage(
-        { event: "system-audio-permission-response", granted },
-        parentPort.location.origin,
-      );
+      // eslint-disable-next-line unicorn/require-post-message-target-origin
+      parentPort.postMessage({ event: "system-audio-permission-response", granted });
     }
     isRequestingSysAudio = false;
   });

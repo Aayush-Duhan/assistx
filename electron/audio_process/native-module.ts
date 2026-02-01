@@ -21,22 +21,21 @@ export function initNativeModule(modulePath: string): void {
   // Set up the log bridge to send native logs to the backend/parent
   nativeInstance!.setGlobalLogFunction((level, logEvent, payload) => {
     if (parentPort) {
-      parentPort.postMessage(
-        {
-          event: "log-to-backend",
-          level,
-          logEvent,
-          payload,
-        },
-        parentPort.location.origin,
-      );
+      // eslint-disable-next-line unicorn/require-post-message-target-origin
+      parentPort.postMessage({
+        event: "log-to-backend",
+        level,
+        logEvent,
+        payload,
+      });
     }
   });
 
   console.log("Audio process initialized");
 
   if (parentPort) {
-    parentPort.postMessage({ event: "initialized" }, parentPort.location.origin);
+    // eslint-disable-next-line unicorn/require-post-message-target-origin
+    parentPort.postMessage({ event: "initialized" });
   }
 }
 

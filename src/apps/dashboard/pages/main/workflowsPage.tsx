@@ -1,5 +1,3 @@
-import React from "react";
-
 const workflowsPage = () => {
   return <div>workflowsPage</div>;
 };

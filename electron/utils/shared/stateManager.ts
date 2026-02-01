@@ -19,7 +19,7 @@ import {
 } from "../utils";
 import { join } from "node:path";
 import { windowManager } from "../../windows/WindowManager";
-import { IS_DEV, IS_WINDOWS } from "../../shared/constants";
+import { IS_DEV, IS_WINDOWS } from "@/shared/constants";
 import { DEFAULT_ONBOARDING_STATE, onboardingStateSchema } from "@/shared/onboardingState";
 
 export const STATE_FILES = {
@@ -59,6 +59,10 @@ function createInitialState(): SharedState {
     appVersion: app.getVersion(),
     theme: loadJsonFile(STATE_FILES.theme, themeSchema) ?? "system",
     isIntelMac: IS_INTEL_MAC,
+    didGrantMicrophonePermission: false,
+    didGrantScreenPermission: false,
+    didGrantAccessibilityPermission: false,
+    showModesInChat: true,
   };
 }
 

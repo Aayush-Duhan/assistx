@@ -6,7 +6,10 @@ describe("mcp-config-diff", () => {
     const prev = { a: { command: "node" }, b: { url: "https://x" } } as any;
     const next = { a: { command: "bash" }, c: { command: "python" } } as any;
     const changes = detectConfigChanges(prev, next);
-    const types = changes.map((c) => c.type).toSorted();
+    const types = changes
+      .map((c) => c.type)
+      .slice()
+      .toSorted();
     expect(types).toEqual(["add", "remove", "update"]);
   });
 });

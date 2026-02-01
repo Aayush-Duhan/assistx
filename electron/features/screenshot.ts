@@ -1,6 +1,6 @@
 import { desktopCapturer } from "electron";
 import { Buffer } from "node:buffer";
-import { IS_MAC } from "../../shared/constants";
+import { IS_MAC } from "@/shared/constants";
 import { windowManager } from "../windows/WindowManager";
 import { loadOnboardingState } from "../utils/utils";
 import { updateSharedState } from "../utils/shared/stateManager";

@@ -252,7 +252,7 @@ YOU MUST OUTPUT IN THE FOLLOWING LANGUAGE: ${displayLanguage}
 `;
 
 export const SUMMARY_SYSTEM_PROMPT = (
-  user: Pick<User, "firstName" | "lastName">,
+  user: { firstName?: string; lastName?: string },
   displayLanguage: string,
   postCallSummaryPrompt?: string,
 ) => `You are an AI meeting notetaker. You will be given a transcript of a meeting, and your goal is to write notes for the meeting.

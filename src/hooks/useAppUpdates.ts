@@ -75,9 +75,9 @@ async function checkForUpdatesGlobal(): Promise<void> {
     // Simple version comparison (assumes semantic versioning)
     if (isNewerVersion(latestVersion, globalUpdateState.currentVersion)) {
       // Find appropriate download asset for current platform
-      const platform = await window.electron.ipcRenderer
+      const platform = (await window.electron.ipcRenderer
         .invoke("get-platform")
-        .catch(() => "unknown");
+        .catch(() => "unknown")) as string;
       const asset = findAssetForPlatform(release.assets, platform);
 
       globalUpdateState.updateInfo = {
@@ -111,9 +111,10 @@ export function useAppVersion(): string | null {
     if (window.electron.ipcRenderer && !globalUpdateState.currentVersion) {
       window.electron.ipcRenderer
         .invoke("get-app-version")
-        .then((appVersion: string) => {
-          globalUpdateState.currentVersion = appVersion;
-          setVersion(appVersion);
+        .then((appVersion: unknown) => {
+          const version = String(appVersion);
+          globalUpdateState.currentVersion = version;
+          setVersion(version);
           // Start the first update check after we have the version
           checkForUpdatesGlobal();
         })

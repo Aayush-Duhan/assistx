@@ -1,5 +1,5 @@
 import { globalShortcut } from "electron";
-import { IS_DEV } from "../../shared/constants";
+import { IS_DEV } from "@/shared/constants";
 import { windowManager } from "../windows/WindowManager";
 import { updateSharedState, getSharedState } from "../utils/shared/stateManager";
 

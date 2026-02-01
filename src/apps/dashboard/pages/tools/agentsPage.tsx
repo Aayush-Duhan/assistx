@@ -275,11 +275,11 @@ const AgentIconPicker = ({
 
 // Tool Selector Placeholder Component (TODO)
 const ToolSelectorPlaceholder = ({
-  _tools,
-  _onChange,
+  tools: _tools,
+  onChange: _onChange,
 }: {
-  _tools: string[];
-  _onChange: (tools: string[]) => void;
+  tools: string[];
+  onChange: (tools: string[]) => void;
 }) => {
   return (
     <div className="p-4 rounded-xl border border-dashed border-zinc-700/50 bg-zinc-900/30">

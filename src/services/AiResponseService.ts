@@ -11,6 +11,7 @@ export type ConversationResponse = {
   input: {
     messages: any[];
     displayInput: string | null;
+    assistedWith: string | null;
   };
   response: any[];
 };
@@ -24,6 +25,7 @@ export type PendingResponse =
       screenshot: string | null;
       reasoningSteps: { text: string }[];
       displayInput: string | null;
+      assistedWith: string | null;
     }
   | {
       state: "error";
@@ -41,6 +43,7 @@ export interface TriggerAiState {
   displayInput: string | null;
   hasScreenshot: boolean;
   screenshot: string | null;
+  assistedWith: string | null;
 }
 
 export type TriggerAiOptions = {
@@ -192,6 +195,7 @@ export class AiResponsesService {
           displayInput: displayInput ?? null,
           hasScreenshot: shouldCaptureScreenshot,
           screenshot: null,
+          assistedWith: null,
         });
       });
 
@@ -216,6 +220,7 @@ export class AiResponsesService {
           screenshot: screenshot?.url ?? null,
           reasoningSteps: [],
           displayInput: displayInput ?? null,
+          assistedWith: null,
         };
         this.triggerAiState = null;
       });
@@ -336,6 +341,7 @@ export class AiResponsesService {
             input: {
               messages,
               displayInput,
+              assistedWith: null,
             },
             response: [{ role: "assistant", content: result.text }],
           };

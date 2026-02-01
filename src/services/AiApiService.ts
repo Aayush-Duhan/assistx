@@ -124,9 +124,7 @@ export class AiApiService {
    *   - screenshot?: base64 data
    * Server will inject the prompt and handle the AI call.
    */
-  async streamResponseLegacy(options: AiStreamOptionsLegacy): Promise<AiStreamResult> {
-    const { userMessage, screenshot, abortSignal, useSearchGrounding = false } = options;
-
+  async streamResponseLegacy(_options: AiStreamOptionsLegacy): Promise<AiStreamResult> {
     // TODO: [SERVER MIGRATION] This will be replaced with a server API call
     // Server will:
     // 1. Get prompt from server/src/prompts.ts
@@ -134,25 +132,6 @@ export class AiApiService {
     // 3. Make AI API call
     // 4. Stream response back to client
     throw new Error("streamResponseLegacy is deprecated. Migrate to server API endpoints.");
-
-    const messages: any[] = [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: userMessage },
-          ...(screenshot
-            ? [
-                {
-                  type: "image",
-                  image: screenshot.url,
-                },
-              ]
-            : []),
-        ],
-      },
-    ];
-
-    return this.streamResponse({ messages, abortSignal, useSearchGrounding, systemPrompt: "" });
   }
 
   isConfigured(): boolean {

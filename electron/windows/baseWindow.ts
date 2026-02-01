@@ -1,7 +1,7 @@
 import { BrowserWindow, shell, app } from "electron";
 import path, { join } from "node:path";
 import { APP_NAME } from "../utils/constants";
-import { IS_WINDOWS, IS_DEV } from "../../shared/constants";
+import { IS_WINDOWS, IS_DEV } from "@/shared/constants";
 import { windowManager } from "./WindowManager";
 import { getSharedState } from "../utils/shared/stateManager";
 

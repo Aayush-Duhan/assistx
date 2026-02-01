@@ -1,5 +1,5 @@
 import { createConsola, LogLevels } from "consola";
-import { IS_DEV } from "../../shared/constants";
+import { IS_DEV } from "@/shared/constants";
 
 /**
  * Logger instance for the application.

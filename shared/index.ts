@@ -42,3 +42,52 @@ export type {
 export { SharedStateProvider, useSharedState, updateState } from "./shared";
 
 export { useIpcRendererHandler } from "./useIpcRendererHandler";
+
+// Workflow types and interfaces
+export { NodeKind, defaultObjectJsonSchema } from "./workflow.interface";
+export type {
+  ObjectJsonSchema7,
+  OutputSchemaSourceKey,
+  TipTapMentionJsonContent,
+  BaseWorkflowNodeData,
+  InputNodeData,
+  OutputNodeData,
+  NoteNodeData,
+  MCPToolKey,
+  AppToolKey,
+  WorkflowToolKey,
+  ChatModel,
+  ToolNodeData,
+  LLMNodeData,
+  ConditionOperator,
+  ConditionItem,
+  ConditionBranch,
+  ConditionBranches,
+  ConditionNodeData,
+  HttpMethod,
+  HttpValue,
+  HttpNodeData,
+  TemplateNodeData,
+  WorkflowNodeData,
+  NodeRuntimeField,
+  NodeRuntimeHistory,
+  WorkflowExecutionContext,
+} from "./workflow.interface";
+
+export type {
+  WorkflowIcon,
+  DBWorkflow,
+  DBNode,
+  DBEdge,
+  WorkflowSummary,
+  WorkflowWithStructure,
+  CreateWorkflowRequest,
+  UpdateWorkflowRequest,
+  SaveWorkflowStructureRequest,
+  ExecuteWorkflowRequest,
+  WorkflowExecutionResult,
+  WorkflowExport,
+  WorkflowImportResult,
+  GenerateWorkflowRequest,
+  GeneratedWorkflow,
+} from "./workflow.types";

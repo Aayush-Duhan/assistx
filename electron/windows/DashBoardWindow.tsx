@@ -1,7 +1,7 @@
 import { app, Display, nativeTheme } from "electron";
 import { CenteredWindow } from "./CenteredWindow";
 import { getSharedState } from "../utils/shared/stateManager";
-import { IS_WINDOWS, IS_MAC } from "../../shared/constants";
+import { IS_WINDOWS, IS_MAC } from "@/shared/constants";
 
 /**
  * Represents the dashboard window for settings and session viewing.

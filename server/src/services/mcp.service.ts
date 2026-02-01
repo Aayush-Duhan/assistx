@@ -219,7 +219,7 @@ class MCPClient {
   private inProgressToolCallIds: string[] = [];
 
   constructor(
-    private id: string,
+    _id: string,
     private name: string,
     private serverConfig: MCPServerConfig,
     private options: { autoDisconnectSeconds?: number } = {},

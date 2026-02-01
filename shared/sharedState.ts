@@ -91,6 +91,9 @@ export const sharedStateSchema = z.object({
   theme: themeSchema,
   isIntelMac: z.boolean(),
   showModesInChat: z.boolean(),
+  didGrantMicrophonePermission: z.boolean(),
+  didGrantScreenPermission: z.boolean(),
+  didGrantAccessibilityPermission: z.boolean(),
 });
 
 export type SharedState = z.infer<typeof sharedStateSchema>;

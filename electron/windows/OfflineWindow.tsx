@@ -1,6 +1,6 @@
 import { CenteredWindow } from "./CenteredWindow";
 import { Display } from "electron";
-import { IS_DEV } from "../../shared/constants";
+import { IS_DEV } from "@/shared/constants";
 
 /**
  * Offline window shown when network is unavailable

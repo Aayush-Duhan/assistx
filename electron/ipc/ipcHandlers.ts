@@ -9,7 +9,7 @@ import {
   unregisterGlobalShortcut,
 } from "../features/shortcuts";
 import { captureScreenshot } from "../features/screenshot";
-import { IS_MAC } from "../../shared/constants";
+import { IS_MAC } from "@/shared/constants";
 import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
 import { join } from "path";
 

@@ -64,7 +64,7 @@ export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorag
       logger.debug("Checking MCP clients Diff");
       const fileConfig = await readConfigFile();
 
-      const fileConfigs = fileConfig.toSorted((a, b) => a.id.localeCompare(b.id));
+      const fileConfigs = fileConfig.slice().toSorted((a, b) => a.id.localeCompare(b.id));
 
       // Get current manager configs
       const managerConfigs = await manager

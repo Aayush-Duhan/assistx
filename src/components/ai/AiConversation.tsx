@@ -175,7 +175,7 @@ export class AiConversation {
 
     let attachmentCount = 0;
 
-    for (const msg of [...newMessages].toReversed()) {
+    for (const msg of [...newMessages].slice().toReversed()) {
       // Count image attachments in the parts array
       const imageParts = Array.isArray(msg.content)
         ? msg.content.filter((part: any) => part.type === "image").length

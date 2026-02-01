@@ -151,6 +151,75 @@ function runMigrations() {
     logger.info("db.migration", "Added is_built_in column to ai_models");
   }
 
+  // Workflows table
+  sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS workflows (
+            id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            version TEXT DEFAULT '1.0.0',
+            icon TEXT,
+            is_published INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 0,
+            trigger_type TEXT,
+            execution_context TEXT,
+            last_run_at INTEGER,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+    `);
+
+  // Migration: Add new columns to workflows if they don't exist
+  const workflowColumns = sqlite.prepare("PRAGMA table_info(workflows)").all() as {
+    name: string;
+  }[];
+  const workflowColNames = new Set(workflowColumns.map((col) => col.name));
+
+  if (!workflowColNames.has("version")) {
+    sqlite.exec("ALTER TABLE workflows ADD COLUMN version TEXT DEFAULT '1.0.0'");
+    logger.info("db.migration", "Added version column to workflows");
+  }
+  if (!workflowColNames.has("icon")) {
+    sqlite.exec("ALTER TABLE workflows ADD COLUMN icon TEXT");
+    logger.info("db.migration", "Added icon column to workflows");
+  }
+  if (!workflowColNames.has("is_published")) {
+    sqlite.exec("ALTER TABLE workflows ADD COLUMN is_published INTEGER DEFAULT 0");
+    logger.info("db.migration", "Added is_published column to workflows");
+  }
+  if (!workflowColNames.has("execution_context")) {
+    sqlite.exec("ALTER TABLE workflows ADD COLUMN execution_context TEXT");
+    logger.info("db.migration", "Added execution_context column to workflows");
+  }
+  // Remove graph_data column migration not needed as SQLite doesn't support DROP COLUMN easily
+
+  // Workflow Nodes table
+  sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS workflow_nodes (
+            id TEXT PRIMARY KEY NOT NULL,
+            workflow_id TEXT NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+            kind TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            node_config TEXT,
+            ui_config TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+    `);
+
+  // Workflow Edges table
+  sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS workflow_edges (
+            id TEXT PRIMARY KEY NOT NULL,
+            workflow_id TEXT NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+            source TEXT NOT NULL,
+            target TEXT NOT NULL,
+            ui_config TEXT,
+            created_at INTEGER NOT NULL
+        )
+    `);
+
   logger.debug("db.migration", "Migrations complete");
 }
 
@@ -654,6 +723,341 @@ export function updateAIModel(
 export function deleteAIModel(id: string): void {
   const database = getDatabase();
   database.delete(schema.aiModels).where(eq(schema.aiModels.id, id)).run();
+}
+
+// ============================================================================
+// Workflows CRUD Operations
+// ============================================================================
+
+import { and, inArray } from "drizzle-orm";
+
+export interface Workflow {
+  id: string;
+  name: string;
+  description: string | null;
+  version: string;
+  icon: { type: string; value: string; style?: Record<string, string> } | null;
+  isPublished: boolean;
+  isActive: boolean;
+  triggerType: string | null;
+  executionContext: {
+    screenshot?: boolean;
+    conversationHistory?: boolean;
+    userPreferences?: boolean;
+  } | null;
+  lastRunAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkflowNode {
+  id: string;
+  workflowId: string;
+  kind: string;
+  name: string;
+  description: string | null;
+  nodeConfig: Record<string, unknown> | null;
+  uiConfig: Record<string, unknown> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkflowEdge {
+  id: string;
+  workflowId: string;
+  source: string;
+  target: string;
+  uiConfig: Record<string, unknown> | null;
+  createdAt: Date;
+}
+
+export interface NewWorkflow {
+  name: string;
+  description?: string;
+  icon?: { type: string; value: string; style?: Record<string, string> };
+}
+
+export function listWorkflows(): Workflow[] {
+  const database = getDatabase();
+  const rows = database.select().from(schema.workflows).all();
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    version: row.version ?? "1.0.0",
+    icon: row.icon as Workflow["icon"],
+    isPublished: row.isPublished ?? false,
+    isActive: row.isActive ?? false,
+    triggerType: row.triggerType,
+    executionContext: row.executionContext as Workflow["executionContext"],
+    lastRunAt: row.lastRunAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  }));
+}
+
+export function getWorkflowById(id: string): Workflow | null {
+  const database = getDatabase();
+  const row = database.select().from(schema.workflows).where(eq(schema.workflows.id, id)).get();
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    version: row.version ?? "1.0.0",
+    icon: row.icon as Workflow["icon"],
+    isPublished: row.isPublished ?? false,
+    isActive: row.isActive ?? false,
+    triggerType: row.triggerType,
+    executionContext: row.executionContext as Workflow["executionContext"],
+    lastRunAt: row.lastRunAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function getWorkflowWithStructure(
+  id: string,
+): (Workflow & { nodes: WorkflowNode[]; edges: WorkflowEdge[] }) | null {
+  const workflow = getWorkflowById(id);
+  if (!workflow) return null;
+
+  const database = getDatabase();
+
+  const nodes = database
+    .select()
+    .from(schema.workflowNodes)
+    .where(eq(schema.workflowNodes.workflowId, id))
+    .all()
+    .map((row) => ({
+      id: row.id,
+      workflowId: row.workflowId,
+      kind: row.kind,
+      name: row.name,
+      description: row.description,
+      nodeConfig: row.nodeConfig as WorkflowNode["nodeConfig"],
+      uiConfig: row.uiConfig as WorkflowNode["uiConfig"],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+
+  const edges = database
+    .select()
+    .from(schema.workflowEdges)
+    .where(eq(schema.workflowEdges.workflowId, id))
+    .all()
+    .map((row) => ({
+      id: row.id,
+      workflowId: row.workflowId,
+      source: row.source,
+      target: row.target,
+      uiConfig: row.uiConfig as WorkflowEdge["uiConfig"],
+      createdAt: row.createdAt,
+    }));
+
+  return { ...workflow, nodes, edges };
+}
+
+export function createWorkflow(data: NewWorkflow): { id: string } {
+  const database = getDatabase();
+  const id = uuidv7();
+  const now = new Date();
+
+  database
+    .insert(schema.workflows)
+    .values({
+      id,
+      name: data.name,
+      description: data.description ?? null,
+      version: "1.0.0",
+      icon: data.icon ?? null,
+      isPublished: false,
+      isActive: false,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+
+  // Create a default Input node for new workflows
+  const inputNodeId = uuidv7();
+  database
+    .insert(schema.workflowNodes)
+    .values({
+      id: inputNodeId,
+      workflowId: id,
+      kind: "input",
+      name: "INPUT",
+      nodeConfig: { outputSchema: { type: "object", properties: {}, required: [] } },
+      uiConfig: { position: { x: 100, y: 100 } },
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+
+  return { id };
+}
+
+export function updateWorkflow(
+  id: string,
+  data: Partial<{
+    name: string;
+    description: string;
+    icon: { type: string; value: string; style?: Record<string, string> };
+    isPublished: boolean;
+    isActive: boolean;
+    triggerType: string;
+    executionContext: {
+      screenshot?: boolean;
+      conversationHistory?: boolean;
+      userPreferences?: boolean;
+    };
+  }>,
+): void {
+  const database = getDatabase();
+  const now = new Date();
+
+  database
+    .update(schema.workflows)
+    .set({
+      ...data,
+      updatedAt: now,
+    })
+    .where(eq(schema.workflows.id, id))
+    .run();
+}
+
+export function deleteWorkflow(id: string): void {
+  const database = getDatabase();
+  // Cascade delete handles nodes and edges
+  database.delete(schema.workflows).where(eq(schema.workflows.id, id)).run();
+}
+
+export function saveWorkflowStructure(
+  workflowId: string,
+  data: {
+    nodes?: Array<{
+      id: string;
+      workflowId: string;
+      kind: string;
+      name: string;
+      description?: string;
+      nodeConfig?: Record<string, unknown>;
+      uiConfig?: Record<string, unknown>;
+    }>;
+    edges?: Array<{
+      id: string;
+      workflowId: string;
+      source: string;
+      target: string;
+      uiConfig?: Record<string, unknown>;
+    }>;
+    deleteNodes?: string[];
+    deleteEdges?: string[];
+  },
+): void {
+  const database = getDatabase();
+  const now = new Date();
+
+  // Delete nodes if specified
+  if (data.deleteNodes && data.deleteNodes.length > 0) {
+    database
+      .delete(schema.workflowNodes)
+      .where(
+        and(
+          eq(schema.workflowNodes.workflowId, workflowId),
+          inArray(schema.workflowNodes.id, data.deleteNodes),
+        ),
+      )
+      .run();
+  }
+
+  // Delete edges if specified
+  if (data.deleteEdges && data.deleteEdges.length > 0) {
+    database
+      .delete(schema.workflowEdges)
+      .where(
+        and(
+          eq(schema.workflowEdges.workflowId, workflowId),
+          inArray(schema.workflowEdges.id, data.deleteEdges),
+        ),
+      )
+      .run();
+  }
+
+  // Upsert nodes
+  if (data.nodes && data.nodes.length > 0) {
+    for (const node of data.nodes) {
+      const existing = database
+        .select()
+        .from(schema.workflowNodes)
+        .where(eq(schema.workflowNodes.id, node.id))
+        .get();
+
+      if (existing) {
+        database
+          .update(schema.workflowNodes)
+          .set({
+            kind: node.kind,
+            name: node.name,
+            description: node.description ?? null,
+            nodeConfig: node.nodeConfig ?? null,
+            uiConfig: node.uiConfig ?? null,
+            updatedAt: now,
+          })
+          .where(eq(schema.workflowNodes.id, node.id))
+          .run();
+      } else {
+        database
+          .insert(schema.workflowNodes)
+          .values({
+            id: node.id,
+            workflowId,
+            kind: node.kind,
+            name: node.name,
+            description: node.description ?? null,
+            nodeConfig: node.nodeConfig ?? null,
+            uiConfig: node.uiConfig ?? null,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run();
+      }
+    }
+  }
+
+  // Upsert edges (edges are simpler, just insert if not exists)
+  if (data.edges && data.edges.length > 0) {
+    for (const edge of data.edges) {
+      const existing = database
+        .select()
+        .from(schema.workflowEdges)
+        .where(eq(schema.workflowEdges.id, edge.id))
+        .get();
+
+      if (!existing) {
+        database
+          .insert(schema.workflowEdges)
+          .values({
+            id: edge.id,
+            workflowId,
+            source: edge.source,
+            target: edge.target,
+            uiConfig: edge.uiConfig ?? null,
+            createdAt: now,
+          })
+          .run();
+      }
+    }
+  }
+
+  // Update workflow's updatedAt
+  database
+    .update(schema.workflows)
+    .set({ updatedAt: now })
+    .where(eq(schema.workflows.id, workflowId))
+    .run();
 }
 
 // Export the schema for use in queries

@@ -1,5 +1,5 @@
 import { app, Display, screen, nativeTheme } from "electron";
-import { IS_MAC } from "../../shared/constants";
+import { IS_MAC } from "@/shared/constants";
 import { AppWindow } from "./AppWindow";
 import { OnboardingWindow } from "./OnboardingWindow";
 import { DashboardWindow } from "./DashBoardWindow";

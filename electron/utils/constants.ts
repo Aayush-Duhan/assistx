@@ -1,5 +1,5 @@
 import os from "node:os";
-import { IS_MAC } from "../../shared/constants";
+import { IS_MAC } from "@/shared/constants";
 
 export function isWindows10OrGreater(): boolean {
   if (process.platform !== "win32") return false;

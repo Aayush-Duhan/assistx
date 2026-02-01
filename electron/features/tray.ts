@@ -1,5 +1,5 @@
 import { app, Menu, Tray } from "electron";
-import { IS_DEV } from "../../shared/constants";
+import { IS_DEV } from "@/shared/constants";
 import path from "node:path";
 import { windowManager } from "../windows/WindowManager";
 import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
