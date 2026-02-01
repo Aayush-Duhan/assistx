@@ -20,6 +20,15 @@ repos:
       - id: check-merge-conflict
       # Skip check-json as tsconfig.json has comments
 
+  # Prevent database files from being committed
+  - repo: local
+    hooks:
+      - id: no-database-files
+        name: No Database Files
+        entry: node scripts/check-db-files.js
+        language: system
+        pass_filenames: false
+
   # Project checks (same commands as CI)
   - repo: local
     hooks:

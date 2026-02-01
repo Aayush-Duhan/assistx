@@ -145,7 +145,7 @@ async function executeNode(
         properties: {},
         required: [],
       },
-      ...((node.nodeConfig as Record<string, unknown>) ?? {}),
+      ...(node.nodeConfig as Record<string, unknown>),
     } as WorkflowNodeData;
 
     const resolveReference = createReferenceResolver(state);

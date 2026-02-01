@@ -41,5 +41,10 @@ extraResources/*.node
 src/assets/logo.png
 .secrets.baseline
 
+# Database files (local development data)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
 # Submodules / external repos
 better-chatbot/
