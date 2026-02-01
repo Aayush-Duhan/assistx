@@ -64,12 +64,9 @@ export type NodeExecutor<T extends WorkflowNodeData = WorkflowNodeData> = (
 // Input Node Executor
 // =============================================================================
 
-export const inputNodeExecutor: NodeExecutor<InputNodeData> = (ctx) => {
-  // Input node just passes through the workflow input
-  return {
-    output: ctx.state.input,
-  };
-};
+export const inputNodeExecutor: NodeExecutor<InputNodeData> = (ctx) => ({
+  output: ctx.state.input,
+});
 
 // =============================================================================
 // Output Node Executor
@@ -101,13 +98,10 @@ export const outputNodeExecutor: NodeExecutor<OutputNodeData> = (ctx) => {
 // Note Node Executor
 // =============================================================================
 
-export const noteNodeExecutor: NodeExecutor<NoteNodeData> = () => {
-  // Note nodes are documentation only, no execution
-  return {
-    output: undefined,
-    skipDownstream: false,
-  };
-};
+export const noteNodeExecutor: NodeExecutor<NoteNodeData> = () => ({
+  output: undefined,
+  skipDownstream: false,
+});
 
 // =============================================================================
 // LLM Node Executor
@@ -115,30 +109,105 @@ export const noteNodeExecutor: NodeExecutor<NoteNodeData> = () => {
 
 import { generateLLMResponse } from "../ai-service";
 
+interface ParsedModel {
+  provider: string;
+  modelId: string;
+}
+
+// Parse model configuration from various input formats
+const parseModelConfig = (rawModel: unknown): ParsedModel | null => {
+  if (rawModel && typeof rawModel === "object") {
+    const provider = (rawModel as { provider?: unknown }).provider;
+    const modelId = (rawModel as { modelId?: unknown }).modelId;
+    if (typeof provider === "string" && typeof modelId === "string") {
+      return { provider, modelId };
+    }
+  }
+
+  if (typeof rawModel === "string") {
+    if (rawModel.includes("/")) {
+      const [provider, ...rest] = rawModel.split("/");
+      return { provider, modelId: rest.join("/") };
+    }
+    return { provider: "openai", modelId: rawModel };
+  }
+
+  return null;
+};
+
 export const llmNodeExecutor: NodeExecutor<LLMNodeData> = async (ctx) => {
-  const { node, processMentions } = ctx;
+  const { node, processMentions, state } = ctx;
 
-  // Build messages array
-  const messages = (node.messages || []).map((msg) => ({
-    role: msg.role,
-    content: msg.content ? processMentions(msg.content) : "",
-  }));
+  // Build messages array from node configuration
+  const messages = (node.messages || []).map((msg) => {
+    const rawContent = msg.content as unknown;
+    let content: string;
+    
+    if (typeof rawContent === "string") {
+      content = rawContent;
+    } else if (rawContent) {
+      content = processMentions(rawContent as TipTapMentionJsonContent);
+    } else {
+      content = "";
+    }
+    
+    return {
+      role: msg.role,
+      content: content.trim(),
+    };
+  }).filter((msg) => msg.content);
 
-  if (messages.length === 0) {
+  // Build fallback messages from system prompt and workflow input
+  const fallbackMessages = () => {
+    const result: Array<{ role: "system" | "user"; content: string }> = [];
+    
+    // Add system prompt if present
+    const systemPrompt = (node as unknown as Record<string, unknown>).systemPrompt;
+    if (typeof systemPrompt === "string" && systemPrompt.trim()) {
+      result.push({ role: "system", content: systemPrompt });
+    }
+
+    // Add user input if present and non-empty
+    const input = state.input;
+    if (input === null || input === undefined) return result;
+    if (typeof input === "object" && Object.keys(input as Record<string, unknown>).length === 0) return result;
+    
+    const inputText = typeof input === "string" ? input : JSON.stringify(input, null, 2);
+    result.push({ role: "user", content: inputText });
+    
+    return result;
+  };
+
+  let resolvedMessages = messages.length > 0 ? messages : fallbackMessages();
+  resolvedMessages = resolvedMessages.filter((msg) => msg.content.trim());
+
+  if (resolvedMessages.length === 0) {
+    resolvedMessages = [{ role: "user", content: "Provide a response." }];
+  } else if (!resolvedMessages.some((msg) => msg.role === "user")) {
+    resolvedMessages = [
+      ...resolvedMessages,
+      { role: "user", content: "Provide a response." },
+    ];
+  }
+
+  if (resolvedMessages.length === 0) {
     return { error: "LLM node has no messages configured" };
   }
 
-  if (!node.model?.provider || !node.model?.modelId) {
+  const rawModel = (node as unknown as Record<string, unknown>).model;
+  const parsedModel = parseModelConfig(rawModel);
+
+  if (!parsedModel?.provider || !parsedModel?.modelId) {
     return { error: "LLM node has no model configured" };
   }
 
   // Generate LLM response using AI service
   const result = await generateLLMResponse({
     model: {
-      provider: node.model.provider,
-      modelId: node.model.modelId,
+      provider: parsedModel.provider,
+      modelId: parsedModel.modelId,
     },
-    messages,
+    messages: resolvedMessages,
   });
 
   if (!result.success) {
@@ -148,7 +217,7 @@ export const llmNodeExecutor: NodeExecutor<LLMNodeData> = async (ctx) => {
   return {
     output: {
       response: result.response,
-      model: `${node.model.provider}/${node.model.modelId}`,
+      model: `${parsedModel.provider}/${parsedModel.modelId}`,
       usage: result.usage,
     },
   };
@@ -379,15 +448,24 @@ export const httpNodeExecutor: NodeExecutor<HttpNodeData> = async (ctx) => {
 export const templateNodeExecutor: NodeExecutor<TemplateNodeData> = (ctx) => {
   const { node, processMentions } = ctx;
 
-  if (!node.template?.tiptap) {
+  const template = (node as unknown as Record<string, unknown>).template;
+  if (!template) {
     return { error: "Template node has no template configured" };
   }
 
-  const result = processMentions(node.template.tiptap);
+  if (typeof template === "string") {
+    return { output: { text: template } };
+  }
 
-  return {
-    output: { text: result },
-  };
+  if (typeof template === "object") {
+    const tiptap = (template as { tiptap?: unknown }).tiptap;
+    if (tiptap) {
+      const result = processMentions(tiptap as TipTapMentionJsonContent);
+      return { output: { text: result } };
+    }
+  }
+
+  return { error: "Template node has no template configured" };
 };
 
 // =============================================================================

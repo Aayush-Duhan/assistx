@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { LuPanelLeft } from "react-icons/lu";
 import { ElectronDragWrapper } from "@/components/electronDragWrapper";
 import { Sidebar } from "./components";
@@ -7,6 +7,7 @@ import KeybindingsPage from "./pages/main/keyBindingsPage";
 import ApiKeysPage from "./pages/features/apiKeysPage";
 import ModelsPage from "./pages/features/modelsPage";
 import ModesPage from "./pages/main/modesPage";
+import WorkflowsPage from "./pages/main/workflowsPage";
 import AgentsPage from "./pages/tools/agentsPage";
 import McpPage from "./pages/tools/mcpPage";
 
@@ -14,27 +15,18 @@ export default function Dashboard() {
   const [activePage, setActivePage] = useState("general");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const renderPage = () => {
-    switch (activePage) {
-      case "general":
-        return <GeneralPage />;
-      case "keybindings":
-        return <KeybindingsPage />;
-      case "apikeys":
-        return <ApiKeysPage />;
-      case "models":
-        return <ModelsPage />;
-      case "modes":
-        return <ModesPage />;
-      case "agents":
-        return <AgentsPage />;
-      case "mcps":
-        return <McpPage />;
-      // ... other cases
-      default:
-        return <GeneralPage />;
-    }
+  const pageComponents: Record<string, React.ReactNode> = {
+    general: <GeneralPage />,
+    keybindings: <KeybindingsPage />,
+    apikeys: <ApiKeysPage />,
+    models: <ModelsPage />,
+    modes: <ModesPage />,
+    workflows: <WorkflowsPage />,
+    agents: <AgentsPage />,
+    mcps: <McpPage />,
   };
+
+  const renderPage = () => pageComponents[activePage] ?? <GeneralPage />;
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#0a0a0a]">

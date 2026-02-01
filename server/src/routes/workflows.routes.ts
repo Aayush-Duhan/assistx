@@ -70,6 +70,22 @@ interface IdParams {
   id: string;
 }
 
+// Helper for common 500 error handling - logging + response
+const handleRouteError = (
+  error: unknown,
+  request: FastifyRequest,
+  reply: FastifyReply,
+  logEvent: string,
+  message: string
+) => {
+  request.ctx?.logger.error(
+    error instanceof Error ? error : new Error(String(error)),
+    logEvent,
+    message,
+  );
+  return reply.status(500).send({ error: message });
+};
+
 export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /api/workflows - List all workflows
   fastify.get("/", async (request: FastifyRequest, reply: FastifyReply) => {
@@ -77,20 +93,15 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       const workflows = listWorkflows();
       return reply.send(workflows);
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.list.error",
-        "Failed to list workflows",
-      );
-      return reply.status(500).send({ error: "Failed to list workflows" });
+      return handleRouteError(error, request, reply, "workflows.list.error", "Failed to list workflows");
     }
   });
 
-  // GET /api/workflows/:id - Get workflow by ID (without structure)
+  // GET /api/workflows/:id - Get workflow by ID (with structure for editor)
   fastify.get<{ Params: IdParams }>("/:id", async (request, reply) => {
     try {
       const { id } = request.params;
-      const workflow = getWorkflowById(id);
+      const workflow = getWorkflowWithStructure(id);
 
       if (!workflow) {
         return reply.status(404).send({ error: "Workflow not found" });
@@ -98,12 +109,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
 
       return reply.send(workflow);
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.get.error",
-        "Failed to get workflow",
-      );
-      return reply.status(500).send({ error: "Failed to get workflow" });
+      return handleRouteError(error, request, reply, "workflows.get.error", "Failed to get workflow");
     }
   });
 
@@ -119,12 +125,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
 
       return reply.send(workflow);
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.getStructure.error",
-        "Failed to get workflow structure",
-      );
-      return reply.status(500).send({ error: "Failed to get workflow structure" });
+      return handleRouteError(error, request, reply, "workflows.getStructure.error", "Failed to get workflow structure");
     }
   });
 
@@ -140,12 +141,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       const result = createWorkflow({ name, description, icon });
       return reply.status(201).send(result);
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.create.error",
-        "Failed to create workflow",
-      );
-      return reply.status(500).send({ error: "Failed to create workflow" });
+      return handleRouteError(error, request, reply, "workflows.create.error", "Failed to create workflow");
     }
   });
 
@@ -158,12 +154,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       updateWorkflow(id, data);
       return reply.status(204).send();
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.update.error",
-        "Failed to update workflow",
-      );
-      return reply.status(500).send({ error: "Failed to update workflow" });
+      return handleRouteError(error, request, reply, "workflows.update.error", "Failed to update workflow");
     }
   });
 
@@ -178,12 +169,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
         saveWorkflowStructure(id, { nodes, edges, deleteNodes, deleteEdges });
         return reply.status(204).send();
       } catch (error) {
-        request.ctx?.logger.error(
-          error instanceof Error ? error : new Error(String(error)),
-          "workflows.saveStructure.error",
-          "Failed to save workflow structure",
-        );
-        return reply.status(500).send({ error: "Failed to save workflow structure" });
+        return handleRouteError(error, request, reply, "workflows.saveStructure.error", "Failed to save workflow structure");
       }
     },
   );
@@ -195,12 +181,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       deleteWorkflow(id);
       return reply.status(204).send();
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.delete.error",
-        "Failed to delete workflow",
-      );
-      return reply.status(500).send({ error: "Failed to delete workflow" });
+      return handleRouteError(error, request, reply, "workflows.delete.error", "Failed to delete workflow");
     }
   });
 
@@ -217,12 +198,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       updateWorkflow(id, { isPublished: !workflow.isPublished });
       return reply.status(204).send();
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.publish.error",
-        "Failed to toggle workflow publish status",
-      );
-      return reply.status(500).send({ error: "Failed to toggle publish status" });
+      return handleRouteError(error, request, reply, "workflows.publish.error", "Failed to toggle publish status");
     }
   });
 
@@ -232,12 +208,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
       const workflows = listWorkflows().filter((w) => w.isPublished);
       return reply.send(workflows);
     } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "workflows.published.error",
-        "Failed to list published workflows",
-      );
-      return reply.status(500).send({ error: "Failed to list published workflows" });
+      return handleRouteError(error, request, reply, "workflows.published.error", "Failed to list published workflows");
     }
   });
 
@@ -265,12 +236,7 @@ export async function workflowsRoutes(fastify: FastifyInstance): Promise<void> {
 
         return reply.send(result);
       } catch (error) {
-        request.ctx?.logger.error(
-          error instanceof Error ? error : new Error(String(error)),
-          "workflows.execute.error",
-          "Failed to execute workflow",
-        );
-        return reply.status(500).send({ error: "Failed to execute workflow" });
+        return handleRouteError(error, request, reply, "workflows.execute.error", "Failed to execute workflow");
       }
     },
   );

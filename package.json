@@ -16,7 +16,8 @@
     "format:fix": "npx oxfmt --write src electron shared server",
     "typecheck": "tsc --noEmit",
     "validate": "npm run lint && npm run typecheck && npm run test",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",
@@ -41,6 +42,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@speed-highlight/core": "^1.2.14",
     "@tailwindcss/vite": "^4.1.18",
+    "@xyflow/react": "^12.10.0",
     "ai": "^6.0.64",
     "better-sqlite3": "^12.6.2",
     "buffer": "^6.0.3",
@@ -61,6 +63,7 @@
     "framer-motion": "^12.29.2",
     "jotai": "^2.17.0",
     "json-schema": "^0.4.0",
+    "katex": "^0.16.28",
     "lodash": "^4.17.23",
     "mobx": "^6.15.0",
     "mobx-react-lite": "^4.1.1",
