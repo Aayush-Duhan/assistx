@@ -103,8 +103,8 @@ export const supportedModelSchema = z.union([
   z.literal("perplexity/sonar-pro"),
 
   // openrouter
-  z.literal("openrouter/qwen3-coder:free"),
-  z.literal("openrouter/deepseek-v3:free"),
+  z.literal("openrouter/qwen/qwen3-coder:free"),
+  z.literal("openrouter/deepseek/deepseek-chat-v3-0324:free"),
 
   // google - https://ai.google.dev/gemini-api/docs/models
   z.literal("google/gemini-2.5-pro"), // smartest model
