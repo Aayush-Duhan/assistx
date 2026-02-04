@@ -270,7 +270,7 @@ export const BUILT_IN_MODELS: BuiltInModel[] = [
   // OpenRouter Models
   {
     providerId: "openrouter",
-    modelId: "gpt-oss-120b:free",
+    modelId: "openai/gpt-oss-120b:free",
     displayName: "GPT-OSS 120B (Free)",
     contextWindow: 131072,
     maxOutputTokens: 8192,
@@ -280,7 +280,7 @@ export const BUILT_IN_MODELS: BuiltInModel[] = [
   },
   {
     providerId: "openrouter",
-    modelId: "glm-4.5-air:free",
+    modelId: "z-ai/glm-4.5-air:free",
     displayName: "GLM 4.5 Air (Free)",
     contextWindow: 131072,
     maxOutputTokens: 8192,
@@ -290,7 +290,7 @@ export const BUILT_IN_MODELS: BuiltInModel[] = [
   },
   {
     providerId: "openrouter",
-    modelId: "qwen3-coder:free",
+    modelId: "qwen/qwen3-coder:free",
     displayName: "Qwen3 Coder (Free)",
     contextWindow: 40960,
     maxOutputTokens: 8192,
