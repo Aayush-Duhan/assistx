@@ -45,9 +45,9 @@ const staticModels: Record<string, Record<string, LanguageModel>> = {
     "qwen3-32b": groq("qwen/qwen3-32b"),
   },
   openRouter: {
-    "gpt-oss-120b:free": openrouter("openai/gpt-oss-120b:free"),
-    "glm-4.5-air:free": openrouter("z-ai/glm-4.5-air:free"),
-    "qwen3-coder:free": openrouter("qwen/qwen3-coder:free"),
+    "openai/gpt-oss-120b:free": openrouter("openai/gpt-oss-120b:free"),
+    "z-ai/glm-4.5-air:free": openrouter("z-ai/glm-4.5-air:free"),
+    "qwen/qwen3-coder:free": openrouter("qwen/qwen3-coder:free"),
   },
 };
 
