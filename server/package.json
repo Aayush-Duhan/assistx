@@ -29,7 +29,7 @@
     "@deepgram/sdk": "^4.11.3",
     "@fastify/cors": "^11.2.0",
     "@fastify/websocket": "^11.2.0",
-    "@openrouter/ai-sdk-provider": "^1.5.2",
+    "@openrouter/ai-sdk-provider": "^2.1.1",
     "ai": "^6.0.3",
     "better-sqlite3": "^12.5.0",
     "dotenv": "^17.2.3",
