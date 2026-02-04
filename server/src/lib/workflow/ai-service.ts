@@ -27,6 +27,7 @@ function createContextFromDB(): LocalCtx {
     anthropic: getApiKeyForProvider("anthropic") ?? undefined,
     groq: getApiKeyForProvider("groq") ?? undefined,
     perplexity: getApiKeyForProvider("perplexity") ?? undefined,
+    openrouter: getApiKeyForProvider("openrouter") ?? undefined,
     google: getApiKeyForProvider("google") ?? undefined,
   };
 

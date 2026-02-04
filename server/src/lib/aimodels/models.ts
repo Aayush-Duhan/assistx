@@ -5,8 +5,7 @@
  */
 
 import type { AnthropicProvider } from "@ai-sdk/anthropic";
-// TODO: Add OpenRouter support because it is not available in ai-sdk v6 yet
-// import type { OpenRouterProvider } from "@openrouter/ai-sdk-provider";
+import type { OpenRouterProvider } from "@openrouter/ai-sdk-provider";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import type { GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -17,7 +16,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import type { PerplexityProvider } from "@ai-sdk/perplexity";
 import { createPerplexity } from "@ai-sdk/perplexity";
 import type { LanguageModelV3 } from "@ai-sdk/provider";
-// import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { z } from "zod";
 
 // ============================================================================
@@ -33,7 +32,7 @@ export type LocalAiCtx = {
   anthropic: AnthropicProvider;
   groq: GroqProvider;
   perplexity: PerplexityProvider;
-  //   openrouter: OpenRouterProvider;
+  openrouter: OpenRouterProvider;
   google: GoogleGenerativeAIProvider;
 };
 
@@ -55,7 +54,7 @@ const PROVIDERS = {
   openai: (ctx: LocalCtx) => ctx.ai.openai.responses,
   groq: (ctx: LocalCtx) => ctx.ai.groq,
   perplexity: (ctx: LocalCtx) => ctx.ai.perplexity,
-  // openrouter: (ctx: LocalCtx) => ctx.ai.openrouter,
+  openrouter: (ctx: LocalCtx) => (modelId: string) => ctx.ai.openrouter.chat(modelId),
   google: (ctx: LocalCtx) => ctx.ai.google,
 };
 
@@ -104,9 +103,8 @@ export const supportedModelSchema = z.union([
   z.literal("perplexity/sonar-pro"),
 
   // openrouter
-  z.literal("openrouter/openai/gpt-oss-120b"),
-  z.literal("openrouter/anthropic/claude-sonnet-4"),
-  z.literal("openrouter/anthropic/claude-3.7-sonnet"),
+  z.literal("openrouter/qwen3-coder:free"),
+  z.literal("openrouter/deepseek-v3:free"),
 
   // google - https://ai.google.dev/gemini-api/docs/models
   z.literal("google/gemini-2.5-pro"), // smartest model
@@ -249,7 +247,7 @@ export function createLocalAiCtx(apiKeys: ApiKeyConfig): LocalAiCtx {
     anthropic: createAnthropic({ apiKey: apiKeys.anthropic ?? "" }),
     groq: createGroq({ apiKey: apiKeys.groq ?? "" }),
     perplexity: createPerplexity({ apiKey: apiKeys.perplexity ?? "" }),
-    // openrouter: createOpenRouter({ apiKey: apiKeys.openrouter ?? "" }),
+    openrouter: createOpenRouter({ apiKey: apiKeys.openrouter ?? "" }),
     google: createGoogleGenerativeAI({ apiKey: apiKeys.google ?? "" }),
   };
 }
