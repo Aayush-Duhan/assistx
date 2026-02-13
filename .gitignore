@@ -48,3 +48,5 @@ data/*.db-wal
 
 # Submodules / external repos
 better-chatbot/
+
+.agent/
