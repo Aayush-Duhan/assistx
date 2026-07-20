@@ -32,10 +32,12 @@ export async function getServerConfig(): Promise<{ baseUrl: string; wsUrl: strin
       console.warn("Failed to get server config from electron:", err);
     }
   }
+  const defaultPort = import.meta.env?.VITE_SERVER_PORT || "3000";
+  const defaultToken = import.meta.env?.VITE_SERVER_TOKEN || "";
   cachedServerConfig = {
-    baseUrl: "http://127.0.0.1:3000/api",
-    wsUrl: "ws://127.0.0.1:3000/api",
-    token: "",
+    baseUrl: `http://127.0.0.1:${defaultPort}/api`,
+    wsUrl: `ws://127.0.0.1:${defaultPort}/api`,
+    token: defaultToken,
   };
   return cachedServerConfig;
 }
