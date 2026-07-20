@@ -3,7 +3,7 @@ import { streamText } from "ai";
 // TODO: [SERVER MIGRATION] Prompts are now on server (server/src/prompts.ts)
 // TODO: [SERVER MIGRATION] Env/API keys are now on server (server/src/env.ts)
 // This entire service will be migrated to server. Client will call server API endpoints.
-import { settingsStore, AIProviderKey } from "../stores/settingsStore";
+import { widgetPreferencesStore } from "../stores/widgetPreferencesStore";
 
 export interface AiStreamOptions {
   messages: any[];
@@ -38,20 +38,7 @@ export interface AiStreamResult {
 }
 
 export class AiApiService {
-  private providerConfigs: Record<AIProviderKey, { apiKey: string; apiKeyVar: string }>;
-
-  constructor() {
-    // TODO: [SERVER MIGRATION] API keys are now managed on server (server/src/env.ts)
-    // This service will be replaced with server API calls
-    this.providerConfigs = {
-      google: {
-        apiKey: "", // Will be handled by server
-        apiKeyVar: "GOOGLE_GENERATIVE_AI_API_KEY",
-      },
-    };
-  }
-
-  private getProviderInstance(provider: AIProviderKey, model: string) {
+  private getProviderInstance(provider: string, model: string) {
     switch (provider) {
       case "google":
         return google(model);
@@ -64,10 +51,11 @@ export class AiApiService {
     const { messages, systemPrompt, abortSignal } = options;
 
     try {
-      const modelInstance = this.getProviderInstance(
-        settingsStore.selectedProvider,
-        settingsStore.selectedModel,
-      );
+      const selectedModel = widgetPreferencesStore.getState().selectedModel;
+      const provider = selectedModel?.provider ?? "google";
+      const model = selectedModel?.model ?? "gemini-2.5-flash";
+
+      const modelInstance = this.getProviderInstance(provider, model);
 
       const result = streamText({
         model: modelInstance,
@@ -97,7 +85,6 @@ export class AiApiService {
                   }
                 : undefined,
               sources: await finalResult.sources,
-              // Note: groundingMetadata access needs to be updated for v5
               groundingMetadata: undefined,
             };
           } catch (finishError) {
@@ -118,42 +105,16 @@ export class AiApiService {
 
   /**
    * @deprecated This method will be replaced by server API calls.
-   * TODO: [SERVER MIGRATION] Client will call POST /api/ai/stream with:
-   *   - promptType: 'system' | 'screenshot'
-   *   - userContext: string
-   *   - userMessage: string
-   *   - screenshot?: base64 data
-   * Server will inject the prompt and handle the AI call.
    */
   async streamResponseLegacy(_options: AiStreamOptionsLegacy): Promise<AiStreamResult> {
-    // TODO: [SERVER MIGRATION] This will be replaced with a server API call
-    // Server will:
-    // 1. Get prompt from server/src/prompts.ts
-    // 2. Replace context placeholder
-    // 3. Make AI API call
-    // 4. Stream response back to client
     throw new Error("streamResponseLegacy is deprecated. Migrate to server API endpoints.");
   }
 
   isConfigured(): boolean {
-    const currentProvider = settingsStore.selectedProvider;
-    const config = this.providerConfigs[currentProvider];
-
-    if (!config.apiKey) {
-      console.warn(
-        `${config.apiKeyVar} not found in environment variables. AI features will not work for ${currentProvider}.`,
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  getProviderConfigStatus(): Record<AIProviderKey, boolean> {
-    return Object.fromEntries(
-      Object.entries(this.providerConfigs).map(([provider, config]) => [provider, !!config.apiKey]),
-    ) as Record<AIProviderKey, boolean>;
+    const selectedModel = widgetPreferencesStore.getState().selectedModel;
+    return selectedModel !== null;
   }
 }
 
 export const aiApiService = new AiApiService();
+

@@ -67,14 +67,24 @@ function createInitialState(): SharedState {
 }
 
 export function updateSharedState(updates: Partial<SharedState>): void {
+  // Strip undefined fields — renderers should never overwrite with undefined
+  const cleanUpdates: Partial<SharedState> = {};
+  for (const [key, value] of Object.entries(updates)) {
+    if (value !== undefined) {
+      (cleanUpdates as any)[key] = value;
+    }
+  }
+
+  if (Object.keys(cleanUpdates).length === 0) return;
+
   const previousState = sharedState;
-  sharedState = { ...sharedState, ...updates };
+  sharedState = { ...sharedState, ...cleanUpdates };
 
   // Notify all windows of state change
   windowManager.sendToWebContents("update-shared-state", sharedState);
 
   // Handle side effects for each changed property
-  for (const key of Object.keys(updates) as (keyof SharedState)[]) {
+  for (const key of Object.keys(cleanUpdates) as (keyof SharedState)[]) {
     handleStateChange(key, previousState[key], sharedState[key]);
   }
 }

@@ -28,7 +28,7 @@ const APP_ID = "assistx";
  */
 async function startServer(): Promise<void> {
   try {
-    process.env.ASSISTX_USER_DATA_PATH = app.getPath("userData");
+    process.env.ASSISTX_DATA_PATH = app.getPath("userData");
 
     const { app: serverApp, initializeApp } = await import("@server/app");
     await initializeApp();
@@ -85,7 +85,7 @@ function initializeDisplayListeners(): void {
       windowManager.setTargetDisplay(targetDisplay);
     } else {
       windowManager.setTargetDisplay(screen.getPrimaryDisplay());
-      windowManager.sendToWebContents("reset-hud-position", null);
+      windowManager.sendToWebContents("reset-widget-position", null);
     }
   }
 
@@ -139,9 +139,10 @@ async function main(): Promise<void> {
   initializeDisplayListeners();
   refreshGlobalShortcuts();
   setupMainProtocolHandlers();
-  windowManager.recreateWindowsForView();
 
+  // Server must start before windows so renderer API requests succeed
   await startServer();
+  windowManager.recreateWindowsForView();
 }
 
 main();

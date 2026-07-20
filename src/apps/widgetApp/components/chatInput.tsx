@@ -14,8 +14,7 @@ import { Popover } from "@base-ui-components/react/popover";
 import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 import { SettingsPanel } from "./settingsPanel";
 import { ModelList, ModelSelectorTrigger } from "../chat/select-model";
-import { chatModelAtom } from "@/stores/modelStore";
-import { useAtom } from "jotai";
+import { useWidgetPreferences } from "@/stores/widgetPreferencesStore";
 
 const expandTransition: Transition = {
   type: "spring",
@@ -65,7 +64,8 @@ export function ChatInput({
   const [showSettings, setShowSettings] = useState(false);
   const { undetectabilityEnabled } = useSharedState();
   const showConversation = useShowConversation();
-  const [currentModel, setChatModel] = useAtom(chatModelAtom);
+  const currentModel = useWidgetPreferences((s) => s.selectedModel);
+  const setChatModel = useWidgetPreferences((s) => s.setSelectedModel);
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
 
   useEffect(() => {

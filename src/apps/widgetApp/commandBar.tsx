@@ -7,13 +7,12 @@ import { useAudioState } from "./hooks/useAudioState";
 import { useWindowPosition } from "./hooks/useWindowPosition";
 import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 import { kit } from "@/components/kit";
-import { observer } from "mobx-react-lite";
 import { Logo } from "@/components/Logo";
 import { ReactNode, useState } from "react";
 import { useHideChatAlsoHidesWidget } from "./hooks/useToggleShowHide";
 import { useToggleShowHide } from "./hooks/useToggleShowHide";
 
-export const CommandBar = observer(function CommandBar() {
+export function CommandBar() {
   const audioState = useAudioState();
   const { isDragging, dragControls } = useWindowPosition();
   const { panelHidden } = useSharedState();
@@ -64,7 +63,7 @@ export const CommandBar = observer(function CommandBar() {
       </div>
     </CaptureMouseEventsWrapper>
   );
-});
+}
 
 function DisableDragWrapper({
   children,

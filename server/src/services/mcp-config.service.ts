@@ -11,7 +11,7 @@ import { homedir } from "os";
  *
  * Priority:
  * 1. MCP_CONFIG_PATH environment variable
- * 2. ASSISTX_USER_DATA_PATH environment variable (set by Electron)
+ * 2. ASSISTX_DATA_PATH environment variable (set by Electron)
  * 3. Default to ~/.assistx/.mcp-config.json
  */
 export function getMcpConfigPath(): string {
@@ -21,8 +21,8 @@ export function getMcpConfigPath(): string {
   }
 
   // When running from Electron, it sets this env var
-  if (process.env.ASSISTX_USER_DATA_PATH) {
-    return join(process.env.ASSISTX_USER_DATA_PATH, ".mcp-config.json");
+  if (process.env.ASSISTX_DATA_PATH) {
+    return join(process.env.ASSISTX_DATA_PATH, ".mcp-config.json");
   }
 
   // Default fallback for standalone server

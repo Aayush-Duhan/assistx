@@ -41,6 +41,9 @@ export type {
 // Shared React components and hooks
 export { SharedStateProvider, useSharedState, updateState } from "./shared";
 
+// Zustand shared state store
+export { useSharedStateStore, sharedStateStore } from "../src/stores/sharedStateStore";
+
 export { useIpcRendererHandler } from "./useIpcRendererHandler";
 
 // Workflow types and interfaces

@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSetAtom } from "jotai";
 import { InlineWindow, InlineWindowProps } from "./InlineWindow";
 import { MovableWindowsPortal } from "../Portal";
-import { movableWindowCountAtom } from "@/state/atoms";
+import { incrementMovableWindowCount, decrementMovableWindowCount } from "@/state/movableWindowCount";
 
 interface MovableWindowProps extends InlineWindowProps {
   show?: boolean;
@@ -13,16 +12,14 @@ interface MovableWindowProps extends InlineWindowProps {
 const MovableWindow = ({ show = true, bounceDirection, ...props }: MovableWindowProps) => {
   const y = bounceDirection === "up" ? [0, -10, 0] : bounceDirection === "down" ? [0, 10, 0] : 0;
 
-  const setMovableWindowCount = useSetAtom(movableWindowCountAtom);
-
   useEffect(() => {
     if (show) {
-      setMovableWindowCount((count: number) => count + 1);
+      incrementMovableWindowCount();
       return () => {
-        setMovableWindowCount((count: number) => count - 1);
+        decrementMovableWindowCount();
       };
     }
-  }, [show, setMovableWindowCount]);
+  }, [show]);
 
   return (
     <MovableWindowsPortal>

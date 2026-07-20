@@ -19,10 +19,14 @@ export function useToggleShowHide() {
       });
     } else {
       const newPanelHidden = !panelHidden;
-      updateState({
+      const update: Parameters<typeof updateState>[0] = {
         panelHidden: newPanelHidden,
-        windowHidden: !newPanelHidden ? false : undefined,
-      });
+      };
+      // Only set windowHidden to false (show) — never send undefined
+      if (!newPanelHidden) {
+        update.windowHidden = false;
+      }
+      updateState(update);
     }
   });
 

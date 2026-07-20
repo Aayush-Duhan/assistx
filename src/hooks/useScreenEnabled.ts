@@ -1,13 +1,13 @@
-import { useLocalStorage } from "usehooks-ts";
+import { useWidgetPreferences } from "@/stores/widgetPreferencesStore";
+import { widgetPreferencesStore } from "@/stores/widgetPreferencesStore";
 
 export function useScreenEnabled() {
-  const [isScreenEnabled, setIsScreenEnabled] = useLocalStorage("screen-enabled", true);
+  const isScreenEnabled = useWidgetPreferences((s) => s.screenEnabled);
+  const setIsScreenEnabled = useWidgetPreferences((s) => s.setScreenEnabled);
 
   return [isScreenEnabled, setIsScreenEnabled] as const;
 }
 
 export function getScreenEnabled() {
-  const isScreenEnabled = localStorage.getItem("screen-enabled");
-
-  return isScreenEnabled === null ? true : isScreenEnabled === "true";
+  return widgetPreferencesStore.getState().screenEnabled;
 }

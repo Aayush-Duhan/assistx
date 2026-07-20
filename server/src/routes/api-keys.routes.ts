@@ -60,28 +60,6 @@ export async function apiKeysRoutes(fastify: FastifyInstance): Promise<void> {
     }
   });
 
-  // GET /api/api-keys/:provider/copy - Get the actual key for copying to clipboard
-  // This endpoint returns the decrypted key - use with caution
-  fastify.get<{ Params: ProviderParams }>("/:provider/copy", async (request, reply) => {
-    try {
-      const { provider } = request.params;
-      const key = getApiKeyForProvider(provider);
-
-      if (!key) {
-        return reply.status(404).send({ error: "API key not found for provider" });
-      }
-
-      return reply.send({ key });
-    } catch (error) {
-      request.ctx?.logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        "api-keys.copy.error",
-        "Failed to retrieve API key for copy",
-      );
-      return reply.status(500).send({ error: "Failed to retrieve API key" });
-    }
-  });
-
   // POST /api/api-keys - Save an API key for a provider
   fastify.post<{ Body: SaveApiKeyBody }>("/", async (request, reply) => {
     try {

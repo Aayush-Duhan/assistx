@@ -1,4 +1,3 @@
-import { ChatModel } from "@/types/chat";
 import { LuCheck, LuChevronDown } from "react-icons/lu";
 import { Fragment, memo, PropsWithChildren, useEffect, useState } from "react";
 import { ModelProviderIcon } from "@/components/ui/model-provider-icon";
@@ -14,8 +13,7 @@ import {
 } from "@/components/ui/command";
 import { useChatModels } from "../hooks/use-chat-models";
 import { Button } from "@/components/ui/select-button";
-import { useAtom } from "jotai";
-import { chatModelAtom } from "@/stores/modelStore";
+import { useWidgetPreferences, type ChatModel } from "@/stores/widgetPreferencesStore";
 import { cn } from "@/lib/utils";
 import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 
@@ -27,7 +25,8 @@ interface SelectModelProps {
 }
 
 export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
-  const [model, setModel] = useAtom(chatModelAtom);
+  const model = useWidgetPreferences((s) => s.selectedModel);
+  const setModel = useWidgetPreferences((s) => s.setSelectedModel);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -57,7 +56,7 @@ export const SelectModel = (props: PropsWithChildren<SelectModelProps>) => {
 };
 
 interface ModelSelectorTriggerProps {
-  model: ChatModel | undefined;
+  model: ChatModel | null | undefined;
   showProvider?: boolean;
   className?: string;
   onClick?: () => void;
@@ -88,7 +87,7 @@ export const ModelSelectorTrigger = ({
 };
 
 interface ModelListProps {
-  selectedModel: ChatModel | undefined;
+  selectedModel: ChatModel | null | undefined;
   onSelect: (model: ChatModel) => void;
   className?: string;
 }

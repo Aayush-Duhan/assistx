@@ -16,10 +16,13 @@ export function sendToIpcMain<T extends keyof typeof ipcToMainEvents>(
 export function addIpcRendererHandler<T extends keyof IpcToRendererEvents>(
   channel: T,
   handler: (payload: IpcToRendererEvents[T]) => void,
-) {
-  window.electron.ipcRenderer.on(channel, (_event, payload) =>
-    handler(payload as IpcToRendererEvents[T]),
-  );
+): () => void {
+  const listener = (_event: unknown, payload: unknown) =>
+    handler(payload as IpcToRendererEvents[T]);
+  window.electron.ipcRenderer.on(channel, listener);
+  return () => {
+    window.electron.ipcRenderer.off(channel, listener);
+  };
 }
 
 export async function invokeIpcMain<T extends keyof typeof ipcInvokeEvents>(

@@ -1,28 +1,22 @@
-import { atom, getDefaultStore } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import { twMerge } from "tailwind-merge";
 import { useSharedState } from "@/shared";
 import { sendToIpcMain } from "@/shared";
 
-const defaultStore = getDefaultStore();
-
 // if non-empty, the app should NOT ignore mouse events
 const captureMouseEventsSymbols = new Set<symbol>();
 
-const isIgnoringMouseEventsAtom = atom(true);
-
-defaultStore.sub(isIgnoringMouseEventsAtom, () => {
-  sendToIpcMain("set-ignore-mouse-events", {
-    ignore: defaultStore.get(isIgnoringMouseEventsAtom),
-  });
-});
+let _isIgnoring = true;
 
 // reset on window load
 sendToIpcMain("set-ignore-mouse-events", { ignore: true });
 
 function updateIgnoreMouseEvents() {
   const ignore = captureMouseEventsSymbols.size === 0;
-  defaultStore.set(isIgnoringMouseEventsAtom, ignore);
+  if (ignore !== _isIgnoring) {
+    _isIgnoring = ignore;
+    sendToIpcMain("set-ignore-mouse-events", { ignore });
+  }
 }
 
 function registerCaptureMouseEventsSymbol(symbol: symbol) {

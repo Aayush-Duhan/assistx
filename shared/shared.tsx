@@ -1,50 +1,53 @@
 /** Shared state with the main process and the other renderers. */
 
-import { createContext, type PropsWithChildren, useContext, useEffect, useState } from "react";
-import { addIpcRendererHandler, invokeIpcMain, sendToIpcMain } from "./ipc.ts";
+import { type PropsWithChildren, useEffect } from "react";
+import {
+  sharedStateStore,
+  hydrateSharedState,
+  useSharedStateStore,
+} from "@/stores/sharedStateStore";
 import type { SharedState } from "./sharedState.ts";
 
-// in the future, use something like zustand for partial rerenders if it
-// becomes a problem; premature optimization at this point
-const Context = createContext<SharedState>(null as unknown as SharedState);
-
+/**
+ * Provider that hydrates the SharedState store from Electron main.
+ * Renders children only after initial state is available.
+ *
+ * Backward-compatible: existing consumers of useSharedState() and
+ * updateState() continue to work without changes.
+ */
 export function SharedStateProvider({ children }: PropsWithChildren) {
-  console.log("[SharedStateProvider] Rendering");
-  const [state, setState] = useState<SharedState | null>(null);
+  const state = useSharedStateStore((s) => s.state);
 
   useEffect(() => {
-    console.log("[SharedStateProvider] useEffect running");
-    // subscribe to shared state changes
-    addIpcRendererHandler("update-shared-state", (newState) => {
-      console.log("[SharedStateProvider] Received state update:", newState);
-      setState(newState);
-    });
-
-    // grab initial state
-    console.log("[SharedStateProvider] Invoking get-shared-state");
-    void invokeIpcMain("get-shared-state", null)
-      .then((result) => {
-        console.log("[SharedStateProvider] Got initial state:", result);
-        setState(result);
-      })
-      .catch((err) => {
-        console.error("[SharedStateProvider] Error getting shared state:", err);
-      });
+    const dispose = hydrateSharedState();
+    return dispose;
   }, []);
 
-  console.log("[SharedStateProvider] Current state:", state);
   if (!state) {
-    console.log("[SharedStateProvider] State is null, returning null");
     return null;
   }
 
-  console.log("[SharedStateProvider] Rendering children");
-  return <Context value={state}>{children}</Context>;
+  return <>{children}</>;
 }
 
-export const useSharedState = () => useContext(Context);
+/**
+ * Returns the current SharedState (non-null — only callable under SharedStateProvider).
+ *
+ * ponytail: Replace callers with narrow selectors (useSharedStateStore(s => s.state.field))
+ * when migrating individual consumers. Drop this wrapper after all callers use selectors.
+ */
+export const useSharedState = (): SharedState => {
+  const state = useSharedStateStore((s) => s.state);
+  if (!state) {
+    throw new Error("useSharedState must be used within a SharedStateProvider");
+  }
+  return state;
+};
 
-// update shared state by doing a round trip through main
+/**
+ * Update shared state by doing a round trip through main.
+ * Strips undefined fields before sending.
+ */
 export function updateState(update: Partial<SharedState>) {
-  sendToIpcMain("update-shared-state", update);
+  sharedStateStore.getState().update(update);
 }
