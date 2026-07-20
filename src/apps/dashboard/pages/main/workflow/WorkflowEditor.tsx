@@ -22,31 +22,7 @@ import { NodeKind } from "@/shared/workflow.interface";
 import WorkflowNodeComponent, { type WorkflowNode, type WorkflowNodeData } from "./WorkflowNode";
 import NodeConfigPanel from "./NodeConfigPanel";
 
-// API helpers
-const workflowApi = {
-  get: async (id: string): Promise<WorkflowWithStructure> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}`);
-    if (!res.ok) throw new Error("Failed to fetch workflow");
-    return res.json();
-  },
-  saveStructure: async (id: string, nodes: DBNode[], edges: DBEdge[]): Promise<void> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}/structure`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nodes, edges }),
-    });
-    if (!res.ok) throw new Error("Failed to save workflow");
-  },
-  execute: async (id: string): Promise<unknown> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}/execute`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (!res.ok) throw new Error("Failed to execute workflow");
-    return res.json();
-  },
-};
+import { workflowsApi as workflowApi } from "@/lib/api";
 
 // Node type config for adding new nodes
 const NODE_TYPE_CONFIG: Array<{ kind: NodeKind; label: string; emoji: string; color: string }> = [

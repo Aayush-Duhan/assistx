@@ -13,7 +13,7 @@ import {
 } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 import type { MCPClientInfo } from "@/shared/mcp";
-
+import { mcpApi } from "@/lib/api";
 
 // Custom hook for MCP data
 function useMcp() {
@@ -22,8 +22,8 @@ function useMcp() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const data = await window.electron.mcp.listClients();
-      setClients(data);
+      const data = await mcpApi.list();
+      setClients(data as MCPClientInfo[]);
     } catch (err) {
       console.error("Failed to fetch MCP clients:", err);
     } finally {
@@ -39,7 +39,7 @@ function useMcp() {
 
   const refreshClient = async (id: string) => {
     try {
-      await window.electron.mcp.refreshClient(id);
+      await mcpApi.refresh(id);
       fetchClients();
     } catch (err) {
       console.error(err);
@@ -48,7 +48,7 @@ function useMcp() {
 
   const removeClient = async (id: string) => {
     try {
-      await window.electron.mcp.removeClient(id);
+      await mcpApi.delete(id);
       fetchClients();
     } catch (err) {
       console.error(err);
@@ -57,7 +57,7 @@ function useMcp() {
 
   const toggleConnection = async (id: string, status: "connected" | "disconnected") => {
     try {
-      await window.electron.mcp.toggleClient(id, status);
+      await mcpApi.toggle(id, status);
       fetchClients();
     } catch (err) {
       console.error(err);
@@ -66,7 +66,7 @@ function useMcp() {
 
   const setAllowedTools = async (id: string, allowedTools: string[]) => {
     try {
-      await window.electron.mcp.setAllowedTools(id, allowedTools);
+      await mcpApi.setAllowedTools(id, allowedTools);
       fetchClients();
     } catch (err) {
       console.error(err);
@@ -111,15 +111,7 @@ const McpPage = () => {
     try {
       setIsSaving(true);
       const config = JSON.parse(newServerConfig);
-      const response = await fetch("http://localhost:3000/api/mcp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newServerName, config }),
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Failed to create server");
-      }
+      await mcpApi.create({ name: newServerName, config });
       setNewServerName("");
       setNewServerConfig('{\n  "command": "node",\n  "args": ["path/to/server.js"]\n}');
       setIsAddDialogOpen(false);

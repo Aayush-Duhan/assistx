@@ -1,9 +1,57 @@
 /**
  * @file api.ts
- * HTTP client for server API communication
+ * HTTP client for server API communication with dynamic port and bearer token auth
  */
 
-const API_BASE_URL = "http://localhost:3000/api";
+import type {
+  WorkflowSummary,
+  CreateWorkflowRequest,
+  WorkflowWithStructure,
+  DBNode,
+  DBEdge,
+} from "@/shared/workflow.types";
+
+let cachedServerConfig: { baseUrl: string; wsUrl: string; token: string } | null = null;
+
+export async function getServerConfig(): Promise<{ baseUrl: string; wsUrl: string; token: string }> {
+  if (cachedServerConfig) {
+    return cachedServerConfig;
+  }
+  if (typeof window !== "undefined" && window.electron?.getServerConfig) {
+    try {
+      const config = await window.electron.getServerConfig();
+      if (config) {
+        cachedServerConfig = {
+          baseUrl: config.baseUrl,
+          wsUrl: config.wsUrl,
+          token: config.token,
+        };
+        return cachedServerConfig;
+      }
+    } catch (err) {
+      console.warn("Failed to get server config from electron:", err);
+    }
+  }
+  cachedServerConfig = {
+    baseUrl: "http://127.0.0.1:3000/api",
+    wsUrl: "ws://127.0.0.1:3000/api",
+    token: "",
+  };
+  return cachedServerConfig;
+}
+
+export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  const config = await getServerConfig();
+  const url = path.startsWith("http")
+    ? path
+    : `${config.baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+
+  const headers = new Headers(options.headers || {});
+  if (config.token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${config.token}`);
+  }
+  return fetch(url, { ...options, headers });
+}
 
 // ============================================================================
 // Modes API
@@ -34,13 +82,13 @@ export interface UpdateModeData {
 
 export const modesApi = {
   async list(): Promise<Mode[]> {
-    const response = await fetch(`${API_BASE_URL}/modes`);
+    const response = await apiFetch("/modes");
     if (!response.ok) throw new Error("Failed to fetch modes");
     return response.json();
   },
 
   async create(data: CreateModeData): Promise<{ id: string }> {
-    const response = await fetch(`${API_BASE_URL}/modes`, {
+    const response = await apiFetch("/modes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -50,7 +98,7 @@ export const modesApi = {
   },
 
   async update(id: string, data: UpdateModeData): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/modes/${id}`, {
+    const response = await apiFetch(`/modes/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -59,21 +107,21 @@ export const modesApi = {
   },
 
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/modes/${id}`, {
+    const response = await apiFetch(`/modes/${id}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete mode");
   },
 
   async activate(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/modes/${id}/activate`, {
+    const response = await apiFetch(`/modes/${id}/activate`, {
       method: "POST",
     });
     if (!response.ok) throw new Error("Failed to activate mode");
   },
 
   async deactivate(): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/modes/deactivate`, {
+    const response = await apiFetch("/modes/deactivate", {
       method: "POST",
     });
     if (!response.ok) throw new Error("Failed to deactivate modes");
@@ -118,13 +166,13 @@ export interface UpdateAgentData {
 
 export const agentsApi = {
   async list(): Promise<Agent[]> {
-    const response = await fetch(`${API_BASE_URL}/agents`);
+    const response = await apiFetch("/agents");
     if (!response.ok) throw new Error("Failed to fetch agents");
     return response.json();
   },
 
   async create(data: CreateAgentData): Promise<{ id: string }> {
-    const response = await fetch(`${API_BASE_URL}/agents`, {
+    const response = await apiFetch("/agents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -134,7 +182,7 @@ export const agentsApi = {
   },
 
   async update(id: string, data: UpdateAgentData): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/agents/${id}`, {
+    const response = await apiFetch(`/agents/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -143,7 +191,7 @@ export const agentsApi = {
   },
 
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/agents/${id}`, {
+    const response = await apiFetch(`/agents/${id}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete agent");
@@ -164,19 +212,19 @@ export interface ApiKeyInfo {
 
 export const apiKeysApi = {
   async list(): Promise<ApiKeyInfo[]> {
-    const response = await fetch(`${API_BASE_URL}/api-keys`);
+    const response = await apiFetch("/api-keys");
     if (!response.ok) throw new Error("Failed to fetch API keys");
     return response.json();
   },
 
   async checkProvider(provider: string): Promise<{ provider: string; isConfigured: boolean }> {
-    const response = await fetch(`${API_BASE_URL}/api-keys/${provider}/status`);
+    const response = await apiFetch(`/api-keys/${provider}/status`);
     if (!response.ok) throw new Error("Failed to check API key status");
     return response.json();
   },
 
   async save(provider: string, key: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api-keys`, {
+    const response = await apiFetch("/api-keys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ provider, key }),
@@ -185,14 +233,14 @@ export const apiKeysApi = {
   },
 
   async delete(provider: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api-keys/${provider}`, {
+    const response = await apiFetch(`/api-keys/${provider}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete API key");
   },
 
   async copyKey(provider: string): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/api-keys/${provider}/copy`);
+    const response = await apiFetch(`/api-keys/${provider}/copy`);
     if (!response.ok) throw new Error("Failed to retrieve API key");
     const data = await response.json();
     return data.key;
@@ -252,19 +300,19 @@ export interface UpdateModelData {
 
 export const modelsApi = {
   async list(): Promise<ProviderModels[]> {
-    const response = await fetch(`${API_BASE_URL}/models`);
+    const response = await apiFetch("/models");
     if (!response.ok) throw new Error("Failed to fetch models");
     return response.json();
   },
 
   async listCustom(): Promise<CustomModel[]> {
-    const response = await fetch(`${API_BASE_URL}/models/custom`);
+    const response = await apiFetch("/models/custom");
     if (!response.ok) throw new Error("Failed to fetch custom models");
     return response.json();
   },
 
   async create(data: CreateModelData): Promise<{ id: string }> {
-    const response = await fetch(`${API_BASE_URL}/models`, {
+    const response = await apiFetch("/models", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -274,7 +322,7 @@ export const modelsApi = {
   },
 
   async update(id: string, data: UpdateModelData): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/models/${id}`, {
+    const response = await apiFetch(`/models/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -283,7 +331,7 @@ export const modelsApi = {
   },
 
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/models/${id}`, {
+    const response = await apiFetch(`/models/${id}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete model");
@@ -313,6 +361,7 @@ export interface MCPServerInfo {
   status: MCPServerStatus;
   error?: unknown;
   toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
 }
 
 export type MCPServerConfig =
@@ -343,7 +392,7 @@ export const mcpApi = {
    * List all MCP servers with their connection status
    */
   async list(): Promise<MCPServerInfo[]> {
-    const response = await fetch(`${API_BASE_URL}/mcp`);
+    const response = await apiFetch("/mcp");
     if (!response.ok) throw new Error("Failed to fetch MCP servers");
     return response.json();
   },
@@ -352,7 +401,7 @@ export const mcpApi = {
    * Get a specific MCP server by ID
    */
   async get(id: string): Promise<MCPServerInfo> {
-    const response = await fetch(`${API_BASE_URL}/mcp/${encodeURIComponent(id)}`);
+    const response = await apiFetch(`/mcp/${encodeURIComponent(id)}`);
     if (!response.ok) throw new Error("Failed to fetch MCP server");
     return response.json();
   },
@@ -361,7 +410,7 @@ export const mcpApi = {
    * Create a new MCP server
    */
   async create(data: CreateMCPServerData): Promise<MCPServerInfo> {
-    const response = await fetch(`${API_BASE_URL}/mcp`, {
+    const response = await apiFetch("/mcp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -377,7 +426,7 @@ export const mcpApi = {
    * Delete an MCP server
    */
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/mcp/${encodeURIComponent(id)}`, {
+    const response = await apiFetch(`/mcp/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete MCP server");
@@ -387,7 +436,7 @@ export const mcpApi = {
    * Refresh/reconnect an MCP server
    */
   async refresh(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/mcp/${encodeURIComponent(id)}/refresh`, {
+    const response = await apiFetch(`/mcp/${encodeURIComponent(id)}/refresh`, {
       method: "POST",
     });
     if (!response.ok) throw new Error("Failed to refresh MCP server");
@@ -397,7 +446,7 @@ export const mcpApi = {
    * Toggle MCP server connection (connect/disconnect)
    */
   async toggle(id: string, status: MCPServerStatus): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/mcp/${encodeURIComponent(id)}/toggle`, {
+    const response = await apiFetch(`/mcp/${encodeURIComponent(id)}/toggle`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -406,10 +455,22 @@ export const mcpApi = {
   },
 
   /**
+   * Update allowed tools for an MCP server
+   */
+  async setAllowedTools(id: string, allowedTools: string[]): Promise<void> {
+    const response = await apiFetch(`/mcp/${encodeURIComponent(id)}/allowed-tools`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ allowedTools }),
+    });
+    if (!response.ok) throw new Error("Failed to update allowed tools");
+  },
+
+  /**
    * Call a tool on an MCP server
    */
   async callTool(id: string, toolName: string, input?: unknown): Promise<MCPToolCallResult> {
-    const response = await fetch(`${API_BASE_URL}/mcp/${encodeURIComponent(id)}/tool`, {
+    const response = await apiFetch(`/mcp/${encodeURIComponent(id)}/tool`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ toolName, input }),
@@ -422,7 +483,7 @@ export const mcpApi = {
    * Get all available tools from all connected MCP servers
    */
   async listTools(): Promise<MCPTool[]> {
-    const response = await fetch(`${API_BASE_URL}/mcp/tools`);
+    const response = await apiFetch("/mcp/tools");
     if (!response.ok) throw new Error("Failed to fetch MCP tools");
     return response.json();
   },
@@ -431,9 +492,80 @@ export const mcpApi = {
    * Get the MCP configuration file path
    */
   async getConfigPath(): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/mcp/config-path`);
+    const response = await apiFetch("/mcp/config-path");
     if (!response.ok) throw new Error("Failed to get MCP config path");
     const data = await response.json();
     return data.path;
+  },
+};
+
+// ============================================================================
+// Workflows API
+// ============================================================================
+
+export const workflowsApi = {
+  list: async (): Promise<WorkflowSummary[]> => {
+    const res = await apiFetch("/workflows");
+    if (!res.ok) throw new Error("Failed to fetch workflows");
+    return res.json();
+  },
+  get: async (id: string): Promise<WorkflowWithStructure> => {
+    const res = await apiFetch(`/workflows/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch workflow");
+    return res.json();
+  },
+  create: async (data: CreateWorkflowRequest): Promise<{ id: string }> => {
+    const res = await apiFetch("/workflows", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create workflow");
+    return res.json();
+  },
+  delete: async (id: string): Promise<void> => {
+    const res = await apiFetch(`/workflows/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete workflow");
+  },
+  togglePublish: async (id: string, isPublished: boolean): Promise<void> => {
+    const res = await apiFetch(`/workflows/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPublished }),
+    });
+    if (!res.ok) throw new Error("Failed to update workflow");
+  },
+  execute: async (id: string): Promise<unknown> => {
+    const res = await apiFetch(`/workflows/${id}/execute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) throw new Error("Failed to execute workflow");
+    return res.json();
+  },
+  saveStructure: async (
+    id: string,
+    payloadOrNodes:
+      | {
+          nodes: DBNode[];
+          edges: DBEdge[];
+          deleteNodes?: string[];
+          deleteEdges?: string[];
+        }
+      | DBNode[],
+    edges?: DBEdge[],
+  ): Promise<void> => {
+    const payload = Array.isArray(payloadOrNodes)
+      ? { nodes: payloadOrNodes, edges: edges || [] }
+      : payloadOrNodes;
+    const res = await apiFetch(`/workflows/${id}/structure`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("Failed to save workflow structure");
   },
 };

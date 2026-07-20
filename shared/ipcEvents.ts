@@ -173,6 +173,17 @@ export const ipcInvokeEvents = {
     payload: z.null(),
     response: z.enum(["none", "available", "failed"]),
   },
+  "get-server-config": {
+    payload: z.null(),
+    response:
+      z.object({
+        port: z.number(),
+        host: z.string(),
+        baseUrl: z.string(),
+        wsUrl: z.string(),
+        token: z.string(),
+      }).nullable(),
+  },
   // MCP
   "mcp-list-clients": {
     payload: z.null(),

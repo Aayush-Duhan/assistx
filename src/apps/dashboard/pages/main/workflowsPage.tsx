@@ -16,74 +16,11 @@ import { cn } from "@/lib/utils";
 import type {
   WorkflowSummary,
   WorkflowIcon,
-  CreateWorkflowRequest,
   DBNode,
   DBEdge,
-  WorkflowWithStructure,
 } from "@/shared/workflow.types";
 import WorkflowEditor from "./workflow/WorkflowEditor";
-
-// API helpers
-const workflowsApi = {
-  list: async (): Promise<WorkflowSummary[]> => {
-    const res = await fetch("http://localhost:3000/api/workflows");
-    if (!res.ok) throw new Error("Failed to fetch workflows");
-    return res.json();
-  },
-  get: async (id: string): Promise<WorkflowWithStructure> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}`);
-    if (!res.ok) throw new Error("Failed to fetch workflow");
-    return res.json();
-  },
-  create: async (data: CreateWorkflowRequest): Promise<{ id: string }> => {
-    const res = await fetch("http://localhost:3000/api/workflows", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Failed to create workflow");
-    return res.json();
-  },
-  delete: async (id: string): Promise<void> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Failed to delete workflow");
-  },
-  togglePublish: async (id: string, isPublished: boolean): Promise<void> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPublished }),
-    });
-    if (!res.ok) throw new Error("Failed to update workflow");
-  },
-  execute: async (id: string): Promise<unknown> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}/execute`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (!res.ok) throw new Error("Failed to execute workflow");
-    return res.json();
-  },
-  saveStructure: async (
-    id: string,
-    payload: {
-      nodes: DBNode[];
-      edges: DBEdge[];
-      deleteNodes?: string[];
-      deleteEdges?: string[];
-    },
-  ): Promise<void> => {
-    const res = await fetch(`http://localhost:3000/api/workflows/${id}/structure`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error("Failed to save workflow structure");
-  },
-};
+import { workflowsApi } from "@/lib/api";
 
 const generateImportId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

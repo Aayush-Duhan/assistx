@@ -17,6 +17,8 @@ import { initializeUpdater } from "./features/autoUpdater";
 import { setupMainProtocolHandlers } from "./protocol-handler";
 import { updateSharedState } from "./utils/shared/stateManager";
 
+import { setServerConfig } from "./utils/serverConfig";
+
 dotenv.config({ path: ".env.local" });
 
 const APP_ID = "assistx";
@@ -30,9 +32,23 @@ async function startServer(): Promise<void> {
   try {
     process.env.ASSISTX_DATA_PATH = app.getPath("userData");
 
-    const { app: serverApp, initializeApp } = await import("@server/app");
+    const { app: serverApp, initializeApp, getSessionToken } = await import("@server/app");
     await initializeApp();
-    await serverApp.listen({ port: 3000, host: "127.0.0.1" });
+    const targetPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 0;
+    await serverApp.listen({ port: targetPort, host: "127.0.0.1" });
+
+    const address = serverApp.server.address();
+    const resolvedPort =
+      typeof address === "object" && address !== null ? address.port : targetPort;
+    const token = getSessionToken();
+
+    setServerConfig({
+      port: resolvedPort,
+      host: "127.0.0.1",
+      baseUrl: `http://127.0.0.1:${resolvedPort}/api`,
+      wsUrl: `ws://127.0.0.1:${resolvedPort}/api`,
+      token,
+    });
   } catch (err) {
     // console.error is used as fallback since logger may not be available if import failed
     console.error("Server failed to start:", err);

@@ -7,6 +7,7 @@ import fastifyCors from "@fastify/cors";
 import fastifyWebsocket from "@fastify/websocket";
 import dotenv from "dotenv";
 import Fastify from "fastify";
+import crypto from "crypto";
 import { validateEnvConfig } from "./env";
 import { logger } from "./lib/pino";
 import ctxPlugin from "./lib/plugins/ctxPlugin";
@@ -17,6 +18,18 @@ import { initMCPService } from "./services/mcp.service";
 // Load environment variables
 dotenv.config();
 
+let sessionToken: string =
+  process.env.ASSISTX_SERVER_TOKEN || crypto.randomBytes(32).toString("hex");
+
+export function getSessionToken(): string {
+  return sessionToken;
+}
+
+export function setSessionToken(token: string): void {
+  sessionToken = token;
+  process.env.ASSISTX_SERVER_TOKEN = token;
+}
+
 // Create Fastify instance
 export const app = Fastify({
   logger: true,
@@ -25,6 +38,32 @@ export const app = Fastify({
 // Export app logger for child loggers
 export const appLogger = logger;
 export { logger };
+
+// Authentication hook for loopback security
+app.addHook("onRequest", async (request, reply) => {
+  const url = request.raw.url || "";
+  // Exclude health check endpoint and CORS preflight OPTIONS requests
+  if (url === "/health" || url.startsWith("/health?") || request.method === "OPTIONS") {
+    return;
+  }
+
+  let token: string | undefined;
+
+  const authHeader = request.headers.authorization;
+  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+    token = authHeader.substring(7).trim();
+  } else if (request.headers["x-api-key"]) {
+    token = request.headers["x-api-key"] as string;
+  } else if (url.includes("?")) {
+    const queryStr = url.split("?")[1];
+    const params = new URLSearchParams(queryStr);
+    token = params.get("token") || undefined;
+  }
+
+  if (!token || token !== getSessionToken()) {
+    return reply.status(401).send({ error: "Unauthorized: Invalid or missing session token" });
+  }
+});
 
 // Register plugins
 async function registerPlugins(): Promise<void> {

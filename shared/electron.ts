@@ -1,4 +1,10 @@
-import type { MCPClientInfo, MCPServerStatus } from "./mcp";
+export interface ServerConfig {
+  port: number;
+  host: string;
+  baseUrl: string;
+  wsUrl: string;
+  token: string;
+}
 
 export type ElectronAPI = {
   ipcRenderer: {
@@ -15,14 +21,7 @@ export type ElectronAPI = {
       NODE_ENV: string | undefined;
     };
   };
-  mcp: {
-    listClients: () => Promise<MCPClientInfo[]>;
-    refreshClient: (id: string) => Promise<void>;
-    toggleClient: (id: string, status: MCPServerStatus) => Promise<void>;
-    callTool: (id: string, toolName: string, input: unknown) => Promise<unknown>;
-    removeClient: (id: string) => Promise<void>;
-    setAllowedTools: (id: string, allowedTools: string[]) => Promise<void>;
-  };
+  getServerConfig: () => Promise<ServerConfig | null>;
 };
 
 declare global {

@@ -19,8 +19,7 @@ import {
   Transcription,
 } from "../types";
 
-// Server WebSocket endpoint
-const SERVER_WS_URL = "ws://localhost:3000/api/transcription/stream";
+import { getServerConfig } from "@/lib/api";
 
 type ServiceState =
   | { state: "loading" }
@@ -90,10 +89,13 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
     }
   }
 
-  private connect(): void {
+  private async connect(): Promise<void> {
     try {
-      const wsUrl = `${SERVER_WS_URL}?source=${this.source}`;
-      console.log(`DeepgramTranscriptionService (${this.source}): Connecting to server...`);
+      const config = await getServerConfig();
+      const baseWsUrl = `${config.wsUrl}/transcription/stream`;
+      const tokenParam = config.token ? `&token=${encodeURIComponent(config.token)}` : "";
+      const wsUrl = `${baseWsUrl}?source=${this.source}${tokenParam}`;
+      console.log(`DeepgramTranscriptionService (${this.source}): Connecting to server at ${wsUrl}...`);
 
       this.socket = new WebSocket(wsUrl);
 
