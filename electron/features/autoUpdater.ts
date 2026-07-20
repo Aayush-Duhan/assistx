@@ -1,12 +1,10 @@
 import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
 import { app } from "electron";
-import autoUpdater from "electron-updater";
+import { autoUpdater } from "electron-updater";
+import log from "electron-log";
 
 /** Update check interval (1 hour) */
 const UPDATE_CHECK_INTERVAL = 1000 * 60 * 60;
-
-/** TODO: Replace with actual update server URL */
-const UPDATE_DOWNLOAD_URL = "https://example.com/updates";
 
 /** Whether app is quitting for update installation */
 let isQuittingForUpdate = false;
@@ -35,22 +33,25 @@ interface ConfigData {
   recommendedElectronVersion: string;
 }
 
-/** Default config data (TODO: fetch from server when backend is available) */
+/** Default config data */
 const configData: ConfigData = {
   minimumElectronVersion: "0.0.0",
   recommendedElectronVersion: "0.0.0",
 };
 
 export function initializeUpdater(): void {
-  const { autoUpdater: updater } = autoUpdater;
-  updater.setFeedURL({
-    provider: "generic",
-    url: UPDATE_DOWNLOAD_URL,
+  // Attach logger for electron-updater debugging
+  autoUpdater.logger = log;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("error", (error) => {
+    log.error("Error in auto-updater:", error);
   });
 
-  // updater.logger = log;
-
-  updater.on("update-available", (info) => {
+  autoUpdater.on("update-available", (info) => {
+    log.info("Update available:", info.version);
     if (getSharedState().autoUpdateState.state === "downloaded") return;
     const state = {
       state: "available" as const,
@@ -62,7 +63,8 @@ export function initializeUpdater(): void {
     updateSharedState({ autoUpdateState: state });
   });
 
-  updater.on("update-downloaded", (info) => {
+  autoUpdater.on("update-downloaded", (info) => {
+    log.info("Update downloaded:", info.version);
     const state = {
       state: "downloaded" as const,
       version: info.version,
@@ -77,8 +79,13 @@ export function initializeUpdater(): void {
     }
   });
 
-  checkForUpdates();
-  setInterval(checkForUpdates, UPDATE_CHECK_INTERVAL);
+  // Check for updates on application launch (only in packaged build or when dev testing)
+  if (app.isPackaged || process.env.TEST_AUTO_UPDATE === "true") {
+    checkForUpdates().catch((err) => log.error("Initial update check failed:", err));
+    setInterval(() => {
+      checkForUpdates().catch((err) => log.error("Scheduled update check failed:", err));
+    }, UPDATE_CHECK_INTERVAL);
+  }
 }
 
 /**
@@ -86,13 +93,10 @@ export function initializeUpdater(): void {
  */
 export async function checkForUpdates(): Promise<"available" | "none" | "failed"> {
   try {
-    // TODO: Fetch config from server when backend is available
-    // configData ??= await fetchConfigData();
-
-    const result = await autoUpdater.autoUpdater.checkForUpdates();
-
-    return result?.isUpdateAvailable ? "available" : "none";
-  } catch {
+    const result = await autoUpdater.checkForUpdates();
+    return result?.updateInfo.version ? "available" : "none";
+  } catch (error) {
+    log.error("Failed to check for updates:", error);
     return "failed";
   }
 }
@@ -111,28 +115,5 @@ export function installUpdate(): void {
   if (getSharedState().autoUpdateState.state !== "downloaded") return;
 
   isQuittingForUpdate = true;
-  autoUpdater.autoUpdater.quitAndInstall();
+  autoUpdater.quitAndInstall();
 }
-
-/**
- * Fetch config data from server with retry
- * TODO: Uncomment when backend is available
- */
-// async function fetchConfigData(): Promise<ConfigData | null> {
-//   let delay = 5000;
-//
-//   for (let attempt = 0; attempt < 3; attempt++) {
-//     try {
-//       const response = await createApiClient().config.get();
-//       if (!response.error) return response.data;
-//       console.error(response.error);
-//     } catch (error) {
-//       console.error(error);
-//     }
-//
-//     await new Promise((resolve) => setTimeout(resolve, delay));
-//     delay *= 2;
-//   }
-//
-//   return null;
-// }
