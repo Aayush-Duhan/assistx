@@ -14,7 +14,7 @@ import {
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { jsonSchema, type ToolCallOptions, type Tool } from "ai";
+import { jsonSchema, type Tool } from "ai";
 import { z } from "zod";
 import type { MCPServerStatus } from "@/shared/mcp";
 
@@ -759,7 +759,7 @@ class MCPClientsManager {
           _originToolName: tool.name,
           _mcpServerName: clientName,
           _mcpServerId: id,
-          execute: async (params: unknown, options?: ToolCallOptions) => {
+          execute: async (params: unknown, options?: { abortSignal?: AbortSignal }) => {
             options?.abortSignal?.throwIfAborted();
             return this.toolCall(id, tool.name, params);
           },

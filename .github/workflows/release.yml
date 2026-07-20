@@ -10,12 +10,8 @@ permissions:
 
 jobs:
   release:
-    name: Build & Publish Release
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+    name: Build & Publish Windows Release
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -24,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -46,12 +42,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Validate code
         run: pnpm validate
 
-      - name: Build and Publish Electron App
+      - name: Build and Publish Windows App
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
