@@ -12,19 +12,8 @@ import {
   LuChevronDown,
 } from "react-icons/lu";
 import { cn } from "@/lib/utils";
+import type { MCPClientInfo } from "@/shared/mcp";
 
-// Types
-type MCPServerStatus = "connected" | "disconnected" | "loading" | "authorizing";
-
-interface MCPClientInfo {
-  id: string;
-  name: string;
-  status: MCPServerStatus;
-  error?: unknown;
-  toolInfo: Array<{ name: string; description: string; inputSchema?: Record<string, unknown> }>;
-  config: Record<string, unknown>;
-  allowedTools?: string[];
-}
 
 // Custom hook for MCP data
 function useMcp() {
@@ -411,9 +400,11 @@ const McpPage = () => {
 
                 {/* Config Preview */}
                 <div className="text-xs text-zinc-500 font-mono bg-black/20 rounded p-2 overflow-hidden text-ellipsis whitespace-nowrap mb-3">
-                  {Object.keys(client.config).includes("command")
-                    ? `$ ${client.config.command} ${((client.config.args as string[]) || []).join(" ")}`
-                    : (client.config.url as string) || JSON.stringify(client.config)}
+                  {"command" in client.config
+                    ? `$ ${client.config.command} ${(client.config.args || []).join(" ")}`
+                    : "url" in client.config
+                      ? client.config.url
+                      : JSON.stringify(client.config)}
                 </div>
 
                 {/* Tools */}

@@ -1,4 +1,4 @@
-import type { MCPServerConfig, MCPRemoteConfig, MCPStdioConfig } from "../../../types/mcp";
+import type { MCPServerConfig, MCPRemoteConfig, MCPStdioConfig } from "@/shared/mcp";
 
 /**
  * Type guard to check if an object is potentially a valid stdio config

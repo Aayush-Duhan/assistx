@@ -180,7 +180,7 @@ export const ipcInvokeEvents = {
       z.object({
         id: z.string(),
         name: z.string(),
-        status: z.enum(["connected", "disconnected", "loading", "authorizing"]),
+        status: z.enum(["connected", "disconnected", "loading", "authorizing", "failed", "needs-auth", "pending", "disabled"]),
         error: z.unknown().optional(),
         toolInfo: z.array(
           z.object({
@@ -191,6 +191,13 @@ export const ipcInvokeEvents = {
         ),
         config: z.object({}).passthrough(),
         allowedTools: z.array(z.string()).optional(),
+        capabilities: z.object({
+          tools: z.boolean().optional(),
+          prompts: z.boolean().optional(),
+          resources: z.boolean().optional(),
+        }).optional(),
+        serverVersion: z.string().optional(),
+        reconnectAttempt: z.number().optional(),
       }),
     ),
   },
@@ -201,7 +208,7 @@ export const ipcInvokeEvents = {
   "mcp-toggle-client": {
     payload: z.object({
       id: z.string(),
-      status: z.enum(["connected", "disconnected", "loading", "authorizing"]),
+      status: z.enum(["connected", "disconnected", "loading", "authorizing", "failed", "needs-auth", "pending", "disabled"]),
     }),
     response: z.void(),
   },

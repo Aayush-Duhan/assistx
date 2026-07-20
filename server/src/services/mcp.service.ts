@@ -16,6 +16,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { jsonSchema, type ToolCallOptions, type Tool } from "ai";
 import { z } from "zod";
+import type { MCPServerStatus } from "@/shared/mcp";
 
 import { logger as appLogger } from "../lib/pino";
 import { getMcpConfigPath } from "./mcp-config.service";
@@ -525,9 +526,9 @@ function createFileBasedMCPConfigStorage(configPath: string): MCPConfigStorage {
       if (error.code === "ENOENT") {
         return [];
       } else if (err instanceof SyntaxError) {
-        throw new Error(`Config file ${configPath} has invalid JSON: ${err.message}`, {
-          cause: err,
-        });
+        const error = new Error(`Config file ${configPath} has invalid JSON: ${err.message}`);
+        (error as any).cause = err;
+        throw error;
       } else {
         throw err;
       }
@@ -1023,7 +1024,7 @@ export async function refreshMcpClientAction(id: string): Promise<void> {
 
 export async function toggleMcpClientConnectionAction(
   id: string,
-  status: "connected" | "disconnected" | "loading" | "authorizing",
+  status: MCPServerStatus,
 ): Promise<void> {
   const manager = getMCPManager();
   const entry = await manager.getClient(id);
@@ -1032,7 +1033,13 @@ export async function toggleMcpClientConnectionAction(
   }
 
   const client = entry.client;
-  if (status === "connected" || status === "authorizing" || status === "loading") {
+  if (
+    status === "connected" ||
+    status === "needs-auth" ||
+    status === "pending" ||
+    status === "loading" ||
+    status === "authorizing"
+  ) {
     await client.disconnect();
   } else {
     await client.connect();

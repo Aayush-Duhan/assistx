@@ -1,6 +1,13 @@
-import equal from "../../../lib/equal";
+/**
+ * MCP server configuration change detection utilities.
+ * Uses hash-based comparison for faster, more reliable diff detection.
+ * Adapted from Claude Code's hashMcpConfig.
+ */
+
+import { createHash } from "crypto";
+import equal from "../../equal";
 import { isMaybeMCPServerConfig } from "./is-mcp-config";
-import type { MCPServerConfig } from "../../../types/mcp";
+import type { MCPServerConfig } from "@/shared/mcp";
 
 // Types of changes that can occur in configuration
 export type ConfigChangeType = "add" | "remove" | "update";
@@ -25,8 +32,37 @@ const validate = (config: unknown) => {
 };
 
 /**
- * Detects changes between two MCP server configuration objects
- * Identifies added, removed, and updated configurations
+ * Compute a stable hash of an MCP server config for change detection.
+ * Keys are sorted so {a:1,b:2} and {b:2,a:1} hash the same.
+ *
+ * @param config MCP server configuration object
+ * @returns 16-character hex hash string
+ */
+export function hashMcpConfig(config: MCPServerConfig): string {
+  const stable = JSON.stringify(config, (_k, v: unknown) => {
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      const obj = v as Record<string, unknown>;
+      const sorted: Record<string, unknown> = {};
+      for (const k of Object.keys(obj).sort()) sorted[k] = obj[k];
+      return sorted;
+    }
+    return v;
+  });
+  return createHash("sha256").update(stable).digest("hex").slice(0, 16);
+}
+
+/**
+ * Check if two MCP server configs are equivalent by comparing their hashes.
+ * More reliable than deep equality for configs that may have different key ordering.
+ */
+export function areMcpConfigsEqual(a: MCPServerConfig, b: MCPServerConfig): boolean {
+  return hashMcpConfig(a) === hashMcpConfig(b);
+}
+
+/**
+ * Detects changes between two MCP server configuration objects.
+ * Identifies added, removed, and updated configurations.
+ * Uses hash-based comparison for update detection.
  */
 export function detectConfigChanges(
   prev: Record<string, unknown>,

@@ -581,7 +581,7 @@ export function getApiKeyForProvider(provider: string): string | null {
   }
 }
 
-export function saveApiKey(provider: string, plainKey: string): void {
+export function saveApiKey(provider: string, plainKey: string, name?: string): void {
   const database = getDatabase();
   const now = new Date();
   const encrypted = encryptApiKey(plainKey);
@@ -599,6 +599,7 @@ export function saveApiKey(provider: string, plainKey: string): void {
       .update(schema.apiKeys)
       .set({
         encryptedKey: encrypted,
+        name: name ?? getProviderDisplayName(provider),
         isValid: true,
         updatedAt: now,
       })
@@ -611,7 +612,7 @@ export function saveApiKey(provider: string, plainKey: string): void {
       .values({
         id: uuidv7(),
         provider,
-        name: getProviderDisplayName(provider),
+        name: name ?? getProviderDisplayName(provider),
         encryptedKey: encrypted,
         isValid: true,
         createdAt: now,

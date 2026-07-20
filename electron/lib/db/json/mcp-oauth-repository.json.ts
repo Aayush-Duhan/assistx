@@ -65,7 +65,7 @@ export const jsonMcpOAuthRepository: McpOAuthRepository = {
     const sessions = store.sessions
       .filter((s) => s.mcpServerId === mcpServerId && !!s.tokens)
       .slice()
-      .toSorted((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
+      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
     return sessions[0] ? clone(sessions[0]) : undefined;
   },
 

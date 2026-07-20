@@ -10,8 +10,9 @@ describe("mcp-tool-id", () => {
   it("creates combined tool id with separator", () => {
     const id = createMCPToolId("server#name", "tool@name");
     expect(id.includes("_")).toBe(true);
-    const { serverName, toolName } = extractMCPToolId(id);
-    expect(serverName.length).toBeGreaterThan(0);
-    expect(toolName.length).toBeGreaterThan(0);
+    const result = extractMCPToolId(id);
+    expect(result).not.toBeNull();
+    expect(result!.serverName.length).toBeGreaterThan(0);
+    expect(result!.toolName.length).toBeGreaterThan(0);
   });
 });

@@ -1,3 +1,5 @@
+import type { MCPClientInfo, MCPServerStatus } from "./mcp";
+
 export type ElectronAPI = {
   ipcRenderer: {
     send: (channel: string, ...args: unknown[]) => void;
@@ -13,9 +15,9 @@ export type ElectronAPI = {
     };
   };
   mcp: {
-    listClients: () => Promise<import("./mcp").MCPClientInfo[]>;
+    listClients: () => Promise<MCPClientInfo[]>;
     refreshClient: (id: string) => Promise<void>;
-    toggleClient: (id: string, status: "connected" | "disconnected") => Promise<void>;
+    toggleClient: (id: string, status: MCPServerStatus) => Promise<void>;
     callTool: (id: string, toolName: string, input: unknown) => Promise<unknown>;
     removeClient: (id: string) => Promise<void>;
     setAllowedTools: (id: string, allowedTools: string[]) => Promise<void>;

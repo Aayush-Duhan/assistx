@@ -9,7 +9,7 @@ describe("mcp-config-diff", () => {
     const types = changes
       .map((c) => c.type)
       .slice()
-      .toSorted();
+      .sort();
     expect(types).toEqual(["add", "remove", "update"]);
   });
 });

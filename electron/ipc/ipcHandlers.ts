@@ -12,20 +12,8 @@ import { captureScreenshot } from "../features/screenshot";
 import { IS_MAC } from "@/shared/constants";
 import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
 import { join } from "path";
+import type { MCPServerStatus, MCPClientInfo } from "@/shared/mcp";
 
-// MCP Server Status type
-type MCPServerStatus = "connected" | "disconnected" | "loading" | "authorizing";
-
-// MCP Server Info type for IPC responses
-interface MCPClientInfo {
-  id: string;
-  name: string;
-  status: MCPServerStatus;
-  error?: unknown;
-  toolInfo: Array<{ name: string; description: string; inputSchema?: Record<string, unknown> }>;
-  config: Record<string, unknown>;
-  allowedTools?: string[];
-}
 
 // Get MCP config path (same logic as mcp-config.service.ts)
 function getMcpConfigPath(): string {

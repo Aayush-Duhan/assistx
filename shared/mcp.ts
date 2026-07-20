@@ -44,10 +44,110 @@ export type MCPToolInfo = {
 };
 
 // ============================================================================
-// MCP Server Info Types
+// MCP Server Connection State (Discriminated Union)
+// Inspired by Claude Code's MCPServerConnection type.
+// Provides precise state tracking for connection lifecycle.
 // ============================================================================
 
-export type MCPServerStatus = "connected" | "disconnected" | "loading" | "authorizing";
+/** Capabilities reported by the MCP server after successful connection */
+export type MCPServerCapabilities = {
+  tools?: boolean;
+  prompts?: boolean;
+  resources?: boolean;
+};
+
+/** Successfully connected MCP server */
+export type ConnectedMCPServer = {
+  type: "connected";
+  name: string;
+  config: MCPServerConfig;
+  capabilities: MCPServerCapabilities;
+  serverInfo?: { name: string; version: string };
+  instructions?: string;
+  toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
+};
+
+/** MCP server that failed to connect */
+export type FailedMCPServer = {
+  type: "failed";
+  name: string;
+  config: MCPServerConfig;
+  error?: string;
+  toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
+};
+
+/** MCP server that requires OAuth authentication */
+export type NeedsAuthMCPServer = {
+  type: "needs-auth";
+  name: string;
+  config: MCPServerConfig;
+  authorizationUrl?: string;
+  toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
+};
+
+/** MCP server that is currently connecting or reconnecting */
+export type PendingMCPServer = {
+  type: "pending";
+  name: string;
+  config: MCPServerConfig;
+  reconnectAttempt?: number;
+  maxReconnectAttempts?: number;
+  toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
+};
+
+/** MCP server that has been disabled by the user */
+export type DisabledMCPServer = {
+  type: "disabled";
+  name: string;
+  config: MCPServerConfig;
+  toolInfo: MCPToolInfo[];
+  allowedTools?: string[];
+};
+
+/** Discriminated union of all MCP server connection states */
+export type MCPServerConnection =
+  | ConnectedMCPServer
+  | FailedMCPServer
+  | NeedsAuthMCPServer
+  | PendingMCPServer
+  | DisabledMCPServer;
+
+// ============================================================================
+// Backward-Compatible Status Type
+// Maps the discriminated union to a simple string for IPC/UI
+// ============================================================================
+
+/**
+ * Simple status strings for IPC transport and UI display.
+ * Maps from the discriminated union:
+ *   connected -> "connected"
+ *   failed -> "disconnected" (with error)
+ *   needs-auth -> "authorizing"
+ *   pending -> "loading"
+ *   disabled -> "disconnected"
+ */
+export type MCPServerStatus =
+  | "connected"
+  | "disconnected"
+  | "loading"
+  | "authorizing"
+  | "failed"
+  | "needs-auth"
+  | "pending"
+  | "disabled";
+
+/** Convert a connection state type to a simple status string */
+export function connectionTypeToStatus(type: MCPServerConnection["type"]): MCPServerStatus {
+  return type;
+}
+
+// ============================================================================
+// MCP Server Info Types (IPC transport format)
+// ============================================================================
 
 export type MCPServerInfo = {
   name: string;
@@ -56,12 +156,15 @@ export type MCPServerInfo = {
   status: MCPServerStatus;
   toolInfo: MCPToolInfo[];
   allowedTools?: string[];
+  capabilities?: MCPServerCapabilities;
+  serverVersion?: string;
+  reconnectAttempt?: number;
 };
+
+export type MCPServerInfoWithId = MCPServerInfo & { id: string };
 
 // Alias for consistency with other parts of the app
 export type MCPClientInfo = MCPServerInfoWithId;
-
-export type MCPServerInfoWithId = MCPServerInfo & { id: string };
 
 // ============================================================================
 // MCP Server CRUD Types

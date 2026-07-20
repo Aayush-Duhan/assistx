@@ -9,6 +9,7 @@ import { listApiKeys, saveApiKey, deleteApiKey, getApiKeyForProvider } from "../
 interface SaveApiKeyBody {
   provider: string;
   key: string;
+  name?: string;
 }
 
 interface ProviderParams {
@@ -84,13 +85,13 @@ export async function apiKeysRoutes(fastify: FastifyInstance): Promise<void> {
   // POST /api/api-keys - Save an API key for a provider
   fastify.post<{ Body: SaveApiKeyBody }>("/", async (request, reply) => {
     try {
-      const { provider, key } = request.body;
+      const { provider, key, name } = request.body;
 
       if (!provider || !key) {
         return reply.status(400).send({ error: "provider and key are required" });
       }
 
-      saveApiKey(provider, key);
+      saveApiKey(provider, key, name);
       return reply.status(201).send({ success: true });
     } catch (error) {
       request.ctx?.logger.error(

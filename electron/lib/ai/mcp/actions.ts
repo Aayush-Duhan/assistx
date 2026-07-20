@@ -1,7 +1,7 @@
 import { z } from "zod/v3";
 import { mcpClientsManager } from "./mcp-manager";
 import { jsonMcpOAuthRepository as mcpOAuthRepository } from "../../db/json/mcp-oauth-repository.json";
-import type { McpServerInsert } from "../../../types/mcp";
+import type { McpServerInsert, MCPServerStatus } from "@/shared/mcp";
 
 export async function selectMcpClientsAction() {
   const list = await mcpClientsManager.getClients();
@@ -66,7 +66,7 @@ export async function refreshMcpClientAction(id: string) {
 export async function authorizeMcpClientAction(id: string) {
   await refreshMcpClientAction(id);
   const client = await mcpClientsManager.getClient(id);
-  if (!client || client.client.status != "authorizing") {
+  if (!client || client.client.status !== "needs-auth") {
     throw new Error("Authorization URL not available");
   }
   return client.client.getAuthorizationUrl()?.toString();
@@ -74,7 +74,7 @@ export async function authorizeMcpClientAction(id: string) {
 
 export async function toggleMcpClientConnectionAction(
   id: string,
-  status: "connected" | "disconnected" | "loading" | "authorizing",
+  status: MCPServerStatus,
 ) {
   const entry = await mcpClientsManager.getClient(id);
   if (!entry) {
@@ -82,7 +82,12 @@ export async function toggleMcpClientConnectionAction(
   }
 
   const client = entry.client;
-  if (status === "connected" || status === "authorizing" || status === "loading") {
+  if (
+    status === "connected" ||
+    status === "needs-auth" ||
+    status === "pending" ||
+    status === "loading"
+  ) {
     await client.disconnect();
   } else {
     await client.connect();

@@ -108,10 +108,11 @@ export class AiApiService {
       };
     } catch (error) {
       console.error("AI API Error:", error);
-      throw new Error(
-        `AI service error: ${error instanceof Error ? error.message : "Unknown error"}`,
-        { cause: error },
+      const err = new Error(
+        `AI service error: ${error instanceof Error ? error.message : "Unknown error"}`
       );
+      (err as any).cause = error;
+      throw err;
     }
   }
 

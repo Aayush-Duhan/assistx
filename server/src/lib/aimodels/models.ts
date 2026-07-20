@@ -157,7 +157,7 @@ export function parseModelSlug(slug: SupportedModel): {
  */
 export function getModel(ctx: LocalCtx, modelSlug: SupportedModel, _tag?: string): LanguageModelV3 {
   const { provider, modelId } = parseModelSlug(modelSlug);
-  return PROVIDERS[provider](ctx)(modelId);
+  return PROVIDERS[provider](ctx)(modelId) as any as LanguageModelV3;
 }
 
 // ============================================================================
