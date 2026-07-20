@@ -13,7 +13,8 @@
     "repo": "assistx"
   },
   "files": [
-    "out"
+    "dist/**/*",
+    "dist-electron/**/*"
   ],
   "protocols": {
     "name": "AssistX Protocol",
