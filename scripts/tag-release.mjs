@@ -40,7 +40,7 @@ try {
 } catch {
   // no previous tag - first release
 }
-const commits = run(`git log ${lastTag ? `${lastTag}..HEAD` : 'HEAD'} --pretty=format:- %s`)
+const commits = run(`git log ${lastTag ? `${lastTag}..HEAD` : 'HEAD'} --pretty=format:"- %s"`)
   .split('\n')
   .filter(Boolean);
 
