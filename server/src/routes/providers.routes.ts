@@ -56,11 +56,15 @@ interface ProviderIdParams {
   providerId: string;
 }
 
-async function probeProvider(provider: string, apiKey: string, baseUrl?: string): Promise<{ valid: boolean; error?: string }> {
+async function probeProvider(
+  provider: string,
+  apiKey: string,
+  baseUrl?: string,
+): Promise<{ valid: boolean; error?: string }> {
   try {
     if (provider === "openai") {
       const res = await fetch("https://api.openai.com/v1/models", {
-        headers: { "Authorization": `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}` },
       });
       return { valid: res.ok, error: res.ok ? undefined : "Invalid API key" };
     }
@@ -78,7 +82,10 @@ async function probeProvider(provider: string, apiKey: string, baseUrl?: string)
           messages: [{ role: "user", content: "test" }],
         }),
       });
-      return { valid: res.status !== 401, error: res.status === 401 ? "Invalid API key" : undefined };
+      return {
+        valid: res.status !== 401,
+        error: res.status === 401 ? "Invalid API key" : undefined,
+      };
     }
     if (provider === "gemini") {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
@@ -86,7 +93,7 @@ async function probeProvider(provider: string, apiKey: string, baseUrl?: string)
     }
     if (provider === "openrouter") {
       const res = await fetch("https://openrouter.ai/api/v1/models", {
-        headers: { "Authorization": `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}` },
       });
       return { valid: res.ok, error: res.ok ? undefined : "Invalid API key" };
     }
@@ -94,7 +101,7 @@ async function probeProvider(provider: string, apiKey: string, baseUrl?: string)
     if (baseUrl) {
       const modelsUrl = `${baseUrl.replace(/\/$/, "")}/models`;
       const res = await fetch(modelsUrl, {
-        headers: { "Authorization": `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}` },
       });
       if (res.ok) return { valid: true };
 
@@ -102,7 +109,7 @@ async function probeProvider(provider: string, apiKey: string, baseUrl?: string)
       const chatRes = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -126,7 +133,7 @@ export async function providersRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get("/", async (_request: FastifyRequest, reply: FastifyReply) => {
     try {
       const connections = getProviderConnections();
-      
+
       let nodeNameMap: Record<string, string> = {};
       try {
         const nodes = getProviderNodes();
@@ -138,9 +145,10 @@ export async function providersRoutes(fastify: FastifyInstance): Promise<void> {
       }
 
       const safeConnections = connections.map((c) => {
-        const isCompatible = c.provider === "openai-compatible" || c.provider === "anthropic-compatible";
+        const isCompatible =
+          c.provider === "openai-compatible" || c.provider === "anthropic-compatible";
         const name = isCompatible
-          ? (c.name || nodeNameMap[c.provider] || c.providerSpecificData?.nodeName || c.provider)
+          ? c.name || nodeNameMap[c.provider] || c.providerSpecificData?.nodeName || c.provider
           : c.name;
 
         const result = { ...c, name };
@@ -253,7 +261,10 @@ export async function providersRoutes(fastify: FastifyInstance): Promise<void> {
       }
 
       let modelsList: any[] = [];
-      const isCompatible = connection.provider === "openai-compatible" || connection.provider === "anthropic-compatible" || connection.provider === "custom-embedding";
+      const isCompatible =
+        connection.provider === "openai-compatible" ||
+        connection.provider === "anthropic-compatible" ||
+        connection.provider === "custom-embedding";
 
       if (isCompatible && connection.providerSpecificData?.baseUrl) {
         try {
@@ -387,23 +398,47 @@ export async function providersRoutes(fastify: FastifyInstance): Promise<void> {
         // Non-fatal: static registry models still returned
       }
 
+      // No-auth providers (e.g. OpenCode Free) have no static list — discover their
+      // models from the public API so they're usable in chat without any setup
+      await Promise.all(
+        REGISTRY.filter((e: any) => e.noAuth && e.modelsFetcher).map(async (e: any) => {
+          const suggested = await fetchSuggestedModels(e.modelsFetcher);
+          if (!suggested.length) return;
+          const list = (responseData[e.id] ||= []);
+          const existing = new Set(list.map((m) => m.id));
+          for (const m of suggested) {
+            if (!existing.has(m.id)) list.push(m);
+          }
+        }),
+      );
+
       return reply.send({ providerModels: responseData });
     } catch {
       return reply.status(500).send({ error: "Failed to fetch provider models" });
     }
   });
 
-  // GET /api/providers/suggested-models/:providerId - Discover models from a provider's public API
-  fastify.get<{ Params: ProviderIdParams }>("/suggested-models/:providerId", async (request, reply) => {
-    try {
-      const entry = REGISTRY.find((e: any) => e.id === request.params.providerId) as any;
-      if (!entry?.modelsFetcher) {
-        return reply.status(404).send({ error: "Provider has no models fetcher" });
-      }
-      const data = await fetchSuggestedModels(entry.modelsFetcher);
-      return reply.send({ data });
-    } catch {
-      return reply.status(500).send({ error: "Failed to fetch suggested models" });
-    }
+  // GET /api/providers/catalog - Registry metadata (noAuth flag) for the chat picker
+  fastify.get("/catalog", async (_request, reply) => {
+    return reply.send({
+      providers: REGISTRY.map((e: any) => ({ id: e.id, noAuth: !!e.noAuth })),
+    });
   });
+
+  // GET /api/providers/suggested-models/:providerId - Discover models from a provider's public API
+  fastify.get<{ Params: ProviderIdParams }>(
+    "/suggested-models/:providerId",
+    async (request, reply) => {
+      try {
+        const entry = REGISTRY.find((e: any) => e.id === request.params.providerId) as any;
+        if (!entry?.modelsFetcher) {
+          return reply.status(404).send({ error: "Provider has no models fetcher" });
+        }
+        const data = await fetchSuggestedModels(entry.modelsFetcher);
+        return reply.send({ data });
+      } catch {
+        return reply.status(500).send({ error: "Failed to fetch suggested models" });
+      }
+    },
+  );
 }

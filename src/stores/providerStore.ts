@@ -44,7 +44,11 @@ interface ProviderStoreActions {
   addNode: (data: any) => Promise<any>;
   updateNode: (id: string, data: any) => Promise<any>;
   deleteNode: (id: string) => Promise<any>;
-  validateConnection: (data: { provider: string; apiKey?: string; providerSpecificData?: any }) => Promise<{ valid: boolean; error?: string }>;
+  validateConnection: (data: {
+    provider: string;
+    apiKey?: string;
+    providerSpecificData?: any;
+  }) => Promise<{ valid: boolean; error?: string }>;
 }
 
 type ProviderStore = ProviderStoreState & ProviderStoreActions;

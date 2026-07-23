@@ -104,11 +104,7 @@ export abstract class BaseWindow {
 
     // Handle window close
     this.window.on("close", (event) => {
-      if (
-        !this.windowIsClosing &&
-        !windowManager.appIsQuitting &&
-        !isQuittingForUpdateInstall()
-      ) {
+      if (!this.windowIsClosing && !windowManager.appIsQuitting && !isQuittingForUpdateInstall()) {
         event.preventDefault();
         windowManager.fakeQuit();
       }

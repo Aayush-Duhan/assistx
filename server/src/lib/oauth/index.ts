@@ -67,12 +67,15 @@ interface StateEntry {
 const stateStore = new Map<string, StateEntry>();
 const STATE_TTL = 10 * 60 * 1000;
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of stateStore) {
-    if (now - entry.timestamp > STATE_TTL) stateStore.delete(key);
-  }
-}, 5 * 60 * 1000);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of stateStore) {
+      if (now - entry.timestamp > STATE_TTL) stateStore.delete(key);
+    }
+  },
+  5 * 60 * 1000,
+);
 
 function storeState(state: string, entry: Omit<StateEntry, "timestamp">): void {
   stateStore.set(state, { ...entry, timestamp: Date.now() });
@@ -166,9 +169,7 @@ export function generateAuthData(
   const pkce = generatePKCE();
   storeState(pkce.state, { provider: providerId, codeVerifier: pkce.codeVerifier, redirectUri });
 
-  const scopes = oauth.scopes
-    ? oauth.scopes.join(" ")
-    : oauth.scope || "";
+  const scopes = oauth.scopes ? oauth.scopes.join(" ") : oauth.scope || "";
 
   const params: Record<string, string> = {
     client_id: oauth.clientId || "",
@@ -225,7 +226,12 @@ export function generateAuthData(
       state: pkce.state,
     });
     const authUrl = `${webAppUrl}/cli-auth?${kimchiParams.toString()}`;
-    return { authUrl, state: pkce.state, flowType: "browser_token", codeVerifier: pkce.codeVerifier };
+    return {
+      authUrl,
+      state: pkce.state,
+      flowType: "browser_token",
+      codeVerifier: pkce.codeVerifier,
+    };
   }
 
   // Google-based providers need access_type=offline, prompt=consent
@@ -308,7 +314,8 @@ export async function exchangeToken(
     // Codex: extract email from id_token
     if (tokens.id_token) {
       result.idToken = tokens.id_token;
-      const email = extractEmailFromToken(tokens.id_token) || extractEmailFromToken(tokens.access_token);
+      const email =
+        extractEmailFromToken(tokens.id_token) || extractEmailFromToken(tokens.access_token);
       if (email) result.email = email;
       // Codex account info
       const payload = decodeJwtPayload(tokens.id_token);
@@ -365,7 +372,9 @@ export async function exchangeToken(
         const userInfo: any = await userRes.json();
         result.email = userInfo.email;
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
 
   // Gemini/Antigravity: fetch project ID
@@ -386,7 +395,9 @@ export async function exchangeToken(
         const data: any = await projectRes.json();
         result.projectId = data.cloudaicompanionProject?.id || data.cloudaicompanionProject || "";
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
 
   return result;
@@ -462,7 +473,12 @@ async function exchangeCline(
     const response = await fetch(tokenUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ grant_type: "authorization_code", code, client_type: "extension", redirect_uri: redirectUri }),
+      body: JSON.stringify({
+        grant_type: "authorization_code",
+        code,
+        client_type: "extension",
+        redirect_uri: redirectUri,
+      }),
     });
     if (!response.ok) throw new Error(`Cline token exchange failed: ${await response.text()}`);
     const data: any = await response.json();
@@ -475,14 +491,12 @@ async function exchangeCline(
   }
 }
 
-async function exchangeKimchi(
-  oauth: OAuthConfig,
-  token: string,
-): Promise<OAuthTokenResult> {
+async function exchangeKimchi(oauth: OAuthConfig, token: string): Promise<OAuthTokenResult> {
   const accessToken = String(token || "").trim();
   if (!accessToken) throw new Error("Missing Kimchi token");
 
-  const validationUrl = oauth.validationUrl || "https://api.cast.ai/v1/llm/openai/supported-providers";
+  const validationUrl =
+    oauth.validationUrl || "https://api.cast.ai/v1/llm/openai/supported-providers";
   const validationRes = await fetch(validationUrl, {
     headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` },
   });
@@ -500,7 +514,9 @@ async function exchangeKimchi(
         email = user.email || (user.id ? `kimchi-user-${user.id}` : undefined);
         displayName = user.name || user.username || undefined;
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
 
   return {
@@ -541,9 +557,12 @@ async function exchangeIflow(
   // Fetch user info (critical for iFlow API key)
   const userInfoUrl = oauth.userInfoUrl || "";
   if (userInfoUrl) {
-    const userInfoRes = await fetch(`${userInfoUrl}?accessToken=${encodeURIComponent(tokens.access_token)}`, {
-      headers: { Accept: "application/json" },
-    });
+    const userInfoRes = await fetch(
+      `${userInfoUrl}?accessToken=${encodeURIComponent(tokens.access_token)}`,
+      {
+        headers: { Accept: "application/json" },
+      },
+    );
     if (userInfoRes.ok) {
       const result: any = await userInfoRes.json();
       const userInfo = result.data || {};
@@ -628,7 +647,9 @@ export async function requestDeviceCode(providerId: string): Promise<DeviceCodeR
   }
 
   // GitHub and generic device code
-  const scopes = Array.isArray(oauth.scopes) ? oauth.scopes.join(" ") : (oauth.scopes || oauth.scope || "");
+  const scopes = Array.isArray(oauth.scopes)
+    ? oauth.scopes.join(" ")
+    : oauth.scopes || oauth.scope || "";
   const res = await fetch(oauth.deviceCodeUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
@@ -757,12 +778,14 @@ async function requestKimiDeviceCode(oauth: any): Promise<DeviceCodeResponse> {
   });
   if (!res.ok) throw new Error(`Device code request failed: ${await res.text()}`);
   const data: any = await res.json();
-  const authorizeDeviceUrl = oauth.authorizeDeviceUrl || "https://www.kimi.com/code/authorize_device";
+  const authorizeDeviceUrl =
+    oauth.authorizeDeviceUrl || "https://www.kimi.com/code/authorize_device";
   return {
     deviceCode: data.device_code,
     userCode: data.user_code,
     verificationUri: data.verification_uri || authorizeDeviceUrl,
-    verificationUriComplete: data.verification_uri_complete || `${authorizeDeviceUrl}?user_code=${data.user_code}`,
+    verificationUriComplete:
+      data.verification_uri_complete || `${authorizeDeviceUrl}?user_code=${data.user_code}`,
     expiresIn: data.expires_in || 600,
     interval: data.interval || 5,
     extraData: { _kimiDeviceId: deviceId },
@@ -851,7 +874,11 @@ export async function pollDeviceToken(
   });
 
   let data: any;
-  try { data = await res.json(); } catch { return { success: false, error: "Invalid response" }; }
+  try {
+    data = await res.json();
+  } catch {
+    return { success: false, error: "Invalid response" };
+  }
 
   if (data.error === "authorization_pending" || data.error === "slow_down") {
     return { success: false, pending: true };
@@ -899,7 +926,9 @@ async function postExchangeGitHub(oauth: any, data: any, result: OAuthTokenResul
           copilotTokenExpiresAt: copilot.expires_at,
         };
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
   // User info
   if (oauth.userInfoUrl) {
@@ -917,11 +946,17 @@ async function postExchangeGitHub(oauth: any, data: any, result: OAuthTokenResul
           githubEmail: user.email,
         };
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
 }
 
-async function pollKiroToken(oauth: any, deviceCode: string, extraData?: Record<string, unknown>): Promise<DevicePollResult> {
+async function pollKiroToken(
+  oauth: any,
+  deviceCode: string,
+  extraData?: Record<string, unknown>,
+): Promise<DevicePollResult> {
   const region = (extraData?._region as string) || "us-east-1";
   const tokenUrl = `https://oidc.${region}.amazonaws.com/token`;
   const res = await fetch(tokenUrl, {
@@ -935,7 +970,11 @@ async function pollKiroToken(oauth: any, deviceCode: string, extraData?: Record<
     }),
   });
   let data: any;
-  try { data = await res.json(); } catch { return { success: false, error: "Invalid response" }; }
+  try {
+    data = await res.json();
+  } catch {
+    return { success: false, error: "Invalid response" };
+  }
 
   if (data.accessToken) {
     const email = extractEmailFromToken(data.accessToken);
@@ -981,7 +1020,9 @@ async function pollKilocodeToken(oauth: any, deviceCode: string): Promise<Device
         const profile: any = await profileRes.json();
         orgId = profile.organizations?.[0]?.id || null;
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
     return {
       success: true,
       tokens: {
@@ -1025,7 +1066,11 @@ async function pollCodebuddyToken(oauth: any, deviceCode: string): Promise<Devic
   return { success: false, error: data.msg || "unknown_error" };
 }
 
-async function pollKimiToken(oauth: any, deviceCode: string, extraData?: Record<string, unknown>): Promise<DevicePollResult> {
+async function pollKimiToken(
+  oauth: any,
+  deviceCode: string,
+  extraData?: Record<string, unknown>,
+): Promise<DevicePollResult> {
   const deviceId = (extraData?._kimiDeviceId as string) || "";
   const res = await fetch(oauth.tokenUrl, {
     method: "POST",
@@ -1042,7 +1087,11 @@ async function pollKimiToken(oauth: any, deviceCode: string, extraData?: Record<
     }),
   });
   let data: any;
-  try { data = await res.json(); } catch { return { success: false, error: "Invalid response" }; }
+  try {
+    data = await res.json();
+  } catch {
+    return { success: false, error: "Invalid response" };
+  }
 
   if (data.error === "authorization_pending" || data.error === "slow_down") {
     return { success: false, pending: true };
@@ -1079,7 +1128,11 @@ async function pollGrokCliToken(oauth: any, deviceCode: string): Promise<DeviceP
     }),
   });
   let data: any;
-  try { data = await res.json(); } catch { return { success: false, error: "Invalid response" }; }
+  try {
+    data = await res.json();
+  } catch {
+    return { success: false, error: "Invalid response" };
+  }
 
   const pending = data?.error === "authorization_pending" || data?.error === "slow_down";
   if (pending) return { success: false, pending: true };
@@ -1087,7 +1140,8 @@ async function pollGrokCliToken(oauth: any, deviceCode: string): Promise<DeviceP
     return { success: false, error: data.error_description || data.error || "No access token" };
   }
 
-  const email = extractEmailFromToken(data.id_token || "") || extractEmailFromToken(data.access_token || "");
+  const email =
+    extractEmailFromToken(data.id_token || "") || extractEmailFromToken(data.access_token || "");
 
   // Best-effort user profile
   let displayName: string | undefined;
@@ -1105,7 +1159,9 @@ async function pollGrokCliToken(oauth: any, deviceCode: string): Promise<DeviceP
       const user: any = await userRes.json();
       displayName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || undefined;
     }
-  } catch { /* best-effort */ }
+  } catch {
+    /* best-effort */
+  }
 
   return {
     success: true,

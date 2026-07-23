@@ -184,14 +184,15 @@ export const ipcInvokeEvents = {
   },
   "get-server-config": {
     payload: z.null().optional(),
-    response:
-      z.object({
+    response: z
+      .object({
         port: z.number(),
         host: z.string(),
         baseUrl: z.string(),
         wsUrl: z.string(),
         token: z.string(),
-      }).nullable(),
+      })
+      .nullable(),
   },
   // MCP
   "mcp-list-clients": {
@@ -200,7 +201,16 @@ export const ipcInvokeEvents = {
       z.object({
         id: z.string(),
         name: z.string(),
-        status: z.enum(["connected", "disconnected", "loading", "authorizing", "failed", "needs-auth", "pending", "disabled"]),
+        status: z.enum([
+          "connected",
+          "disconnected",
+          "loading",
+          "authorizing",
+          "failed",
+          "needs-auth",
+          "pending",
+          "disabled",
+        ]),
         error: z.unknown().optional(),
         toolInfo: z.array(
           z.object({
@@ -211,11 +221,13 @@ export const ipcInvokeEvents = {
         ),
         config: z.object({}).passthrough(),
         allowedTools: z.array(z.string()).optional(),
-        capabilities: z.object({
-          tools: z.boolean().optional(),
-          prompts: z.boolean().optional(),
-          resources: z.boolean().optional(),
-        }).optional(),
+        capabilities: z
+          .object({
+            tools: z.boolean().optional(),
+            prompts: z.boolean().optional(),
+            resources: z.boolean().optional(),
+          })
+          .optional(),
         serverVersion: z.string().optional(),
         reconnectAttempt: z.number().optional(),
       }),
@@ -228,7 +240,16 @@ export const ipcInvokeEvents = {
   "mcp-toggle-client": {
     payload: z.object({
       id: z.string(),
-      status: z.enum(["connected", "disconnected", "loading", "authorizing", "failed", "needs-auth", "pending", "disabled"]),
+      status: z.enum([
+        "connected",
+        "disconnected",
+        "loading",
+        "authorizing",
+        "failed",
+        "needs-auth",
+        "pending",
+        "disabled",
+      ]),
     }),
     response: z.void(),
   },

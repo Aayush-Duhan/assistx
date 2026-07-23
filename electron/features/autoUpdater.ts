@@ -1,8 +1,27 @@
 import { app } from "electron";
 import { autoUpdater } from "electron-updater";
-import log from "electron-log";
+import { logger as serverLogger } from "@server/lib/pino/logger";
 import { compareVersions, type UpdateStatus } from "@/shared/updateStatus";
 import { windowManager } from "../windows/WindowManager";
+
+const log = serverLogger.child("updater");
+
+function toError(err: unknown): Error {
+  return err instanceof Error ? err : new Error(String(err));
+}
+
+function formatLogArg(arg: unknown): string {
+  if (typeof arg === "string") return arg;
+  if (arg instanceof Error) return arg.stack ?? arg.message;
+  return JSON.stringify(arg);
+}
+
+/** electron-updater logs through a single-method logger interface; route it into pino. */
+const updaterLogger = {
+  info: (...args: unknown[]) => log.info("updater.internal", args.map(formatLogArg).join(" ")),
+  warn: (...args: unknown[]) => log.warn("updater.internal", args.map(formatLogArg).join(" ")),
+  error: (...args: unknown[]) => log.error("updater.internal", args.map(formatLogArg).join(" ")),
+};
 
 /** Update check interval (1 hour) */
 const UPDATE_CHECK_INTERVAL = 1000 * 60 * 60;
@@ -58,17 +77,17 @@ export function getUpdateStatus(): UpdateStatus {
 }
 
 export function initializeUpdater(): void {
-  autoUpdater.logger = log;
+  autoUpdater.logger = updaterLogger;
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on("checking-for-update", () => {
-    log.info("Checking for update...");
+    log.info("updater.check", "Checking for update...");
     broadcastUpdateStatus({ state: "checking" }, { force: true });
   });
 
   autoUpdater.on("update-available", (info) => {
-    log.info("Update available:", info.version);
+    log.info("updater.available", `Update available: ${info.version}`);
     if (updateStatus.state === "downloaded") return;
     broadcastUpdateStatus(
       {
@@ -81,7 +100,7 @@ export function initializeUpdater(): void {
   });
 
   autoUpdater.on("update-not-available", (info) => {
-    log.info("Update not available:", info.version);
+    log.info("updater.not-available", `Update not available: ${info.version}`);
     if (updateStatus.state === "downloaded") return;
     broadcastUpdateStatus({ state: "idle" }, { force: true });
   });
@@ -104,7 +123,7 @@ export function initializeUpdater(): void {
   });
 
   autoUpdater.on("update-downloaded", (info) => {
-    log.info("Update downloaded:", info.version);
+    log.info("updater.downloaded", `Update downloaded: ${info.version}`);
     broadcastUpdateStatus(
       {
         state: "downloaded",
@@ -120,7 +139,7 @@ export function initializeUpdater(): void {
   });
 
   autoUpdater.on("error", (error) => {
-    log.error("Error in auto-updater:", error);
+    log.error(toError(error), "updater.error", "Error in auto-updater");
     const version =
       updateStatus.state === "available" ||
       updateStatus.state === "downloading" ||
@@ -139,9 +158,13 @@ export function initializeUpdater(): void {
   });
 
   if (app.isPackaged || process.env.TEST_AUTO_UPDATE === "true") {
-    checkForUpdates().catch((err) => log.error("Initial update check failed:", err));
+    checkForUpdates().catch((err) =>
+      log.error(toError(err), "updater.check.initial-failed", "Initial update check failed"),
+    );
     setInterval(() => {
-      checkForUpdates().catch((err) => log.error("Scheduled update check failed:", err));
+      checkForUpdates().catch((err) =>
+        log.error(toError(err), "updater.check.scheduled-failed", "Scheduled update check failed"),
+      );
     }, UPDATE_CHECK_INTERVAL);
   }
 }
@@ -164,7 +187,7 @@ export async function checkForUpdates(): Promise<"available" | "none" | "failed"
 
     return "none";
   } catch (error) {
-    log.error("Failed to check for updates:", error);
+    log.error(toError(error), "updater.check.failed", "Failed to check for updates");
     return "failed";
   }
 }

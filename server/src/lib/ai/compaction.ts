@@ -33,7 +33,7 @@ export namespace Compaction {
   export async function run(params: { input: string }) {
     const { text } = await generateText({
       model: "openai/gpt-5-mini",
-      system: SYSTEM_PROMPT,
+      instructions: SYSTEM_PROMPT,
       prompt: params.input,
       temperature: 0,
     });

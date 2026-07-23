@@ -11,8 +11,8 @@ const ICON_ALIASES: Record<string, string> = {
   "perplexity-agent": "perplexity",
   "gitlab-duo": "gitlab",
   "vercel-ai-gateway": "vercel",
-  "google": "gemini",
-  "anthropic": "anthropic",
+  google: "gemini",
+  anthropic: "anthropic",
 };
 
 export function ModelProviderIcon({

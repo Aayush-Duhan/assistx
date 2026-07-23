@@ -4,11 +4,7 @@
  * reconnection tracking, and Vercel AI SDK tool integration.
  */
 
-import type {
-  MCPServerConfig,
-  McpServerInsert,
-  McpServerSelect,
-} from "@/shared/mcp";
+import type { MCPServerConfig, McpServerInsert, McpServerSelect } from "@/shared/mcp";
 import { VercelAIMcpToolTag } from "../../../types/mcp";
 import type { VercelAIMcpTool } from "../../../types/mcp";
 import {
@@ -18,12 +14,11 @@ import {
   clearToolInfoCache,
   clearAllConnectionCaches,
 } from "./create-mcp-client";
-import { errorToString, generateUUID, safeJSONParse } from "../../utils";
+import { errorToString, safeJSONParse } from "../../utils";
 import { createMCPToolId } from "./mcp-tool-id";
 import globalLogger from "../../logger";
 import { jsonSchema } from "ai";
 import { createMemoryMCPConfigStorage } from "./memory-mcp-config-storage";
-import { colorize } from "consola/utils";
 
 // ============================================================================
 // Batched Parallel Startup Constants
@@ -68,8 +63,12 @@ async function processBatched<T>(
 
   for (const item of items) {
     const p = processor(item).then(
-      () => { executing.delete(p); },
-      () => { executing.delete(p); },
+      () => {
+        executing.delete(p);
+      },
+      () => {
+        executing.delete(p);
+      },
     );
     executing.add(p);
 
@@ -93,17 +92,12 @@ function isLocalConfig(config: MCPServerConfig): boolean {
 // ============================================================================
 
 export class MCPClientsManager {
-  protected clients = new Map<
-    string,
-    { client: MCPClient; name: string }
-  >();
+  protected clients = new Map<string, { client: MCPClient; name: string }>();
 
   private initialized = false;
   private initPromise?: Promise<void>;
 
-  private logger = globalLogger.withDefaults({
-    message: colorize("dim", `[${generateUUID().slice(0, 4)}] MCP Manager: `),
-  });
+  private logger = globalLogger.child("mcp-manager");
 
   constructor(
     private storage: MCPConfigStorage = createMemoryMCPConfigStorage(),
@@ -128,9 +122,12 @@ export class MCPClientsManager {
 
   async init(): Promise<void> {
     if (this.initialized) return;
-    if (this.initPromise) { await this.initPromise; return; }
+    if (this.initPromise) {
+      await this.initPromise;
+      return;
+    }
 
-    this.logger.info("Initializing MCP clients manager");
+    this.logger.info("mcp.manager.init", "Initializing MCP clients manager");
 
     this.initPromise = (async () => {
       try {
@@ -142,6 +139,7 @@ export class MCPClientsManager {
         const remoteServers = configs.filter((c) => !isLocalConfig(c.config));
 
         this.logger.info(
+          "mcp.manager.start",
           `Starting ${localServers.length} local + ${remoteServers.length} remote MCP servers`,
         );
 
@@ -149,7 +147,7 @@ export class MCPClientsManager {
           try {
             await this.addClient(id, name, config);
           } catch {
-            this.logger.warn(`Failed to connect MCP server "${name}"`);
+            this.logger.warn("mcp.manager.add.failed", `Failed to connect MCP server "${name}"`);
           }
         };
 
@@ -254,7 +252,7 @@ export class MCPClientsManager {
    * Removes a client by ID, disposing resources and removing from storage.
    */
   async removeClient(id: string): Promise<void> {
-    if (this.storage && await this.storage.has(id)) {
+    if (this.storage && (await this.storage.has(id))) {
       await this.storage.delete(id);
     }
     await this.disconnectClient(id);
@@ -280,7 +278,7 @@ export class MCPClientsManager {
     const server = await this.storage.get(id);
     if (!server) throw new Error(`Client ${id} not found`);
 
-    this.logger.info(`Reconnecting client "${server.name}"`);
+    this.logger.info("mcp.manager.reconnect", `Reconnecting client "${server.name}"`);
 
     // Clear the connection and tool info caches
     const existing = this.clients.get(id);
@@ -342,7 +340,11 @@ export class MCPClientsManager {
   // Tool Calls
   // --------------------------------------------------------------------------
 
-  async toolCallByServerName(serverName: string, toolName: string, input: unknown): Promise<unknown> {
+  async toolCallByServerName(
+    serverName: string,
+    toolName: string,
+    input: unknown,
+  ): Promise<unknown> {
     const clients = await this.getClients();
     const client = clients.find((c) => c.client.getInfo().name === serverName);
 

@@ -6,7 +6,7 @@
 import fastifyCors from "@fastify/cors";
 import fastifyWebsocket from "@fastify/websocket";
 import dotenv from "dotenv";
-import Fastify from "fastify";
+import Fastify, { type FastifyBaseLogger } from "fastify";
 import crypto from "crypto";
 import { validateEnvConfig } from "./env";
 import { logger } from "./lib/pino";
@@ -31,8 +31,11 @@ export function setSessionToken(token: string): void {
 }
 
 // Create Fastify instance
+// Route Fastify's built-in logger through the shared pino instance so its
+// output matches the app logger (pretty-printed in dev) instead of raw JSON.
+// The cast bridges pino 10's BaseLogger (adds msgPrefix) with Fastify's type.
 export const app = Fastify({
-  logger: true,
+  loggerInstance: logger.pino as unknown as FastifyBaseLogger,
 });
 
 // Export app logger for child loggers

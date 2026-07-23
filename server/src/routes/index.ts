@@ -10,6 +10,7 @@ import { agentsRoutes } from "./agents.routes";
 import { providersRoutes } from "./providers.routes";
 import { oauthRoutes } from "./oauth.routes";
 import { mcpRoutes } from "./mcp.routes";
+import { chatRoutes } from "./chat.routes";
 
 /**
  * Register all API routes
@@ -32,6 +33,9 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
 
   // MCP routes (Model Context Protocol server management)
   await fastify.register(mcpRoutes, { prefix: "/api/mcp" });
+
+  // Chat routes (OpenAI-compatible proxy over provider connections)
+  await fastify.register(chatRoutes, { prefix: "/api/chat" });
 
   // Global OAuth loopback callback landing page for browser OAuth redirects (e.g. Google / Antigravity / Gemini)
   fastify.get<{ Querystring: { code?: string; state?: string; error?: string } }>(
@@ -66,4 +70,3 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
     },
   );
 }
-

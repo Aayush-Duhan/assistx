@@ -34,8 +34,7 @@ import { hashMcpConfig } from "./mcp-config-diff";
 import { PgOAuthClientProvider } from "./pg-oauth-provider";
 import { onMcpOAuthCallback } from "../../../protocol-handler";
 import logger from "../../logger";
-import type { ConsolaInstance } from "consola";
-import { colorize } from "consola/utils";
+import type { Logger } from "@server/lib/pino/logger";
 
 // ============================================================================
 // Constants
@@ -58,13 +57,9 @@ const STDERR_MAX_BYTES = 64 * 1024 * 1024; // 64MB cap on stderr accumulation
  * The SDK returns 404 when a session ID is no longer valid.
  */
 function isMcpSessionExpiredError(error: Error): boolean {
-  const httpStatus =
-    "code" in error ? (error as Error & { code?: number }).code : undefined;
+  const httpStatus = "code" in error ? (error as Error & { code?: number }).code : undefined;
   if (httpStatus !== 404) return false;
-  return (
-    error.message.includes('"code":-32001') ||
-    error.message.includes('"code": -32001')
-  );
+  return error.message.includes('"code":-32001') || error.message.includes('"code": -32001');
 }
 
 /** Check if an error message indicates a terminal connection failure */
@@ -97,6 +92,10 @@ function errorToString(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   return JSON.stringify(error);
+}
+
+function toError(err: unknown): Error {
+  return err instanceof Error ? err : new Error(String(err));
 }
 
 // ============================================================================
@@ -175,7 +174,7 @@ class OAuthAuthorizationRequiredError extends Error {
  * so the next operation triggers a fresh connect.
  */
 export class MCPClient {
-  private _log: ConsolaInstance;
+  private _log: Logger;
   private error?: unknown;
   private authorizationUrl?: URL;
   private oauthProvider?: PgOAuthClientProvider;
@@ -194,9 +193,7 @@ export class MCPClient {
     private serverConfig: MCPServerConfig,
     private options: ClientOptions = {},
   ) {
-    this._log = logger.withDefaults({
-      message: colorize("cyan", `[${this.id.slice(0, 4)}] MCP Client ${this.name}: `),
-    });
+    this._log = logger.child(`mcp:${this.name}`);
     this.ensureProtocolSubscription();
   }
 
@@ -292,12 +289,15 @@ export class MCPClient {
 
   private async doConnect(oauthState?: string): Promise<CachedConnection> {
     const startedAt = Date.now();
-    this._log.info("Connecting to MCP server");
+    this._log.info("mcp.connect", "Connecting to MCP server");
 
     // Expand environment variables in config
     const { expanded: expandedConfig, missingVars } = expandConfigEnvVars(this.serverConfig);
     if (missingVars.length > 0) {
-      this._log.warn(`Missing environment variables: ${missingVars.join(", ")}`);
+      this._log.warn(
+        "mcp.connect.missing-env",
+        `Missing environment variables: ${missingVars.join(", ")}`,
+      );
     }
 
     const client = new Client({
@@ -372,7 +372,11 @@ export class MCPClient {
     const timeoutPromise = new Promise<never>((_, reject) => {
       const timeoutId = setTimeout(() => {
         transport.close().catch(() => {});
-        reject(new Error(`MCP server "${this.name}" connection timed out after ${CONNECTION_TIMEOUT_MS}ms`));
+        reject(
+          new Error(
+            `MCP server "${this.name}" connection timed out after ${CONNECTION_TIMEOUT_MS}ms`,
+          ),
+        );
       }, CONNECTION_TIMEOUT_MS);
       connectPromise.then(
         () => clearTimeout(timeoutId),
@@ -384,13 +388,16 @@ export class MCPClient {
       await Promise.race([connectPromise, timeoutPromise]);
     } catch (error) {
       if (stderrOutput) {
-        this._log.error(`Server stderr: ${stderrOutput}`);
+        this._log.error("mcp.connect.stderr", `Server stderr: ${stderrOutput}`);
       }
 
       // Handle OAuth / auth errors for remote servers
       if (isMaybeRemoteConfig(expandedConfig) && error instanceof Error) {
         if (isUnauthorized(error) && !this.needOauthProvider) {
-          this._log.info("OAuth authentication required, retrying with OAuth provider");
+          this._log.info(
+            "mcp.connect.oauth-required",
+            "OAuth authentication required, retrying with OAuth provider",
+          );
           this.needOauthProvider = true;
           return this.doConnect(oauthState);
         }
@@ -402,7 +409,9 @@ export class MCPClient {
             transport,
             capabilities: {},
             cleanup: async () => {
-              try { await client.close(); } catch {}
+              try {
+                await client.close();
+              } catch {}
             },
           };
         }
@@ -413,7 +422,7 @@ export class MCPClient {
     }
 
     if (stderrOutput) {
-      this._log.error(`Server stderr: ${stderrOutput}`);
+      this._log.error("mcp.connect.stderr", `Server stderr: ${stderrOutput}`);
       stderrOutput = "";
     }
 
@@ -427,7 +436,10 @@ export class MCPClient {
     const serverVersion = client.getServerVersion() ?? undefined;
 
     const elapsed = Date.now() - startedAt;
-    this._log.info(`Connected in ${(elapsed / 1000).toFixed(2)}s, capabilities: ${JSON.stringify(capabilities)}`);
+    this._log.info(
+      "mcp.connect.success",
+      `Connected in ${(elapsed / 1000).toFixed(2)}s, capabilities: ${JSON.stringify(capabilities)}`,
+    );
 
     // Set up error and close handlers for automatic reconnection
     const cacheKey = getCacheKey(this.name, this.serverConfig);
@@ -437,18 +449,18 @@ export class MCPClient {
     const closeAndInvalidate = (reason: string) => {
       if (hasTriggeredClose) return;
       hasTriggeredClose = true;
-      this._log.info(`Closing transport: ${reason}`);
+      this._log.info("mcp.transport.close", `Closing transport: ${reason}`);
       connectionCache.delete(cacheKey);
       toolInfoCache.delete(this.name);
       client.close().catch(() => {});
     };
 
     client.onerror = (error: Error) => {
-      this._log.error(`Connection error: ${error.message}`);
+      this._log.error("mcp.connection.error", `Connection error: ${error.message}`);
 
       // Session expiry detection for HTTP transports
       if (isMaybeRemoteConfig(this.serverConfig) && isMcpSessionExpiredError(error)) {
-        this._log.info("Session expired, triggering reconnection");
+        this._log.info("mcp.session.expired", "Session expired, triggering reconnection");
         closeAndInvalidate("session expired");
         return;
       }
@@ -472,7 +484,10 @@ export class MCPClient {
     };
 
     client.onclose = () => {
-      this._log.info("Transport closed, invalidating cache for reconnection");
+      this._log.info(
+        "mcp.transport.closed",
+        "Transport closed, invalidating cache for reconnection",
+      );
       connectionCache.delete(cacheKey);
       toolInfoCache.delete(this.name);
     };
@@ -505,7 +520,9 @@ export class MCPClient {
       client,
       transport,
       capabilities,
-      serverInfo: serverVersion ? { name: serverVersion.name, version: serverVersion.version } : undefined,
+      serverInfo: serverVersion
+        ? { name: serverVersion.name, version: serverVersion.version }
+        : undefined,
       instructions: client.getInstructions(),
       cleanup,
     };
@@ -517,24 +534,47 @@ export class MCPClient {
 
   private async gracefulKillProcess(pid: number): Promise<void> {
     const isAlive = () => {
-      try { process.kill(pid, 0); return true; } catch { return false; }
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
     };
-    const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
     // 1. SIGINT (100ms grace)
-    try { process.kill(pid, "SIGINT"); } catch { return; }
+    try {
+      process.kill(pid, "SIGINT");
+    } catch {
+      return;
+    }
     await sleep(100);
-    if (!isAlive()) { this._log.info("Process exited after SIGINT"); return; }
+    if (!isAlive()) {
+      this._log.info("mcp.process.exit.sigint", "Process exited after SIGINT");
+      return;
+    }
 
     // 2. SIGTERM (400ms grace)
-    this._log.info("SIGINT failed, sending SIGTERM");
-    try { process.kill(pid, "SIGTERM"); } catch { return; }
+    this._log.info("mcp.process.sigterm", "SIGINT failed, sending SIGTERM");
+    try {
+      process.kill(pid, "SIGTERM");
+    } catch {
+      return;
+    }
     await sleep(400);
-    if (!isAlive()) { this._log.info("Process exited after SIGTERM"); return; }
+    if (!isAlive()) {
+      this._log.info("mcp.process.exit.sigterm", "Process exited after SIGTERM");
+      return;
+    }
 
     // 3. SIGKILL (force)
-    this._log.info("SIGTERM failed, sending SIGKILL");
-    try { process.kill(pid, "SIGKILL"); } catch { /* already dead */ }
+    this._log.info("mcp.process.sigkill", "SIGTERM failed, sending SIGKILL");
+    try {
+      process.kill(pid, "SIGKILL");
+    } catch {
+      /* already dead */
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -546,7 +586,7 @@ export class MCPClient {
       return undefined;
     }
 
-    this._log.info("Creating OAuth provider");
+    this._log.info("mcp.oauth.create-provider", "Creating OAuth provider");
     if (this.oauthProvider) {
       if (oauthState && oauthState !== this.oauthProvider.state()) {
         this.oauthProvider.adoptState(oauthState);
@@ -570,12 +610,15 @@ export class MCPClient {
         software_version: "1.0.0",
       },
       onRedirectToAuthorization: async (authorizationUrl: URL) => {
-        this._log.info("OAuth authorization required");
+        this._log.info("mcp.oauth.authorization-required", "OAuth authorization required");
         this.authorizationUrl = authorizationUrl;
         try {
           await shell.openExternal(authorizationUrl.toString());
         } catch (e) {
-          this._log.warn("Failed to open browser for OAuth", e);
+          this._log.warn(
+            "mcp.oauth.open-browser-failed",
+            `Failed to open browser for OAuth: ${errorToString(e)}`,
+          );
         }
         throw new OAuthAuthorizationRequiredError(authorizationUrl);
       },
@@ -600,10 +643,10 @@ export class MCPClient {
 
     if (!finish) throw new Error("finishAuth not available");
 
-    this._log.info("Exchanging OAuth code for token");
+    this._log.info("mcp.oauth.exchange", "Exchanging OAuth code for token");
     await finish.call(conn?.transport, code);
     this.authorizationUrl = undefined;
-    this._log.info("OAuth token exchange completed");
+    this._log.info("mcp.oauth.exchange.success", "OAuth token exchange completed");
   }
 
   async ensureOAuthState(state: string): Promise<void> {
@@ -616,7 +659,7 @@ export class MCPClient {
   // --------------------------------------------------------------------------
 
   async disconnect(): Promise<void> {
-    this._log.info("Disconnecting");
+    this._log.info("mcp.disconnect", "Disconnecting");
     if (this._disconnectTimer) {
       clearTimeout(this._disconnectTimer);
       this._disconnectTimer = undefined;
@@ -661,7 +704,7 @@ export class MCPClient {
       }));
       toolInfoCache.set(this.name, this.toolInfo);
     } catch (err) {
-      this._log.error("Failed to fetch tools", err);
+      this._log.error(toError(err), "mcp.tools.fetch-failed", "Failed to fetch tools");
     }
   }
 
@@ -676,7 +719,9 @@ export class MCPClient {
     try {
       const client = await this.ensureConnected();
       if (this.status === "needs-auth") {
-        throw new Error("OAuth authorization required. Refresh the MCP client to initiate authorization.");
+        throw new Error(
+          "OAuth authorization required. Refresh the MCP client to initiate authorization.",
+        );
       }
 
       this.scheduleAutoDisconnect();
@@ -696,7 +741,7 @@ export class MCPClient {
 
       // Auto-reconnect on transport closed
       if (errMsg.includes("Transport is closed")) {
-        this._log.info("Transport closed, reconnecting");
+        this._log.info("mcp.tool.reconnect", "Transport closed, reconnecting");
         clearConnectionCache(this.name, this.serverConfig);
         const client = await this.ensureConnected();
         return client.callTool({
@@ -705,7 +750,7 @@ export class MCPClient {
         });
       }
 
-      this._log.error("Tool call failed", toolName, err);
+      this._log.error(toError(err), "mcp.tool.call-failed", `Tool call failed: ${toolName}`);
       return {
         isError: true,
         error: { message: errorToString(err), name: (err as Error)?.name || "ERROR" },
@@ -738,7 +783,10 @@ export class MCPClient {
       if (this.inProgressToolCallIds.length === 0) {
         this.disconnect();
       } else {
-        this._log.info(`Skipping auto-disconnect: ${this.inProgressToolCallIds.length} calls in progress`);
+        this._log.info(
+          "mcp.disconnect.skip",
+          `Skipping auto-disconnect: ${this.inProgressToolCallIds.length} calls in progress`,
+        );
         this.scheduleAutoDisconnect();
       }
     }, this.options.autoDisconnectSeconds * 1000);
@@ -750,16 +798,18 @@ export class MCPClient {
 
   private ensureProtocolSubscription(): void {
     if (this.unsubscribeProtocol) return;
-    this.unsubscribeProtocol = onMcpOAuthCallback(async ({ code, state }: { code: string; state: string }) => {
-      try {
-        await this.ensureOAuthState(state);
-        if (this.status !== "needs-auth") return;
-        await this.finishAuth(code, state);
-        await this.connect(state);
-      } catch (e) {
-        this._log.error("OAuth callback failed", e);
-      }
-    });
+    this.unsubscribeProtocol = onMcpOAuthCallback(
+      async ({ code, state }: { code: string; state: string }) => {
+        try {
+          await this.ensureOAuthState(state);
+          if (this.status !== "needs-auth") return;
+          await this.finishAuth(code, state);
+          await this.connect(state);
+        } catch (e) {
+          this._log.error(toError(e), "mcp.oauth.callback-failed", "OAuth callback failed");
+        }
+      },
+    );
   }
 }
 

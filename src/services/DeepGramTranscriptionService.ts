@@ -96,7 +96,9 @@ export class DeepgramTranscriptionService implements ITranscriptionService {
       const tokenParam = config.token ? `&token=${encodeURIComponent(config.token)}` : "";
       const wsUrl = `${baseWsUrl}?source=${this.source}${tokenParam}`;
       const sanitizedLogUrl = `${baseWsUrl}?source=${this.source}${config.token ? "&token=[REDACTED]" : ""}`;
-      console.log(`DeepgramTranscriptionService (${this.source}): Connecting to server at ${sanitizedLogUrl}...`);
+      console.log(
+        `DeepgramTranscriptionService (${this.source}): Connecting to server at ${sanitizedLogUrl}...`,
+      );
 
       this.socket = new WebSocket(wsUrl);
 

@@ -1,7 +1,7 @@
 import { IoImage } from "react-icons/io5";
 import { TbBubble } from "react-icons/tb";
 import { useSharedState } from "@/shared";
-import { Popover } from "@base-ui-components/react/popover";
+import { Popover } from "@base-ui/react/popover";
 import type { ModelMessage } from "ai";
 import { animate } from "motion";
 import { AnimatePresence, motion, useMotionValue } from "motion/react";
@@ -316,7 +316,7 @@ const ScreenshotTool = ({ url }: { url: string | null }) => {
   }, [windowHidden]);
 
   return (
-    <Popover.Root open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
+    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
       <Popover.Trigger openOnHover={!windowHidden} delay={0}>
         <div className="flex pr-2 items-center gap-1 text-[11px] font-medium text-white/40 text-shadow-[0_0_1px_2px_rgba(0,0,0,0.1)]">
           Sent with screenshot

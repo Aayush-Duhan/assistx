@@ -9,7 +9,7 @@ export const MODEL_DEFAULTS = {
   kind: "llm",
   quotaFamily: "normal",
   strip: [] as string[],
-  targetFormat: null as string | null
+  targetFormat: null as string | null,
 };
 
 export function normalizeModel(raw: any): any {

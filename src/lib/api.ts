@@ -5,7 +5,11 @@
 
 let cachedServerConfig: { baseUrl: string; wsUrl: string; token: string } | null = null;
 
-export async function getServerConfig(): Promise<{ baseUrl: string; wsUrl: string; token: string }> {
+export async function getServerConfig(): Promise<{
+  baseUrl: string;
+  wsUrl: string;
+  token: string;
+}> {
   if (cachedServerConfig) {
     return cachedServerConfig;
   }

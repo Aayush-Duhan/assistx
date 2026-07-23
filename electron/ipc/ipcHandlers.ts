@@ -1,11 +1,7 @@
 import { app, desktopCapturer, shell, systemPreferences, BrowserWindow } from "electron";
 import { windowManager } from "../windows/WindowManager";
 import { handle, on } from "./ipcMain";
-import {
-  checkForUpdates,
-  getUpdateStatus,
-  installUpdate,
-} from "../features/autoUpdater";
+import { checkForUpdates, getUpdateStatus, installUpdate } from "../features/autoUpdater";
 import { getVersionInfo } from "../utils/versionInfo";
 import {
   enableDevShortcuts,
@@ -187,7 +183,7 @@ export function initializeIpcHandlers(): void {
           const parsed = new URL(currentUrl);
           const code = parsed.searchParams.get("code");
           const error = parsed.searchParams.get("error");
-          
+
           resolved = true;
           authWindow.destroy();
           resolve({ code, error });
@@ -227,4 +223,3 @@ export function initializeIpcHandlers(): void {
     }
   });
 }
-

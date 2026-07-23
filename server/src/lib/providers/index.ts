@@ -21,10 +21,20 @@ function buildTransport(transport: TransportConfig, oauth?: OAuthConfig): Transp
 }
 
 const MEDIA_KEYS = new Set([
-  "serviceKinds", "ttsConfig", "sttConfig", "embeddingConfig",
-  "imageConfig", "imageToTextConfig", "videoConfig", "musicConfig",
-  "searchViaChat", "searchConfig", "fetchConfig",
-  "modelsFetcher", "mediaPriority", "hiddenKinds",
+  "serviceKinds",
+  "ttsConfig",
+  "sttConfig",
+  "embeddingConfig",
+  "imageConfig",
+  "imageToTextConfig",
+  "videoConfig",
+  "musicConfig",
+  "searchViaChat",
+  "searchConfig",
+  "fetchConfig",
+  "modelsFetcher",
+  "mediaPriority",
+  "hiddenKinds",
 ]);
 
 export const PROVIDERS: Record<string, any> = {};
@@ -47,15 +57,21 @@ for (const rawEntry of REGISTRY) {
   if (entry.oauth) {
     PROVIDER_OAUTH[entry.id] = { ...entry.oauth };
     if (entry.transport) {
-      if (PROVIDER_OAUTH[entry.id].clientId === undefined && entry.transport.clientId !== undefined) {
+      if (
+        PROVIDER_OAUTH[entry.id].clientId === undefined &&
+        entry.transport.clientId !== undefined
+      ) {
         PROVIDER_OAUTH[entry.id].clientId = entry.transport.clientId;
       }
-      if (PROVIDER_OAUTH[entry.id].clientSecret === undefined && entry.transport.clientSecret !== undefined) {
+      if (
+        PROVIDER_OAUTH[entry.id].clientSecret === undefined &&
+        entry.transport.clientSecret !== undefined
+      ) {
         PROVIDER_OAUTH[entry.id].clientSecret = entry.transport.clientSecret;
       }
     }
   }
-  
+
   const mediaFields: any = {};
   for (const k of MEDIA_KEYS) {
     if ((entry as any)[k] !== undefined) {
@@ -67,7 +83,6 @@ for (const rawEntry of REGISTRY) {
     PROVIDER_MEDIA[entry.id] = mediaFields;
   }
 }
-
 
 // TTS model/voice tables keyed by special names (openai-tts-models, ...), not provider ids
 Object.assign(PROVIDER_MODELS, buildTtsProviderModels());

@@ -1,4 +1,3 @@
-
 export default {
   id: "codex",
   priority: 30,
@@ -15,18 +14,13 @@ export default {
     deprecated: true,
     deprecationNotice: "RISK_NOTICE",
     kindNotice: {
-      image: "Requires a ChatGPT Plus (or higher) account. Free accounts are not supported for image generation.",
+      image:
+        "Requires a ChatGPT Plus (or higher) account. Free accounts are not supported for image generation.",
     },
   },
   category: "oauth",
   thinkingConfig: {
-    options: [
-      "auto",
-      "none",
-      "low",
-      "medium",
-      "high",
-    ],
+    options: ["auto", "none", "low", "medium", "high"],
     defaultMode: "auto",
   },
   transport: {
@@ -40,29 +34,83 @@ export default {
     usage: {
       url: "https://chatgpt.com/backend-api/wham/usage",
       resetCreditsUrl: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits",
-      resetCreditsConsumeUrl: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits/consume",
+      resetCreditsConsumeUrl:
+        "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits/consume",
     },
   },
   models: [
     { id: "gpt-5.6-sol", name: "GPT 5.6 Sol" },
-    { id: "gpt-5.6-sol-review", name: "GPT 5.6 Sol Review", upstreamModelId: "gpt-5.6-sol", quotaFamily: "review" },
+    {
+      id: "gpt-5.6-sol-review",
+      name: "GPT 5.6 Sol Review",
+      upstreamModelId: "gpt-5.6-sol",
+      quotaFamily: "review",
+    },
     { id: "gpt-5.6-terra", name: "GPT 5.6 Terra" },
-    { id: "gpt-5.6-terra-review", name: "GPT 5.6 Terra Review", upstreamModelId: "gpt-5.6-terra", quotaFamily: "review" },
+    {
+      id: "gpt-5.6-terra-review",
+      name: "GPT 5.6 Terra Review",
+      upstreamModelId: "gpt-5.6-terra",
+      quotaFamily: "review",
+    },
     { id: "gpt-5.6-luna", name: "GPT 5.6 Luna" },
-    { id: "gpt-5.6-luna-review", name: "GPT 5.6 Luna Review", upstreamModelId: "gpt-5.6-luna", quotaFamily: "review" },
+    {
+      id: "gpt-5.6-luna-review",
+      name: "GPT 5.6 Luna Review",
+      upstreamModelId: "gpt-5.6-luna",
+      quotaFamily: "review",
+    },
     { id: "gpt-5.5", name: "GPT 5.5" },
-    { id: "gpt-5.5-review", name: "GPT 5.5 Review", upstreamModelId: "gpt-5.5", quotaFamily: "review" },
+    {
+      id: "gpt-5.5-review",
+      name: "GPT 5.5 Review",
+      upstreamModelId: "gpt-5.5",
+      quotaFamily: "review",
+    },
     { id: "gpt-5.4", name: "GPT 5.4" },
-    { id: "gpt-5.4-review", name: "GPT 5.4 Review", upstreamModelId: "gpt-5.4", quotaFamily: "review" },
+    {
+      id: "gpt-5.4-review",
+      name: "GPT 5.4 Review",
+      upstreamModelId: "gpt-5.4",
+      quotaFamily: "review",
+    },
     { id: "gpt-5.4-mini", name: "GPT 5.4 Mini" },
-    { id: "gpt-5.4-mini-review", name: "GPT 5.4 Mini Review", upstreamModelId: "gpt-5.4-mini", quotaFamily: "review" },
+    {
+      id: "gpt-5.4-mini-review",
+      name: "GPT 5.4 Mini Review",
+      upstreamModelId: "gpt-5.4-mini",
+      quotaFamily: "review",
+    },
     { id: "gpt-5.3-codex-spark", name: "GPT 5.3 Codex Spark" },
-    { id: "gpt-5.3-codex-spark-review", name: "GPT 5.3 Codex Spark Review", upstreamModelId: "gpt-5.3-codex-spark", quotaFamily: "review" },
-    { id: "gpt-5.5-image", name: "GPT 5.5 Image", capabilities: ["text2img","edit"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
-    { id: "gpt-5.4-image", name: "GPT 5.4 Image", capabilities: ["text2img","edit"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
-    { id: "gpt-5.3-image", name: "GPT 5.3 Image", capabilities: ["text2img","edit"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    {
+      id: "gpt-5.3-codex-spark-review",
+      name: "GPT 5.3 Codex Spark Review",
+      upstreamModelId: "gpt-5.3-codex-spark",
+      quotaFamily: "review",
+    },
+    {
+      id: "gpt-5.5-image",
+      name: "GPT 5.5 Image",
+      capabilities: ["text2img", "edit"],
+      params: ["size", "quality", "background", "image_detail", "output_format"],
+      kind: "image",
+    },
+    {
+      id: "gpt-5.4-image",
+      name: "GPT 5.4 Image",
+      capabilities: ["text2img", "edit"],
+      params: ["size", "quality", "background", "image_detail", "output_format"],
+      kind: "image",
+    },
+    {
+      id: "gpt-5.3-image",
+      name: "GPT 5.3 Image",
+      capabilities: ["text2img", "edit"],
+      params: ["size", "quality", "background", "image_detail", "output_format"],
+      kind: "image",
+    },
   ],
-  serviceKinds: ["llm","image"],
+  serviceKinds: ["llm", "image"],
   oauth: {
     clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
     authorizeUrl: "https://auth.openai.com/oauth/authorize",

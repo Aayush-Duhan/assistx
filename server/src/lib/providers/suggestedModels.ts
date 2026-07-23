@@ -11,9 +11,7 @@ const FILTERS: Record<string, Filter> = {
     models
       .filter(
         (m) =>
-          m.pricing?.prompt === "0" &&
-          m.pricing?.completion === "0" &&
-          m.context_length >= 200000
+          m.pricing?.prompt === "0" && m.pricing?.completion === "0" && m.context_length >= 200000,
       )
       .map((m) => ({ id: m.id, name: m.name, contextLength: m.context_length }))
       .sort((a, b) => (b.contextLength ?? 0) - (a.contextLength ?? 0)),
@@ -34,7 +32,7 @@ const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const cache = new Map<string, { data: SuggestedModel[]; expiresAt: number }>();
 
 export async function fetchSuggestedModels(
-  fetcher: { url: string; type: string } | undefined
+  fetcher: { url: string; type: string } | undefined,
 ): Promise<SuggestedModel[]> {
   if (!fetcher?.url || !fetcher?.type) return [];
 
@@ -49,9 +47,7 @@ export async function fetchSuggestedModels(
     const list = Array.isArray(raw) ? raw : [];
     const filter = FILTERS[fetcher.type];
     // Unknown type = OpenAI-style passthrough: accept every model id
-    const data = filter
-      ? filter(list)
-      : list.map((m: any) => ({ id: m.id, name: m.name || m.id }));
+    const data = filter ? filter(list) : list.map((m: any) => ({ id: m.id, name: m.name || m.id }));
     cache.set(fetcher.url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
     return data;
   } catch {

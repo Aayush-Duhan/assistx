@@ -72,10 +72,7 @@ export async function authorizeMcpClientAction(id: string) {
   return client.client.getAuthorizationUrl()?.toString();
 }
 
-export async function toggleMcpClientConnectionAction(
-  id: string,
-  status: MCPServerStatus,
-) {
+export async function toggleMcpClientConnectionAction(id: string, status: MCPServerStatus) {
   const entry = await mcpClientsManager.getClient(id);
   if (!entry) {
     throw new Error(`Client ${id} not found`);

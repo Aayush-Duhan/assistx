@@ -2,9 +2,7 @@ export default {
   id: "vertex",
   priority: 40,
   alias: "vertex",
-  aliases: [
-    "vx",
-  ],
+  aliases: ["vx"],
   uiAlias: "vx",
   display: {
     name: "Vertex AI",
@@ -28,5 +26,5 @@ export default {
     { id: "gemini-3-flash-preview", name: "Gemini 3 Flash Preview" },
     { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
   ],
-  serviceKinds: ["llm","imageToText"],
+  serviceKinds: ["llm", "imageToText"],
 };

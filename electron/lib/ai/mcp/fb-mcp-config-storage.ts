@@ -12,11 +12,8 @@ import { createDebounce } from "../../utils";
 import equal from "../../equal";
 import defaultLogger from "../../logger";
 import { MCP_CONFIG_PATH } from "./config-path";
-import { colorize } from "consola/utils";
 
-const logger = defaultLogger.withDefaults({
-  message: colorize("gray", `MCP File Config Storage: `),
-});
+const logger = defaultLogger.child("mcp-config-storage");
 
 /**
  * Creates a file-based implementation of MCPServerStorage
@@ -61,7 +58,7 @@ export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorag
 
   async function checkAndRefreshClients() {
     try {
-      logger.debug("Checking MCP clients Diff");
+      logger.debug("mcp.config.check", "Checking MCP clients diff");
       const fileConfig = await readConfigFile();
 
       const fileConfigs = fileConfig.slice().sort((a, b) => a.id.localeCompare(b.id));
@@ -89,11 +86,11 @@ export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorag
         const refreshPromises = fileConfigs.map(async ({ id, name, config }) => {
           const managerConfig = await manager.getClient(id);
           if (!managerConfig) {
-            logger.debug(`Adding MCP client ${id}`);
+            logger.debug("mcp.config.add", `Adding MCP client ${id}`);
             return manager.addClient(id, name, config);
           }
           if (!equal(managerConfig.client.getInfo().config, config)) {
-            logger.debug(`Refreshing MCP client ${id}`);
+            logger.debug("mcp.config.refresh", `Refreshing MCP client ${id}`);
             return manager.refreshClient(id);
           }
         });
@@ -103,13 +100,17 @@ export function createFileBasedMCPConfigsStorage(path?: string): MCPConfigStorag
             return !fileConfig;
           })
           .map((c) => {
-            logger.debug(`Removing MCP client ${c.id}`);
+            logger.debug("mcp.config.remove", `Removing MCP client ${c.id}`);
             return manager.removeClient(c.id);
           });
         await Promise.allSettled([...refreshPromises, ...deletePromises]);
       }
     } catch (err) {
-      logger.error("Error checking and refreshing clients:", err);
+      logger.error(
+        err instanceof Error ? err : new Error(String(err)),
+        "mcp.config.check.error",
+        "Error checking and refreshing clients",
+      );
     }
   }
 

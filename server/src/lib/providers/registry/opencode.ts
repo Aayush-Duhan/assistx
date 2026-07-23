@@ -13,7 +13,8 @@ export default {
   category: "free",
   noAuth: true,
   transport: {
-    baseUrl: "https://opencode.ai",
+    // Full chat endpoint (assistx convention) — 9router's executor appends this path itself
+    baseUrl: "https://opencode.ai/zen/v1/chat/completions",
     headers: {
       "x-opencode-client": "desktop",
     },

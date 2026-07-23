@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 
 interface ModelInfo {
+  id: string;
   name: string;
 }
 
@@ -20,9 +21,10 @@ export const useChatModels = () => {
     const fetchModels = async () => {
       try {
         setIsLoading(true);
-        const [modelsRes, connectionsRes] = await Promise.all([
+        const [modelsRes, connectionsRes, catalogRes] = await Promise.all([
           apiFetch("/providers/models"),
           apiFetch("/providers"),
+          apiFetch("/providers/catalog"),
         ]);
         if (!modelsRes.ok || !connectionsRes.ok) throw new Error("Failed to fetch models");
         const { providerModels } = (await modelsRes.json()) as {
@@ -31,14 +33,21 @@ export const useChatModels = () => {
         const { connections } = (await connectionsRes.json()) as {
           connections: { provider: string; isActive: boolean }[];
         };
+        const { providers: catalog } = (
+          catalogRes.ok ? await catalogRes.json() : { providers: [] }
+        ) as { providers: { id: string; noAuth: boolean }[] };
+        const noAuthProviders = new Set(catalog.filter((p) => p.noAuth).map((p) => p.id));
 
-        const activeProviders = new Set(connections.filter((c) => c.isActive).map((c) => c.provider));
+        const activeProviders = new Set(
+          connections.filter((c) => c.isActive).map((c) => c.provider),
+        );
 
         const transformed: ProviderInfo[] = Object.entries(providerModels).map(
           ([providerId, models]) => ({
             provider: providerId,
-            hasAPIKey: activeProviders.has(providerId),
-            models: models.map((m) => ({ name: m.name })),
+            // No-auth providers (e.g. OpenCode Free) are always usable — no key needed
+            hasAPIKey: activeProviders.has(providerId) || noAuthProviders.has(providerId),
+            models: models.map((m) => ({ id: m.id, name: m.name })),
           }),
         );
 

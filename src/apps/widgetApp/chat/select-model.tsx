@@ -117,19 +117,19 @@ export const ModelList = ({ selectedModel, onSelect, className }: ModelListProps
             >
               {provider.models.map((item) => (
                 <CommandItem
-                  key={item.name}
+                  key={item.id}
                   disabled={!provider.hasAPIKey}
                   className="cursor-pointer"
                   onSelect={() => {
                     onSelect({
                       provider: provider.provider,
-                      model: item.name,
+                      model: item.id,
                     });
                   }}
-                  value={item.name}
+                  value={`${item.name} ${item.id}`}
                 >
                   {selectedModel?.provider === provider.provider &&
-                  selectedModel?.model === item.name ? (
+                  selectedModel?.model === item.id ? (
                     <LuCheck className="size-3" />
                   ) : (
                     <div className="ml-3" />

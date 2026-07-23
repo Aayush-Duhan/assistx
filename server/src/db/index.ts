@@ -5,11 +5,7 @@ import * as schema from "./schema";
 import path from "node:path";
 import { existsSync, mkdirSync } from "node:fs";
 import { uuidv7 } from "uuidv7";
-import {
-  DEFAULT_MODES,
-  DEFAULT_AGENTS,
-  getProviderDisplayName,
-} from "./seed-data";
+import { DEFAULT_MODES, DEFAULT_AGENTS, getProviderDisplayName } from "./seed-data";
 import { logger } from "../lib/pino/logger";
 
 // Types for external use
@@ -72,11 +68,12 @@ export function initializeDatabase() {
   migrateApiKeysToProviderConnections();
 
   // Start proactive token refresh for OAuth connections
-  import("../lib/oauth/tokenRefreshService").then((m) => m.startTokenRefreshService()).catch(() => {});
+  import("../lib/oauth/tokenRefreshService")
+    .then((m) => m.startTokenRefreshService())
+    .catch(() => {});
 
   logger.info("db.init", "Database initialized", { path: dbPath });
   return db;
-
 }
 
 /**
@@ -419,7 +416,11 @@ export function rowToConn(row: any): any {
       decryptedData = JSON.parse(decryptApiKey(row.data));
     }
   } catch (e) {
-    logger.error(e instanceof Error ? e : new Error(String(e)), "db.rowToConn.decrypt.error", "Failed to decrypt connection data");
+    logger.error(
+      e instanceof Error ? e : new Error(String(e)),
+      "db.rowToConn.decrypt.error",
+      "Failed to decrypt connection data",
+    );
   }
   return {
     ...decryptedData,
@@ -436,7 +437,8 @@ export function rowToConn(row: any): any {
 }
 
 export function connToRow(c: any): any {
-  const { id, provider, authType, name, email, priority, isActive, createdAt, updatedAt, ...rest } = c;
+  const { id, provider, authType, name, email, priority, isActive, createdAt, updatedAt, ...rest } =
+    c;
   const encryptedData = encryptApiKey(JSON.stringify(rest));
   return {
     id,
@@ -452,7 +454,9 @@ export function connToRow(c: any): any {
   };
 }
 
-export function getProviderConnections(filter: { provider?: string; isActive?: boolean } = {}): any[] {
+export function getProviderConnections(
+  filter: { provider?: string; isActive?: boolean } = {},
+): any[] {
   const database = getDatabase();
   const conditions = [];
   if (filter.provider) {
@@ -466,7 +470,7 @@ export function getProviderConnections(filter: { provider?: string; isActive?: b
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;
   }
-  
+
   const rows = query.all();
   const list = rows.map(rowToConn);
   list.sort((a, b) => (a.priority || 999) - (b.priority || 999));
@@ -486,13 +490,13 @@ export function getProviderConnectionById(id: string): any {
 export function createProviderConnection(data: any): any {
   const database = getDatabase();
   const now = new Date().toISOString();
-  
+
   const all = getProviderConnections({ provider: data.provider });
   let existing = null;
   if (data.authType === "oauth" && data.email) {
     const incomingUsername = data.providerSpecificData?.username;
     const incomingWs = data.providerSpecificData?.chatgptAccountId;
-    existing = all.find(c => {
+    existing = all.find((c) => {
       if (c.authType !== "oauth" || c.email !== data.email) return false;
       if (data.provider === "codex") {
         const existingWs = c.providerSpecificData?.chatgptAccountId;
@@ -510,7 +514,7 @@ export function createProviderConnection(data: any): any {
       return true;
     });
   } else if (data.authType === "apikey" && data.name) {
-    existing = all.find(c => c.authType === "apikey" && c.name === data.name);
+    existing = all.find((c) => c.authType === "apikey" && c.name === data.name);
   }
 
   if (existing) {
@@ -552,13 +556,29 @@ export function createProviderConnection(data: any): any {
     createdAt: now,
     updatedAt: now,
   };
-  
+
   const OPTIONAL_FIELDS = [
-    "displayName", "email", "globalPriority", "defaultModel",
-    "accessToken", "refreshToken", "expiresAt", "tokenType",
-    "scope", "projectId", "apiKey", "testStatus",
-    "lastTested", "lastError", "lastErrorAt", "rateLimitedUntil", "expiresIn", "errorCode",
-    "consecutiveUseCount", "idToken", "lastRefreshAt",
+    "displayName",
+    "email",
+    "globalPriority",
+    "defaultModel",
+    "accessToken",
+    "refreshToken",
+    "expiresAt",
+    "tokenType",
+    "scope",
+    "projectId",
+    "apiKey",
+    "testStatus",
+    "lastTested",
+    "lastError",
+    "lastErrorAt",
+    "rateLimitedUntil",
+    "expiresIn",
+    "errorCode",
+    "consecutiveUseCount",
+    "idToken",
+    "lastRefreshAt",
   ];
   for (const f of OPTIONAL_FIELDS) {
     if (data[f] !== undefined && data[f] !== null) conn[f] = data[f];
@@ -570,7 +590,7 @@ export function createProviderConnection(data: any): any {
 
   const r = connToRow(conn);
   database.insert(schema.providerConnections).values(r).run();
-  
+
   reorderInTx(data.provider);
 
   return getProviderConnectionById(conn.id);
@@ -583,7 +603,7 @@ export function updateProviderConnection(id: string, data: any): any {
 
   const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
   const r = connToRow(merged);
-  
+
   database
     .update(schema.providerConnections)
     .set({
@@ -602,7 +622,7 @@ export function updateProviderConnection(id: string, data: any): any {
   if (data.priority !== undefined) {
     reorderInTx(existing.provider);
   }
-  
+
   return getProviderConnectionById(id);
 }
 
@@ -611,10 +631,7 @@ export function deleteProviderConnection(id: string): boolean {
   const existing = getProviderConnectionById(id);
   if (!existing) return false;
 
-  database
-    .delete(schema.providerConnections)
-    .where(eq(schema.providerConnections.id, id))
-    .run();
+  database.delete(schema.providerConnections).where(eq(schema.providerConnections.id, id)).run();
 
   reorderInTx(existing.provider);
   return true;
@@ -632,11 +649,13 @@ export function deleteProviderConnectionsByProvider(providerId: string): number 
 
 function deriveConnectionName(data: any, fallbackName: string) {
   if (data.provider === "github") {
-    return data.providerSpecificData?.githubLogin
-      || data.providerSpecificData?.githubEmail
-      || data.email
-      || data.providerSpecificData?.githubName
-      || fallbackName;
+    return (
+      data.providerSpecificData?.githubLogin ||
+      data.providerSpecificData?.githubEmail ||
+      data.email ||
+      data.providerSpecificData?.githubName ||
+      fallbackName
+    );
   }
   return fallbackName;
 }
@@ -666,7 +685,11 @@ export function rowToNode(row: any): any {
       parsedData = JSON.parse(row.data);
     }
   } catch (e) {
-    logger.error(e instanceof Error ? e : new Error(String(e)), "db.rowToNode.parse.error", "Failed to parse node data");
+    logger.error(
+      e instanceof Error ? e : new Error(String(e)),
+      "db.rowToNode.parse.error",
+      "Failed to parse node data",
+    );
   }
   return {
     ...parsedData,
@@ -724,7 +747,7 @@ export function createProviderNode(data: any): any {
     updatedAt: now,
   };
   const r = nodeToRow(node);
-  
+
   database
     .insert(schema.providerNodes)
     .values(r)
@@ -735,10 +758,10 @@ export function createProviderNode(data: any): any {
         name: r.name,
         data: r.data,
         updatedAt: r.updatedAt,
-      }
+      },
     })
     .run();
-    
+
   return node;
 }
 
@@ -748,7 +771,7 @@ export function updateProviderNode(id: string, data: any): any {
   if (!existing) return null;
   const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
   const r = nodeToRow(merged);
-  
+
   database
     .update(schema.providerNodes)
     .set({
@@ -759,7 +782,7 @@ export function updateProviderNode(id: string, data: any): any {
     })
     .where(eq(schema.providerNodes.id, id))
     .run();
-    
+
   return getProviderNodeById(id);
 }
 
@@ -767,22 +790,21 @@ export function deleteProviderNode(id: string): any {
   const database = getDatabase();
   const existing = getProviderNodeById(id);
   if (!existing) return null;
-  
-  database
-    .delete(schema.providerNodes)
-    .where(eq(schema.providerNodes.id, id))
-    .run();
-    
+
+  database.delete(schema.providerNodes).where(eq(schema.providerNodes.id, id)).run();
+
   return existing;
 }
 
-export function getActiveCredentialForProvider(providerId: string): { apiKey?: string; accessToken?: string } | null {
+export function getActiveCredentialForProvider(
+  providerId: string,
+): { apiKey?: string; accessToken?: string } | null {
   const connections = getProviderConnections({ provider: providerId, isActive: true });
   if (connections.length === 0) return null;
   const conn = connections[0];
   return {
     apiKey: conn.apiKey,
-    accessToken: conn.accessToken
+    accessToken: conn.accessToken,
   };
 }
 
@@ -827,7 +849,9 @@ export function deleteApiKey(provider: string): void {
 export function migrateApiKeysToProviderConnections() {
   if (!sqlite) return;
   try {
-    const apiKeysCount = sqlite.prepare("SELECT COUNT(*) as count FROM api_keys").get() as { count: number };
+    const apiKeysCount = sqlite.prepare("SELECT COUNT(*) as count FROM api_keys").get() as {
+      count: number;
+    };
     if (!apiKeysCount || apiKeysCount.count === 0) return;
 
     logger.info("db.migration", "Starting API keys migration to provider_connections...");
@@ -836,43 +860,53 @@ export function migrateApiKeysToProviderConnections() {
     const now = new Date().toISOString();
 
     for (const row of rows) {
-      const existing = sqlite.prepare("SELECT id FROM provider_connections WHERE provider = ? AND auth_type = 'apikey'").get([row.provider]);
+      const existing = sqlite
+        .prepare("SELECT id FROM provider_connections WHERE provider = ? AND auth_type = 'apikey'")
+        .get([row.provider]);
       if (!existing) {
         let plainKey = "";
         try {
           plainKey = decryptApiKey(row.encrypted_key);
         } catch (e) {
-          logger.error(e instanceof Error ? e : new Error(String(e)), "db.migration.decrypt_error", `Failed to decrypt key for ${row.provider}`);
+          logger.error(
+            e instanceof Error ? e : new Error(String(e)),
+            "db.migration.decrypt_error",
+            `Failed to decrypt key for ${row.provider}`,
+          );
           continue;
         }
 
         const connData = { apiKey: plainKey };
         const encryptedData = encryptApiKey(JSON.stringify(connData));
 
-        sqlite.prepare(`
+        sqlite
+          .prepare(`
           INSERT INTO provider_connections (id, provider, auth_type, name, priority, is_active, data, created_at, updated_at)
           VALUES (?, ?, 'apikey', ?, 1, 1, ?, ?, ?)
-        `).run([
-          uuidv7(),
-          row.provider,
-          row.name || getProviderDisplayName(row.provider),
-          encryptedData,
-          now,
-          now
-        ]);
-        
-        logger.info("db.migration", `Successfully migrated key for provider ${row.provider} to provider_connections`);
+        `)
+          .run([
+            uuidv7(),
+            row.provider,
+            row.name || getProviderDisplayName(row.provider),
+            encryptedData,
+            now,
+            now,
+          ]);
+
+        logger.info(
+          "db.migration",
+          `Successfully migrated key for provider ${row.provider} to provider_connections`,
+        );
       }
     }
   } catch (error) {
     logger.error(
       error instanceof Error ? error : new Error(String(error)),
       "db.migration.error",
-      "Failed to run API keys to provider_connections migration"
+      "Failed to run API keys to provider_connections migration",
     );
   }
 }
-
 
 // getProviderDisplayName is now imported from seed-data.ts
 

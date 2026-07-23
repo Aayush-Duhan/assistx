@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 export const ENTERPRISE_COACHING_ANALYSIS_SYSTEM_PROMPT = (displayLanguage: string) => `
 You are an expert AI for analyzing sales call interactions and providing coaching insights. Your job is to analyze the transcript and calculate key interaction metrics that help improve sales performance.

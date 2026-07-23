@@ -57,7 +57,9 @@ export async function oauthRoutes(fastify: FastifyInstance): Promise<void> {
         }
 
         if (!redirectUri) {
-          return reply.status(400).send({ error: "redirectUri is required for authorization code flow" });
+          return reply
+            .status(400)
+            .send({ error: "redirectUri is required for authorization code flow" });
         }
 
         const authData = generateAuthData(provider, redirectUri);
@@ -111,50 +113,50 @@ export async function oauthRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   // POST /:provider/poll — poll device code for token
-  fastify.post<{ Params: ProviderParams; Body: { deviceCode: string; codeVerifier?: string; extraData?: Record<string, unknown> } }>(
-    "/:provider/poll",
-    async (request, reply) => {
-      const { provider } = request.params;
-      const { deviceCode, codeVerifier, extraData } = request.body || {};
+  fastify.post<{
+    Params: ProviderParams;
+    Body: { deviceCode: string; codeVerifier?: string; extraData?: Record<string, unknown> };
+  }>("/:provider/poll", async (request, reply) => {
+    const { provider } = request.params;
+    const { deviceCode, codeVerifier, extraData } = request.body || {};
 
-      if (!deviceCode) {
-        return reply.status(400).send({ error: "deviceCode is required" });
-      }
+    if (!deviceCode) {
+      return reply.status(400).send({ error: "deviceCode is required" });
+    }
 
-      try {
-        const result = await pollDeviceToken(provider, deviceCode, codeVerifier, extraData);
+    try {
+      const result = await pollDeviceToken(provider, deviceCode, codeVerifier, extraData);
 
-        if (result.success && result.tokens) {
-          const conn = createProviderConnection({
-            provider,
-            authType: "oauth",
-            name: result.tokens.displayName || result.tokens.email || provider,
-            email: result.tokens.email,
-            accessToken: result.tokens.accessToken,
-            refreshToken: result.tokens.refreshToken,
-            expiresAt: result.tokens.expiresIn
-              ? new Date(Date.now() + result.tokens.expiresIn * 1000).toISOString()
-              : undefined,
-            scope: result.tokens.scope,
-            isActive: true,
-            providerSpecificData: result.tokens.providerSpecificData,
-          });
-
-          return reply.status(201).send({ success: true, connection: stripSecrets(conn) });
-        }
-
-        return reply.send({
-          success: false,
-          pending: result.pending || false,
-          error: result.error,
+      if (result.success && result.tokens) {
+        const conn = createProviderConnection({
+          provider,
+          authType: "oauth",
+          name: result.tokens.displayName || result.tokens.email || provider,
+          email: result.tokens.email,
+          accessToken: result.tokens.accessToken,
+          refreshToken: result.tokens.refreshToken,
+          expiresAt: result.tokens.expiresIn
+            ? new Date(Date.now() + result.tokens.expiresIn * 1000).toISOString()
+            : undefined,
+          scope: result.tokens.scope,
+          isActive: true,
+          providerSpecificData: result.tokens.providerSpecificData,
         });
-      } catch (err) {
-        return reply
-          .status(500)
-          .send({ success: false, error: err instanceof Error ? err.message : "Poll failed" });
+
+        return reply.status(201).send({ success: true, connection: stripSecrets(conn) });
       }
-    },
-  );
+
+      return reply.send({
+        success: false,
+        pending: result.pending || false,
+        error: result.error,
+      });
+    } catch (err) {
+      return reply
+        .status(500)
+        .send({ success: false, error: err instanceof Error ? err.message : "Poll failed" });
+    }
+  });
 
   // POST /:provider/refresh — manually refresh a connection's token
   fastify.post<{ Params: ProviderParams; Body: { connectionId: string } }>(

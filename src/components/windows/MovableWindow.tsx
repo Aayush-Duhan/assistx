@@ -2,7 +2,10 @@ import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { InlineWindow, InlineWindowProps } from "./InlineWindow";
 import { MovableWindowsPortal } from "../Portal";
-import { incrementMovableWindowCount, decrementMovableWindowCount } from "@/state/movableWindowCount";
+import {
+  incrementMovableWindowCount,
+  decrementMovableWindowCount,
+} from "@/state/movableWindowCount";
 
 interface MovableWindowProps extends InlineWindowProps {
   show?: boolean;

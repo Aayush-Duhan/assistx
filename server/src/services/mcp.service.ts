@@ -29,7 +29,7 @@ const logger = appLogger.child("mcp");
 // ============================================================================
 
 const MCPRemoteConfigZodSchema = z.object({
-  url: z.string().url().describe("The URL of the SSE endpoint"),
+  url: z.url().describe("The URL of the SSE endpoint"),
   headers: z.record(z.string(), z.string()).optional(),
 });
 
@@ -983,7 +983,7 @@ export async function selectMcpClientAction(id: string): Promise<MCPServerInfoWi
 
 export async function saveMcpClientAction(server: McpServerInsert): Promise<MCPServerInfoWithId> {
   const nameSchema = z.string().regex(/^[a-zA-Z0-9-]+$/, {
-    message: "Name must contain only alphanumeric characters (A-Z, a-z, 0-9) and hyphens (-)",
+    error: "Name must contain only alphanumeric characters (A-Z, a-z, 0-9) and hyphens (-)",
   });
 
   const result = nameSchema.safeParse(server.name);

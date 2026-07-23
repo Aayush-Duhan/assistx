@@ -1,4 +1,3 @@
-
 export default {
   id: "claude",
   priority: 10,
@@ -22,7 +21,8 @@ export default {
     urlSuffix: "?beta=true",
     headers: {
       "Anthropic-Version": "2023-06-01",
-      "Anthropic-Beta": "claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,context-management-2025-06-27,prompt-caching-scope-2026-01-05,advanced-tool-use-2025-11-20,effort-2025-11-24,structured-outputs-2025-12-15,fast-mode-2026-02-01,redact-thinking-2026-02-12,token-efficient-tools-2026-03-28",
+      "Anthropic-Beta":
+        "claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,context-management-2025-06-27,prompt-caching-scope-2026-01-05,advanced-tool-use-2025-11-20,effort-2025-11-24,structured-outputs-2025-12-15,fast-mode-2026-02-01,redact-thinking-2026-02-12,token-efficient-tools-2026-03-28",
       "Anthropic-Dangerous-Direct-Browser-Access": "true",
       "User-Agent": "claude-cli/2.1.92 (external, sdk-cli)",
       "X-App": "cli",
@@ -48,9 +48,7 @@ export default {
         header: "Authorization",
         scheme: "bearer",
       },
-      hooks: [
-        "claudeOverlay",
-      ],
+      hooks: ["claudeOverlay"],
     },
     usage: {
       oauthUrl: "https://api.anthropic.com/api/oauth/usage",
@@ -69,11 +67,7 @@ export default {
     clientId: "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
     authorizeUrl: "https://claude.ai/oauth/authorize",
     tokenUrl: "https://api.anthropic.com/v1/oauth/token",
-    scopes: [
-      "org:create_api_key",
-      "user:profile",
-      "user:inference",
-    ],
+    scopes: ["org:create_api_key", "user:profile", "user:inference"],
     codeChallengeMethod: "S256",
     refreshLeadMs: 14400000,
     refresh: {

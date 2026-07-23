@@ -134,7 +134,7 @@ export function getEnvConfig(): EnvConfig {
 
 /**
  * Get API key configuration for AI models.
- * Use this to create LocalAiCtx from environment variables.
+ * Use this to create AI provider instances from environment variables.
  */
 export function getApiKeyConfig() {
   return {

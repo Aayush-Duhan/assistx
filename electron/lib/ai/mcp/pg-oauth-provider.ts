@@ -7,11 +7,10 @@ import type {
 import { OAuthClientProvider, UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 
 import globalLogger from "../../logger";
-import { colorize } from "consola/utils";
+import type { Logger } from "@server/lib/pino/logger";
 import { uuidv7 } from "uuidv7";
 import { jsonMcpOAuthRepository } from "../../db/json/mcp-oauth-repository.json";
 import { McpOAuthSession } from "../../../types/mcp";
-import { ConsolaInstance } from "consola";
 
 /**
  * JSON-backed OAuth client provider for MCP servers
@@ -20,7 +19,7 @@ import { ConsolaInstance } from "consola";
 export class PgOAuthClientProvider implements OAuthClientProvider {
   private currentOAuthState: string = "";
   private cachedAuthData: McpOAuthSession | undefined;
-  private logger: ConsolaInstance;
+  private logger: Logger;
   private initialized = false;
 
   constructor(
@@ -33,9 +32,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
       state?: string;
     },
   ) {
-    this.logger = globalLogger.withDefaults({
-      message: colorize("dim", `[MCP OAuth Provider ${this.config.name}-${uuidv7().slice(0, 4)}] `),
-    });
+    this.logger = globalLogger.child(`mcp-oauth:${this.config.name}`);
   }
 
   private async initializeOAuth() {
@@ -47,7 +44,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
         this.currentOAuthState = session.state || "";
         this.cachedAuthData = session;
         this.initialized = true;
-        this.logger.info("Adopted OAuth session from provided state");
+        this.logger.info("mcp.oauth.session.adopted", "Adopted OAuth session from provided state");
         return;
       }
     }
@@ -59,7 +56,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
       this.currentOAuthState = authenticated.state || "";
       this.cachedAuthData = authenticated;
       this.initialized = true;
-      this.logger.info("Using existing authenticated session");
+      this.logger.info("mcp.oauth.session.existing", "Using existing authenticated session");
       return;
     }
 
@@ -70,7 +67,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
       serverUrl: this.config.serverUrl,
     });
     this.initialized = true;
-    this.logger.info("Created new OAuth session");
+    this.logger.info("mcp.oauth.session.created", "Created new OAuth session");
   }
 
   private async getAuthData() {
@@ -126,7 +123,10 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
       clientInfo: clientCredentials,
     });
 
-    this.logger.debug(`OAuth client credentials stored successfully`);
+    this.logger.debug(
+      "mcp.oauth.credentials.stored",
+      "OAuth client credentials stored successfully",
+    );
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {
@@ -146,7 +146,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
       { tokens: accessTokens },
     );
 
-    this.logger.info(`OAuth tokens stored successfully`);
+    this.logger.info("mcp.oauth.tokens.stored", "OAuth tokens stored successfully");
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
@@ -180,6 +180,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
     if (!session) return;
     if (session.mcpServerId !== this.config.mcpServerId) {
       this.logger.warn(
+        "mcp.oauth.state.mismatch",
         `Attempted to adopt state for different server (${session.mcpServerId}), ignoring`,
       );
       return;
@@ -187,7 +188,7 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
     this.currentOAuthState = state;
     this.cachedAuthData = session;
     this.initialized = true;
-    this.logger.info(`Adopted OAuth state for callback reconciliation`);
+    this.logger.info("mcp.oauth.state.adopted", "Adopted OAuth state for callback reconciliation");
   }
 
   async invalidateCredentials(
@@ -200,17 +201,21 @@ export class PgOAuthClientProvider implements OAuthClientProvider {
           this.cachedAuthData = undefined;
           this.initialized = false;
           this.currentOAuthState = "";
-          this.logger.info(`OAuth credentials invalidated`);
+          this.logger.info("mcp.oauth.credentials.invalidated", "OAuth credentials invalidated");
           break;
         case "tokens":
           await this.updateAuthData({
             tokens: undefined,
           });
-          this.logger.info(`OAuth tokens invalidated`);
+          this.logger.info("mcp.oauth.tokens.invalidated", "OAuth tokens invalidated");
           break;
       }
     } catch (error) {
-      this.logger.error(`Failed to invalidate OAuth credentials: ${error}`);
+      this.logger.error(
+        error instanceof Error ? error : new Error(String(error)),
+        "mcp.oauth.invalidate.failed",
+        "Failed to invalidate OAuth credentials",
+      );
       throw error;
     }
   }

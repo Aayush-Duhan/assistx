@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { ModelProviderIcon } from "@/components/ui/model-provider-icon";
 import { useProviderStore, ProviderConnection } from "@/stores/providerStore";
 
-
 // Provider registry — all model providers from 9router, organized into 4 categories
 type ProviderCategory = "oauth" | "free" | "apikey" | "custom";
 interface ProviderEntry {
@@ -32,90 +31,599 @@ interface ProviderEntry {
 
 const REGISTRY_PROVIDERS: ProviderEntry[] = [
   // ── OAuth / Device Code Providers ─────────────────────────────────────
-  { id: "claude", name: "Claude Code", type: "oauth", category: "oauth", docsUrl: "https://claude.ai", placeholder: "OAuth Login" },
-  { id: "codex", name: "OpenAI Codex", type: "oauth", category: "oauth", docsUrl: "https://platform.openai.com", placeholder: "OAuth Login" },
-  { id: "github", name: "GitHub Copilot", type: "device_code", category: "oauth", docsUrl: "https://github.com/features/copilot", placeholder: "Device Code Login" },
-  { id: "xai", name: "xAI (Grok)", type: "oauth", category: "oauth", docsUrl: "https://console.x.ai", placeholder: "OAuth Login" },
-  { id: "antigravity", name: "Antigravity", type: "oauth", category: "oauth", docsUrl: "https://cloud.google.com", placeholder: "OAuth Login" },
-  { id: "cline", name: "Cline", type: "oauth", category: "oauth", docsUrl: "https://cline.bot", placeholder: "OAuth Login" },
-  { id: "clinepass", name: "ClinePass", type: "oauth", category: "oauth", docsUrl: "https://clinepass.com", placeholder: "OAuth Login" },
-  { id: "cursor", name: "Cursor IDE", type: "oauth", category: "oauth", docsUrl: "https://cursor.sh", placeholder: "Import Token" },
-  { id: "kimi", name: "Kimi", type: "device_code", category: "oauth", docsUrl: "https://kimi.ai", placeholder: "Device Code Login" },
-  { id: "kilocode", name: "Kilo Code", type: "device_code", category: "oauth", docsUrl: "https://kilocode.ai", placeholder: "Device Code Login" },
-  { id: "kimchi", name: "Kimchi", type: "oauth", category: "oauth", docsUrl: "https://kimchi.dev", placeholder: "OAuth Login" },
-  { id: "codebuddy-cn", name: "CodeBuddy CN", type: "device_code", category: "oauth", docsUrl: "https://copilot.tencent.com", placeholder: "Device Code Login" },
-  { id: "grok-cli", name: "Grok CLI", type: "device_code", category: "oauth", docsUrl: "https://x.ai", placeholder: "Device Code Login" },
-  { id: "qwen", name: "Qwen Code", type: "device_code", category: "oauth", docsUrl: "https://qwen.ai", placeholder: "Device Code Login" },
-  { id: "gitlab", name: "GitLab Duo", type: "oauth", category: "oauth", docsUrl: "https://gitlab.com", placeholder: "OAuth Login" },
-  { id: "iflow", name: "iFlow AI", type: "oauth", category: "oauth", docsUrl: "https://iflow.com", placeholder: "OAuth Login" },
+  {
+    id: "claude",
+    name: "Claude Code",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://claude.ai",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "codex",
+    name: "OpenAI Codex",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://platform.openai.com",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "github",
+    name: "GitHub Copilot",
+    type: "device_code",
+    category: "oauth",
+    docsUrl: "https://github.com/features/copilot",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "xai",
+    name: "xAI (Grok)",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://console.x.ai",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "antigravity",
+    name: "Antigravity",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://cloud.google.com",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "cline",
+    name: "Cline",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://cline.bot",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "clinepass",
+    name: "ClinePass",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://clinepass.com",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "cursor",
+    name: "Cursor IDE",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://cursor.sh",
+    placeholder: "Import Token",
+  },
+  {
+    id: "kimi",
+    name: "Kimi",
+    type: "device_code",
+    category: "oauth",
+    docsUrl: "https://kimi.ai",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "kilocode",
+    name: "Kilo Code",
+    type: "device_code",
+    category: "oauth",
+    docsUrl: "https://kilocode.ai",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "kimchi",
+    name: "Kimchi",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://kimchi.dev",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "codebuddy-cn",
+    name: "CodeBuddy CN",
+    type: "device_code",
+    category: "oauth",
+    docsUrl: "https://copilot.tencent.com",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "grok-cli",
+    name: "Grok CLI",
+    type: "device_code",
+    category: "oauth",
+    docsUrl: "https://x.ai",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "qwen",
+    name: "Qwen Code",
+    type: "device_code",
+    category: "oauth",
+    docsUrl: "https://qwen.ai",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "gitlab",
+    name: "GitLab Duo",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://gitlab.com",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "iflow",
+    name: "iFlow AI",
+    type: "oauth",
+    category: "oauth",
+    docsUrl: "https://iflow.com",
+    placeholder: "OAuth Login",
+  },
 
   // ── Free / No-Auth Providers ──────────────────────────────────────────
-  { id: "gemini-cli", name: "Gemini CLI", type: "oauth", category: "free", docsUrl: "https://aistudio.google.com", placeholder: "OAuth Login" },
-  { id: "kiro", name: "Kiro AI", type: "device_code", category: "free", docsUrl: "https://kiro.dev", placeholder: "Device Code Login" },
-  { id: "qoder", name: "Qoder", type: "device_code", category: "free", docsUrl: "https://qoder.sh", placeholder: "Device Code Login" },
-  { id: "mimo-free", name: "MiMo Code Free", type: "none", category: "free", docsUrl: "https://xiaomi.com", placeholder: "No key needed" },
-  { id: "opencode", name: "OpenCode Free", type: "none", category: "free", docsUrl: "https://opencode.ai", placeholder: "No key needed" },
-  { id: "gemini", name: "Gemini", type: "apikey", category: "free", docsUrl: "https://aistudio.google.com/apikey", placeholder: "AIza..." },
-  { id: "openrouter", name: "OpenRouter", type: "apikey", category: "free", docsUrl: "https://openrouter.ai/keys", placeholder: "sk-or-..." },
-  { id: "ollama", name: "Ollama Cloud", type: "none", category: "free", docsUrl: "https://ollama.com", placeholder: "No key needed" },
-  { id: "ollama-local", name: "Ollama Local", type: "none", category: "free", docsUrl: "https://ollama.com", placeholder: "Local server" },
-  { id: "nvidia", name: "NVIDIA NIM", type: "apikey", category: "free", docsUrl: "https://build.nvidia.com", placeholder: "nvapi-..." },
-  { id: "cloudflare-ai", name: "Cloudflare", type: "apikey", category: "free", docsUrl: "https://dash.cloudflare.com", placeholder: "API Token" },
-  { id: "vertex", name: "Vertex AI", type: "apikey", category: "free", docsUrl: "https://cloud.google.com/vertex-ai", placeholder: "API Key" },
+  {
+    id: "gemini-cli",
+    name: "Gemini CLI",
+    type: "oauth",
+    category: "free",
+    docsUrl: "https://aistudio.google.com",
+    placeholder: "OAuth Login",
+  },
+  {
+    id: "kiro",
+    name: "Kiro AI",
+    type: "device_code",
+    category: "free",
+    docsUrl: "https://kiro.dev",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "qoder",
+    name: "Qoder",
+    type: "device_code",
+    category: "free",
+    docsUrl: "https://qoder.sh",
+    placeholder: "Device Code Login",
+  },
+  {
+    id: "mimo-free",
+    name: "MiMo Code Free",
+    type: "none",
+    category: "free",
+    docsUrl: "https://xiaomi.com",
+    placeholder: "No key needed",
+  },
+  {
+    id: "opencode",
+    name: "OpenCode Free",
+    type: "none",
+    category: "free",
+    docsUrl: "https://opencode.ai",
+    placeholder: "No key needed",
+  },
+  {
+    id: "gemini",
+    name: "Gemini",
+    type: "apikey",
+    category: "free",
+    docsUrl: "https://aistudio.google.com/apikey",
+    placeholder: "AIza...",
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    type: "apikey",
+    category: "free",
+    docsUrl: "https://openrouter.ai/keys",
+    placeholder: "sk-or-...",
+  },
+  {
+    id: "ollama",
+    name: "Ollama Cloud",
+    type: "none",
+    category: "free",
+    docsUrl: "https://ollama.com",
+    placeholder: "No key needed",
+  },
+  {
+    id: "ollama-local",
+    name: "Ollama Local",
+    type: "none",
+    category: "free",
+    docsUrl: "https://ollama.com",
+    placeholder: "Local server",
+  },
+  {
+    id: "nvidia",
+    name: "NVIDIA NIM",
+    type: "apikey",
+    category: "free",
+    docsUrl: "https://build.nvidia.com",
+    placeholder: "nvapi-...",
+  },
+  {
+    id: "cloudflare-ai",
+    name: "Cloudflare",
+    type: "apikey",
+    category: "free",
+    docsUrl: "https://dash.cloudflare.com",
+    placeholder: "API Token",
+  },
+  {
+    id: "vertex",
+    name: "Vertex AI",
+    type: "apikey",
+    category: "free",
+    docsUrl: "https://cloud.google.com/vertex-ai",
+    placeholder: "API Key",
+  },
 
   // ── API Key Providers ─────────────────────────────────────────────────
-  { id: "openai", name: "OpenAI", type: "apikey", category: "apikey", docsUrl: "https://platform.openai.com/api-keys", placeholder: "sk-..." },
-  { id: "anthropic", name: "Anthropic", type: "apikey", category: "apikey", docsUrl: "https://console.anthropic.com/settings/keys", placeholder: "sk-ant-..." },
-  { id: "google", name: "Google Gemini", type: "apikey", category: "apikey", docsUrl: "https://aistudio.google.com/apikey", placeholder: "AIza..." },
-  { id: "deepseek", name: "DeepSeek", type: "apikey", category: "apikey", docsUrl: "https://platform.deepseek.com", placeholder: "sk-..." },
-  { id: "groq", name: "Groq", type: "apikey", category: "apikey", docsUrl: "https://console.groq.com/keys", placeholder: "gsk_..." },
-  { id: "mistral", name: "Mistral", type: "apikey", category: "apikey", docsUrl: "https://console.mistral.ai", placeholder: "API Key" },
-  { id: "cohere", name: "Cohere", type: "apikey", category: "apikey", docsUrl: "https://dashboard.cohere.com/api-keys", placeholder: "API Key" },
-  { id: "perplexity", name: "Perplexity", type: "apikey", category: "apikey", docsUrl: "https://perplexity.ai", placeholder: "pplx-..." },
-  { id: "fireworks", name: "Fireworks AI", type: "apikey", category: "apikey", docsUrl: "https://fireworks.ai", placeholder: "API Key" },
-  { id: "together", name: "Together AI", type: "apikey", category: "apikey", docsUrl: "https://together.ai", placeholder: "API Key" },
-  { id: "cerebras", name: "Cerebras", type: "apikey", category: "apikey", docsUrl: "https://cerebras.ai", placeholder: "API Key" },
-  { id: "azure", name: "Azure OpenAI", type: "apikey", category: "apikey", docsUrl: "https://portal.azure.com", placeholder: "API Key" },
-  { id: "huggingface", name: "HuggingFace", type: "apikey", category: "apikey", docsUrl: "https://huggingface.co/settings/tokens", placeholder: "hf_..." },
-  { id: "nebius", name: "Nebius AI", type: "apikey", category: "apikey", docsUrl: "https://nebius.ai", placeholder: "API Key" },
-  { id: "siliconflow", name: "SiliconFlow", type: "apikey", category: "apikey", docsUrl: "https://siliconflow.cn", placeholder: "API Key" },
-  { id: "hyperbolic", name: "Hyperbolic", type: "apikey", category: "apikey", docsUrl: "https://hyperbolic.xyz", placeholder: "API Key" },
-  { id: "featherless", name: "Featherless", type: "apikey", category: "apikey", docsUrl: "https://featherless.ai", placeholder: "API Key" },
-  { id: "chutes", name: "Chutes AI", type: "apikey", category: "apikey", docsUrl: "https://chutes.ai", placeholder: "API Key" },
-  { id: "venice", name: "Venice AI", type: "apikey", category: "apikey", docsUrl: "https://venice.ai", placeholder: "API Key" },
-  { id: "blackbox", name: "Blackbox AI", type: "apikey", category: "apikey", docsUrl: "https://blackbox.ai", placeholder: "API Key" },
-  { id: "glm", name: "GLM Coding", type: "apikey", category: "apikey", docsUrl: "https://open.bigmodel.cn", placeholder: "API Key" },
-  { id: "glm-cn", name: "GLM (China)", type: "apikey", category: "apikey", docsUrl: "https://open.bigmodel.cn", placeholder: "API Key" },
-  { id: "volcengine-ark", name: "Volcengine Ark", type: "apikey", category: "apikey", docsUrl: "https://volcengine.com", placeholder: "API Key" },
-  { id: "minimax", name: "Minimax", type: "apikey", category: "apikey", docsUrl: "https://minimax.chat", placeholder: "API Key" },
-  { id: "minimax-cn", name: "Minimax (China)", type: "apikey", category: "apikey", docsUrl: "https://minimax.chat", placeholder: "API Key" },
-  { id: "alicode", name: "Alibaba", type: "apikey", category: "apikey", docsUrl: "https://dashscope.console.aliyun.com", placeholder: "API Key" },
-  { id: "alicode-intl", name: "Alibaba Coding", type: "apikey", category: "apikey", docsUrl: "https://dashscope.console.aliyun.com", placeholder: "API Key" },
-  { id: "alims-intl", name: "Alibaba Studio", type: "apikey", category: "apikey", docsUrl: "https://dashscope.console.aliyun.com", placeholder: "API Key" },
-  { id: "nanobanana", name: "NanoBanana", type: "apikey", category: "apikey", docsUrl: "https://nanobanana.ai", placeholder: "API Key" },
-  { id: "opencode-go", name: "OpenCode Go", type: "apikey", category: "apikey", docsUrl: "https://opencode.ai", placeholder: "API Key" },
-  { id: "commandcode", name: "Command Code", type: "apikey", category: "apikey", docsUrl: "https://commandcode.ai", placeholder: "API Key" },
-  { id: "perplexity-agent", name: "Perplexity Agent", type: "apikey", category: "apikey", docsUrl: "https://perplexity.ai", placeholder: "pplx-..." },
-  { id: "vertex-partner", name: "Vertex Partner", type: "apikey", category: "apikey", docsUrl: "https://cloud.google.com", placeholder: "API Key" },
-  { id: "vercel-ai-gateway", name: "Vercel AI Gateway", type: "apikey", category: "apikey", docsUrl: "https://vercel.com", placeholder: "API Key" },
-  { id: "fal-ai", name: "Fal.ai", type: "apikey", category: "apikey", docsUrl: "https://fal.ai", placeholder: "API Key" },
-  { id: "byteplus", name: "BytePlus", type: "apikey", category: "apikey", docsUrl: "https://byteplus.com", placeholder: "API Key" },
-  { id: "xiaomi-mimo", name: "Xiaomi MiMo", type: "apikey", category: "apikey", docsUrl: "https://xiaomi.com", placeholder: "API Key" },
-  { id: "voyage-ai", name: "Voyage AI", type: "apikey", category: "apikey", docsUrl: "https://voyage.ai", placeholder: "API Key" },
-  { id: "jina-ai", name: "Jina AI", type: "apikey", category: "apikey", docsUrl: "https://jina.ai", placeholder: "API Key" },
-  { id: "linkup", name: "Linkup", type: "apikey", category: "apikey", docsUrl: "https://linkup.so", placeholder: "API Key" },
+  {
+    id: "openai",
+    name: "OpenAI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://platform.openai.com/api-keys",
+    placeholder: "sk-...",
+  },
+  {
+    id: "anthropic",
+    name: "Anthropic",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://console.anthropic.com/settings/keys",
+    placeholder: "sk-ant-...",
+  },
+  {
+    id: "google",
+    name: "Google Gemini",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://aistudio.google.com/apikey",
+    placeholder: "AIza...",
+  },
+  {
+    id: "deepseek",
+    name: "DeepSeek",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://platform.deepseek.com",
+    placeholder: "sk-...",
+  },
+  {
+    id: "groq",
+    name: "Groq",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://console.groq.com/keys",
+    placeholder: "gsk_...",
+  },
+  {
+    id: "mistral",
+    name: "Mistral",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://console.mistral.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "cohere",
+    name: "Cohere",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://dashboard.cohere.com/api-keys",
+    placeholder: "API Key",
+  },
+  {
+    id: "perplexity",
+    name: "Perplexity",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://perplexity.ai",
+    placeholder: "pplx-...",
+  },
+  {
+    id: "fireworks",
+    name: "Fireworks AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://fireworks.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "together",
+    name: "Together AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://together.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "cerebras",
+    name: "Cerebras",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://cerebras.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "azure",
+    name: "Azure OpenAI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://portal.azure.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "huggingface",
+    name: "HuggingFace",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://huggingface.co/settings/tokens",
+    placeholder: "hf_...",
+  },
+  {
+    id: "nebius",
+    name: "Nebius AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://nebius.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "siliconflow",
+    name: "SiliconFlow",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://siliconflow.cn",
+    placeholder: "API Key",
+  },
+  {
+    id: "hyperbolic",
+    name: "Hyperbolic",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://hyperbolic.xyz",
+    placeholder: "API Key",
+  },
+  {
+    id: "featherless",
+    name: "Featherless",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://featherless.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "chutes",
+    name: "Chutes AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://chutes.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "venice",
+    name: "Venice AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://venice.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "blackbox",
+    name: "Blackbox AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://blackbox.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "glm",
+    name: "GLM Coding",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://open.bigmodel.cn",
+    placeholder: "API Key",
+  },
+  {
+    id: "glm-cn",
+    name: "GLM (China)",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://open.bigmodel.cn",
+    placeholder: "API Key",
+  },
+  {
+    id: "volcengine-ark",
+    name: "Volcengine Ark",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://volcengine.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "minimax",
+    name: "Minimax",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://minimax.chat",
+    placeholder: "API Key",
+  },
+  {
+    id: "minimax-cn",
+    name: "Minimax (China)",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://minimax.chat",
+    placeholder: "API Key",
+  },
+  {
+    id: "alicode",
+    name: "Alibaba",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://dashscope.console.aliyun.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "alicode-intl",
+    name: "Alibaba Coding",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://dashscope.console.aliyun.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "alims-intl",
+    name: "Alibaba Studio",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://dashscope.console.aliyun.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "nanobanana",
+    name: "NanoBanana",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://nanobanana.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "opencode-go",
+    name: "OpenCode Go",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://opencode.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "commandcode",
+    name: "Command Code",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://commandcode.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "perplexity-agent",
+    name: "Perplexity Agent",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://perplexity.ai",
+    placeholder: "pplx-...",
+  },
+  {
+    id: "vertex-partner",
+    name: "Vertex Partner",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://cloud.google.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "vercel-ai-gateway",
+    name: "Vercel AI Gateway",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://vercel.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "fal-ai",
+    name: "Fal.ai",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://fal.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "byteplus",
+    name: "BytePlus",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://byteplus.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "xiaomi-mimo",
+    name: "Xiaomi MiMo",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://xiaomi.com",
+    placeholder: "API Key",
+  },
+  {
+    id: "voyage-ai",
+    name: "Voyage AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://voyage.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "jina-ai",
+    name: "Jina AI",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://jina.ai",
+    placeholder: "API Key",
+  },
+  {
+    id: "linkup",
+    name: "Linkup",
+    type: "apikey",
+    category: "apikey",
+    docsUrl: "https://linkup.so",
+    placeholder: "API Key",
+  },
 
   // ── Custom Endpoint Providers ─────────────────────────────────────────
-  { id: "openai-compatible", name: "OpenAI Compatible", type: "custom", category: "custom", docsUrl: "", placeholder: "Custom endpoint" },
-  { id: "anthropic-compatible", name: "Anthropic Compatible", type: "custom", category: "custom", docsUrl: "", placeholder: "Custom endpoint" },
-  { id: "custom-embedding", name: "Custom Embedding", type: "custom", category: "custom", docsUrl: "", placeholder: "Custom endpoint" },
+  {
+    id: "openai-compatible",
+    name: "OpenAI Compatible",
+    type: "custom",
+    category: "custom",
+    docsUrl: "",
+    placeholder: "Custom endpoint",
+  },
+  {
+    id: "anthropic-compatible",
+    name: "Anthropic Compatible",
+    type: "custom",
+    category: "custom",
+    docsUrl: "",
+    placeholder: "Custom endpoint",
+  },
+  {
+    id: "custom-embedding",
+    name: "Custom Embedding",
+    type: "custom",
+    category: "custom",
+    docsUrl: "",
+    placeholder: "Custom endpoint",
+  },
 ];
 
 const CATEGORIES: { key: ProviderCategory; label: string; description: string }[] = [
-  { key: "oauth", label: "OAuth Providers", description: "Sign in with your existing account — no API key needed" },
-  { key: "free", label: "Free / Free Tier", description: "Free to use or generous free tier available" },
+  {
+    key: "oauth",
+    label: "OAuth Providers",
+    description: "Sign in with your existing account — no API key needed",
+  },
+  {
+    key: "free",
+    label: "Free / Free Tier",
+    description: "Free to use or generous free tier available",
+  },
   { key: "apikey", label: "API Key Providers", description: "Connect with a provider API key" },
-  { key: "custom", label: "Custom Endpoints", description: "OpenAI/Anthropic-compatible custom servers" },
+  {
+    key: "custom",
+    label: "Custom Endpoints",
+    description: "OpenAI/Anthropic-compatible custom servers",
+  },
 ];
 
 export default function ProvidersPage() {
@@ -133,14 +641,17 @@ export default function ProvidersPage() {
   const [activeTab, setActiveTab] = useState<"all" | "connected" | ProviderCategory>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
-  
+
   // Edit forms states
   const [editingConnection, setEditingConnection] = useState<ProviderConnection | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   // Validation feedback
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{ valid: boolean; error?: string } | null>(null);
+  const [validationResult, setValidationResult] = useState<{
+    valid: boolean;
+    error?: string;
+  } | null>(null);
 
   // Form inputs
   const [formName, setFormName] = useState("");
@@ -154,11 +665,19 @@ export default function ProvidersPage() {
   const [formCustomModels, setFormCustomModels] = useState<string[]>([]);
   const [dynamicModels, setDynamicModels] = useState<any[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [suggestedModels, setSuggestedModels] = useState<{ id: string; name: string; contextLength?: number }[]>([]);
+  const [suggestedModels, setSuggestedModels] = useState<
+    { id: string; name: string; contextLength?: number }[]
+  >([]);
   const modelsRequestId = useRef(0);
 
   // Device code flow state
-  const [deviceCodeData, setDeviceCodeData] = useState<{ deviceCode: string; userCode: string; verificationUri: string; verificationUriComplete?: string; interval: number } | null>(null);
+  const [deviceCodeData, setDeviceCodeData] = useState<{
+    deviceCode: string;
+    userCode: string;
+    verificationUri: string;
+    verificationUriComplete?: string;
+    interval: number;
+  } | null>(null);
   const [isPollingDevice, setIsPollingDevice] = useState(false);
 
   useEffect(() => {
@@ -181,7 +700,9 @@ export default function ProvidersPage() {
         if (!cancelled) setSuggestedModels(json.data || []);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedProviderId]);
 
   const selectProviderForEdit = useCallback(async (conn: ProviderConnection) => {
@@ -215,28 +736,33 @@ export default function ProvidersPage() {
     }
   }, []);
 
-  const selectNewProviderSetup = useCallback((providerId: string) => {
-    setSelectedProviderId(providerId);
-    setEditingConnection(null);
-    setFormName(REGISTRY_PROVIDERS.find(p => p.id === providerId)?.name || "");
-    setFormApiKey("");
-    setFormEmail("");
-    setFormBaseUrl("");
-    setFormPrefix("");
-    setFormIsActive(true);
-    setFormPriority(connections.length + 1);
-    setFormCustomModels([]);
-    setFormCustomModelsInput("");
-    setValidationResult(null);
-    setIsCreatingNew(true);
-    setDynamicModels([]);
-  }, [connections]);
+  const selectNewProviderSetup = useCallback(
+    (providerId: string) => {
+      setSelectedProviderId(providerId);
+      setEditingConnection(null);
+      setFormName(REGISTRY_PROVIDERS.find((p) => p.id === providerId)?.name || "");
+      setFormApiKey("");
+      setFormEmail("");
+      setFormBaseUrl("");
+      setFormPrefix("");
+      setFormIsActive(true);
+      setFormPriority(connections.length + 1);
+      setFormCustomModels([]);
+      setFormCustomModelsInput("");
+      setValidationResult(null);
+      setIsCreatingNew(true);
+      setDynamicModels([]);
+    },
+    [connections],
+  );
 
   const handleSave = async () => {
     if (!selectedProviderId) return;
 
-    const isCustom = ["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(selectedProviderId);
-    
+    const isCustom = ["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(
+      selectedProviderId,
+    );
+
     // Structure metadata payload
     const providerSpecificData: any = {};
     if (isCustom) {
@@ -249,7 +775,11 @@ export default function ProvidersPage() {
 
     const payload: any = {
       provider: selectedProviderId,
-      authType: isCustom ? "apikey" : (formApiKey ? "apikey" : (REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.type || "apikey")),
+      authType: isCustom
+        ? "apikey"
+        : formApiKey
+          ? "apikey"
+          : REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.type || "apikey",
       name: formName,
       email: formEmail || undefined,
       isActive: formIsActive,
@@ -281,7 +811,11 @@ export default function ProvidersPage() {
 
   const handleDelete = async () => {
     if (!editingConnection) return;
-    if (confirm(`Are you sure you want to remove the connection to ${editingConnection.name || editingConnection.provider}?`)) {
+    if (
+      confirm(
+        `Are you sure you want to remove the connection to ${editingConnection.name || editingConnection.provider}?`,
+      )
+    ) {
       await deleteConnection(editingConnection.id);
       setSelectedProviderId(null);
       setEditingConnection(null);
@@ -293,7 +827,9 @@ export default function ProvidersPage() {
     setIsValidating(true);
     setValidationResult(null);
 
-    const isCustom = ["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(selectedProviderId);
+    const isCustom = ["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(
+      selectedProviderId,
+    );
     const data: any = {
       provider: selectedProviderId,
       apiKey: formApiKey || undefined, // falls back to saved key on server if empty
@@ -307,7 +843,10 @@ export default function ProvidersPage() {
       const res = await validateConnection(data);
       setValidationResult(res);
     } catch (e) {
-      setValidationResult({ valid: false, error: e instanceof Error ? e.message : "Connection probe failed" });
+      setValidationResult({
+        valid: false,
+        error: e instanceof Error ? e.message : "Connection probe failed",
+      });
     } finally {
       setIsValidating(false);
     }
@@ -321,7 +860,10 @@ export default function ProvidersPage() {
     try {
       const serverConfig = await getServerConfig();
       const serverOrigin = serverConfig.baseUrl.replace(/\/api\/?$/, "");
-      const isGoogleProvider = selectedProviderId === "antigravity" || selectedProviderId === "gemini-cli" || selectedProviderId === "google";
+      const isGoogleProvider =
+        selectedProviderId === "antigravity" ||
+        selectedProviderId === "gemini-cli" ||
+        selectedProviderId === "google";
       const redirectUri = isGoogleProvider
         ? `${serverOrigin}/oauth/callback`
         : "assistx://oauth/callback";
@@ -335,7 +877,10 @@ export default function ProvidersPage() {
 
       // Listen for protocol deep link callback from main process
       const callbackPromise = new Promise<{ code?: string; error?: string }>((resolve) => {
-        const handleCallback = (_event: any, data: { code?: string; state?: string; error?: string }) => {
+        const handleCallback = (
+          _event: any,
+          data: { code?: string; state?: string; error?: string },
+        ) => {
           if (data.state && data.state !== startData.state) return;
           if ((window as any).electron?.ipcRenderer) {
             (window as any).electron.ipcRenderer.off("provider-oauth-callback", handleCallback);
@@ -417,39 +962,49 @@ export default function ProvidersPage() {
       }
 
       setIsPollingDevice(true);
-      const pollInterval = setInterval(async () => {
-        try {
-          const pollRes = await apiFetch("/providers/oauth/" + selectedProviderId + "/poll", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ deviceCode: data.deviceCode, codeVerifier: data.codeVerifier, extraData: data.extraData }),
-          });
-          const pollData = await pollRes.json();
+      const pollInterval = setInterval(
+        async () => {
+          try {
+            const pollRes = await apiFetch("/providers/oauth/" + selectedProviderId + "/poll", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                deviceCode: data.deviceCode,
+                codeVerifier: data.codeVerifier,
+                extraData: data.extraData,
+              }),
+            });
+            const pollData = await pollRes.json();
 
-          if (pollData.success) {
+            if (pollData.success) {
+              clearInterval(pollInterval);
+              setIsPollingDevice(false);
+              setDeviceCodeData(null);
+              setValidationResult({ valid: true });
+              fetchConnections();
+              setSelectedProviderId(null);
+              setEditingConnection(null);
+              setIsCreatingNew(false);
+            } else if (!pollData.pending) {
+              clearInterval(pollInterval);
+              setIsPollingDevice(false);
+              setDeviceCodeData(null);
+              setValidationResult({ valid: false, error: pollData.error || "Device auth failed" });
+            }
+          } catch {
             clearInterval(pollInterval);
             setIsPollingDevice(false);
             setDeviceCodeData(null);
-            setValidationResult({ valid: true });
-            fetchConnections();
-            setSelectedProviderId(null);
-            setEditingConnection(null);
-            setIsCreatingNew(false);
-          } else if (!pollData.pending) {
-            clearInterval(pollInterval);
-            setIsPollingDevice(false);
-            setDeviceCodeData(null);
-            setValidationResult({ valid: false, error: pollData.error || "Device auth failed" });
+            setValidationResult({ valid: false, error: "Polling failed" });
           }
-        } catch {
-          clearInterval(pollInterval);
-          setIsPollingDevice(false);
-          setDeviceCodeData(null);
-          setValidationResult({ valid: false, error: "Polling failed" });
-        }
-      }, (data.interval || 5) * 1000);
+        },
+        (data.interval || 5) * 1000,
+      );
     } catch (e) {
-      setValidationResult({ valid: false, error: e instanceof Error ? e.message : "Device code flow failed" });
+      setValidationResult({
+        valid: false,
+        error: e instanceof Error ? e.message : "Device code flow failed",
+      });
     } finally {
       setIsValidating(false);
     }
@@ -464,7 +1019,7 @@ export default function ProvidersPage() {
   };
 
   const handleRemoveCustomModel = (modelId: string) => {
-    setFormCustomModels(formCustomModels.filter(m => m !== modelId));
+    setFormCustomModels(formCustomModels.filter((m) => m !== modelId));
   };
 
   // Filtered providers listing
@@ -498,7 +1053,8 @@ export default function ProvidersPage() {
                   Providers
                 </h1>
                 <p className="text-sm text-zinc-400 mt-1">
-                  Connect your preferred model APIs, OAuth credentials, and custom compatibility endpoints.
+                  Connect your preferred model APIs, OAuth credentials, and custom compatibility
+                  endpoints.
                 </p>
               </div>
 
@@ -533,7 +1089,7 @@ export default function ProvidersPage() {
                       "px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all",
                       activeTab === tab
                         ? "bg-zinc-800 text-orange-400 shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200"
+                        : "text-zinc-400 hover:text-zinc-200",
                     )}
                   >
                     {tab === "apikey" ? "API Key" : tab}
@@ -559,7 +1115,10 @@ export default function ProvidersPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg group-hover:border-zinc-700 transition-colors">
-                              <ModelProviderIcon provider={conn.provider} className="w-6 h-6 text-zinc-200" />
+                              <ModelProviderIcon
+                                provider={conn.provider}
+                                className="w-6 h-6 text-zinc-200"
+                              />
                             </div>
                             <div>
                               <h3 className="font-semibold text-sm text-zinc-200 group-hover:text-orange-400 transition-colors">
@@ -568,20 +1127,24 @@ export default function ProvidersPage() {
                               <p className="text-xs text-zinc-500 capitalize">{conn.authType}</p>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
                               #{conn.priority || 1}
                             </span>
-                            <span className={cn(
-                              "w-2 h-2 rounded-full",
-                              conn.isActive ? "bg-emerald-500" : "bg-zinc-600"
-                            )} />
+                            <span
+                              className={cn(
+                                "w-2 h-2 rounded-full",
+                                conn.isActive ? "bg-emerald-500" : "bg-zinc-600",
+                              )}
+                            />
                           </div>
                         </div>
 
                         {conn.email && (
-                          <p className="text-xs text-zinc-400 mt-2 font-mono truncate">{conn.email}</p>
+                          <p className="text-xs text-zinc-400 mt-2 font-mono truncate">
+                            {conn.email}
+                          </p>
                         )}
                         {conn.providerSpecificData?.baseUrl && (
                           <p className="text-[10px] text-zinc-500 mt-2 font-mono truncate">
@@ -604,17 +1167,23 @@ export default function ProvidersPage() {
                   <div className="mb-3">
                     <h2 className="text-xs font-semibold text-zinc-400 tracking-wider uppercase flex items-center gap-2">
                       <LuFolderGit className="w-3.5 h-3.5" /> {cat.label}
-                      <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">— {cat.description}</span>
+                      <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">
+                        — {cat.description}
+                      </span>
                     </h2>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {categoryProviders.map((provider) => {
-                      const hasConnection = connections.some((c: any) => c.provider === provider.id);
+                      const hasConnection = connections.some(
+                        (c: any) => c.provider === provider.id,
+                      );
                       return (
                         <div
                           key={provider.id}
                           onClick={() => {
-                            const existing = connections.find((c: any) => c.provider === provider.id);
+                            const existing = connections.find(
+                              (c: any) => c.provider === provider.id,
+                            );
                             if (existing) selectProviderForEdit(existing);
                             else selectNewProviderSetup(provider.id);
                           }}
@@ -623,14 +1192,21 @@ export default function ProvidersPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div className="p-1.5 bg-zinc-900/80 border border-zinc-800 rounded-lg group-hover:border-zinc-700/80 transition-colors shrink-0">
-                                <ModelProviderIcon provider={provider.id} className="w-5 h-5 text-zinc-300" />
+                                <ModelProviderIcon
+                                  provider={provider.id}
+                                  className="w-5 h-5 text-zinc-300"
+                                />
                               </div>
                               <div className="min-w-0">
                                 <h3 className="font-medium text-sm text-zinc-200 group-hover:text-zinc-100 truncate">
                                   {provider.name}
                                 </h3>
                                 <p className="text-[10px] text-zinc-500 capitalize">
-                                  {provider.type === "custom" ? "Custom Node" : provider.type === "device_code" ? "device code" : provider.type}
+                                  {provider.type === "custom"
+                                    ? "Custom Node"
+                                    : provider.type === "device_code"
+                                      ? "device code"
+                                      : provider.type}
                                 </p>
                               </div>
                             </div>
@@ -681,19 +1257,21 @@ export default function ProvidersPage() {
 
             {/* Layout Grid */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0 overflow-y-auto pr-1">
-              
               {/* Left Form (2 Columns) */}
               <div className="lg:col-span-2 space-y-6">
-                
                 {/* Configuration Card */}
                 <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-6 shadow-sm">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl">
-                      <ModelProviderIcon provider={selectedProviderId} className="w-8 h-8 text-zinc-100" />
+                      <ModelProviderIcon
+                        provider={selectedProviderId}
+                        className="w-8 h-8 text-zinc-100"
+                      />
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold text-zinc-200">
-                        {formName || REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.name}
+                        {formName ||
+                          REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.name}
                       </h2>
                       <p className="text-xs text-zinc-500 capitalize">
                         Configure {selectedProviderId} connection settings
@@ -704,7 +1282,9 @@ export default function ProvidersPage() {
                   <div className="space-y-4">
                     {/* Display Name */}
                     <div>
-                      <label className="block text-xs font-medium text-zinc-400 mb-1.5">Connection Name</label>
+                      <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                        Connection Name
+                      </label>
                       <input
                         type="text"
                         value={formName}
@@ -715,7 +1295,8 @@ export default function ProvidersPage() {
                     </div>
 
                     {/* OAuth Login */}
-                    {REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.type === "oauth" && (
+                    {REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.type ===
+                      "oauth" && (
                       <div className="space-y-3">
                         <button
                           type="button"
@@ -730,7 +1311,8 @@ export default function ProvidersPage() {
                     )}
 
                     {/* Device Code Login */}
-                    {REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.type === "device_code" && (
+                    {REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.type ===
+                      "device_code" && (
                       <div className="space-y-3">
                         <button
                           type="button"
@@ -738,20 +1320,29 @@ export default function ProvidersPage() {
                           disabled={isPollingDevice || isValidating}
                           className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 border border-zinc-800 text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer text-zinc-200"
                         >
-                          {isPollingDevice ? <LuLoader className="w-3.5 h-3.5 animate-spin" /> : null}
-                          {isPollingDevice ? "Waiting for Authorization..." : "Login with Device Code"}
+                          {isPollingDevice ? (
+                            <LuLoader className="w-3.5 h-3.5 animate-spin" />
+                          ) : null}
+                          {isPollingDevice
+                            ? "Waiting for Authorization..."
+                            : "Login with Device Code"}
                         </button>
 
                         {deviceCodeData && (
                           <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-950/60">
-                            <p className="text-xs text-zinc-400 mb-2">Enter this code on the provider's website:</p>
+                            <p className="text-xs text-zinc-400 mb-2">
+                              Enter this code on the provider's website:
+                            </p>
                             <div className="flex items-center justify-center py-3 px-4 bg-zinc-900 rounded-lg border border-zinc-700 mb-3">
                               <span className="text-2xl font-mono font-bold text-orange-400 tracking-widest select-all">
                                 {deviceCodeData.userCode}
                               </span>
                             </div>
                             <a
-                              href={deviceCodeData.verificationUriComplete || deviceCodeData.verificationUri}
+                              href={
+                                deviceCodeData.verificationUriComplete ||
+                                deviceCodeData.verificationUri
+                              }
                               target="_blank"
                               rel="noreferrer"
                               className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer text-zinc-200"
@@ -760,7 +1351,8 @@ export default function ProvidersPage() {
                             </a>
                             {isPollingDevice && (
                               <p className="text-xs text-zinc-500 mt-3 flex items-center gap-2">
-                                <LuLoader className="w-3 h-3 animate-spin" /> Waiting for authorization...
+                                <LuLoader className="w-3 h-3 animate-spin" /> Waiting for
+                                authorization...
                               </p>
                             )}
                           </div>
@@ -769,13 +1361,18 @@ export default function ProvidersPage() {
                     )}
 
                     {/* API Key Input */}
-                    {REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.type === "apikey" && (
+                    {REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.type ===
+                      "apikey" && (
                       <div>
                         <div className="flex justify-between items-center mb-1.5">
-                          <label className="block text-xs font-medium text-zinc-400">API Credentials</label>
-                          {REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.docsUrl && (
+                          <label className="block text-xs font-medium text-zinc-400">
+                            API Credentials
+                          </label>
+                          {REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.docsUrl && (
                             <a
-                              href={REGISTRY_PROVIDERS.find(p => p.id === selectedProviderId)?.docsUrl}
+                              href={
+                                REGISTRY_PROVIDERS.find((p) => p.id === selectedProviderId)?.docsUrl
+                              }
                               target="_blank"
                               rel="noreferrer"
                               className="text-[10px] text-orange-400 hover:underline flex items-center gap-1"
@@ -788,17 +1385,25 @@ export default function ProvidersPage() {
                           type="password"
                           value={formApiKey}
                           onChange={(e) => setFormApiKey(e.target.value)}
-                          placeholder={editingConnection ? "•••••••••••••••• (Leave empty to keep current)" : "sk-..."}
+                          placeholder={
+                            editingConnection
+                              ? "•••••••••••••••• (Leave empty to keep current)"
+                              : "sk-..."
+                          }
                           className="w-full px-3.5 py-2 bg-zinc-900/80 border border-zinc-800 focus:border-orange-500/50 rounded-lg text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
                         />
                       </div>
                     )}
 
                     {/* Custom Endpoint Fields */}
-                    {["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(selectedProviderId) && (
+                    {["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(
+                      selectedProviderId,
+                    ) && (
                       <>
                         <div>
-                          <label className="block text-xs font-medium text-zinc-400 mb-1.5">Base Endpoint URL</label>
+                          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                            Base Endpoint URL
+                          </label>
                           <input
                             type="text"
                             value={formBaseUrl}
@@ -808,7 +1413,9 @@ export default function ProvidersPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-zinc-400 mb-1.5">Model ID Prefix (Optional)</label>
+                          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                            Model ID Prefix (Optional)
+                          </label>
                           <input
                             type="text"
                             value={formPrefix}
@@ -818,12 +1425,18 @@ export default function ProvidersPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-zinc-400 mb-1.5">API Auth Credentials (Optional)</label>
+                          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                            API Auth Credentials (Optional)
+                          </label>
                           <input
                             type="password"
                             value={formApiKey}
                             onChange={(e) => setFormApiKey(e.target.value)}
-                            placeholder={editingConnection ? "•••••••••••••••• (Leave empty to keep current)" : "API Key / Token"}
+                            placeholder={
+                              editingConnection
+                                ? "•••••••••••••••• (Leave empty to keep current)"
+                                : "API Key / Token"
+                            }
                             className="w-full px-3.5 py-2 bg-zinc-900/80 border border-zinc-800 focus:border-orange-500/50 rounded-lg text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
                           />
                         </div>
@@ -833,7 +1446,9 @@ export default function ProvidersPage() {
                     {/* Priority & Active Status */}
                     <div className="grid grid-cols-2 gap-4 pt-2">
                       <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-1.5">Priority Order</label>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                          Priority Order
+                        </label>
                         <input
                           type="number"
                           min="1"
@@ -851,7 +1466,9 @@ export default function ProvidersPage() {
                             onChange={(e) => setFormIsActive(e.target.checked)}
                             className="w-4 h-4 accent-orange-500 rounded border-zinc-800"
                           />
-                          <span className="text-sm font-medium text-zinc-300">Active Connection</span>
+                          <span className="text-sm font-medium text-zinc-300">
+                            Active Connection
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -892,24 +1509,28 @@ export default function ProvidersPage() {
 
                   {/* Validation Probe Results */}
                   {validationResult && (
-                    <div className={cn(
-                      "mt-4 p-3.5 rounded-lg border text-xs flex items-start gap-2.5 transition-all",
-                      validationResult.valid
-                        ? "bg-emerald-950/20 border-emerald-900/60 text-emerald-400"
-                        : "bg-red-950/20 border-red-900/60 text-red-400"
-                    )}>
+                    <div
+                      className={cn(
+                        "mt-4 p-3.5 rounded-lg border text-xs flex items-start gap-2.5 transition-all",
+                        validationResult.valid
+                          ? "bg-emerald-950/20 border-emerald-900/60 text-emerald-400"
+                          : "bg-red-950/20 border-red-900/60 text-red-400",
+                      )}
+                    >
                       {validationResult.valid ? (
                         <>
                           <LuCheck className="w-4 h-4 mt-0.5 shrink-0" />
                           <div>
-                            <span className="font-bold">Connection successful!</span> Credentials and endpoint verified.
+                            <span className="font-bold">Connection successful!</span> Credentials
+                            and endpoint verified.
                           </div>
                         </>
                       ) : (
                         <>
                           <LuX className="w-4 h-4 mt-0.5 shrink-0" />
                           <div>
-                            <span className="font-bold">Connection failed.</span> {validationResult.error || "Please check credentials."}
+                            <span className="font-bold">Connection failed.</span>{" "}
+                            {validationResult.error || "Please check credentials."}
                           </div>
                         </>
                       )}
@@ -918,9 +1539,13 @@ export default function ProvidersPage() {
                 </div>
 
                 {/* Custom Models List Configuration */}
-                {["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(selectedProviderId) && (
+                {["openai-compatible", "anthropic-compatible", "custom-embedding"].includes(
+                  selectedProviderId,
+                ) && (
                   <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-6">
-                    <h3 className="text-sm font-semibold text-zinc-200 mb-2">Custom Models Configuration</h3>
+                    <h3 className="text-sm font-semibold text-zinc-200 mb-2">
+                      Custom Models Configuration
+                    </h3>
                     <p className="text-xs text-zinc-500 mb-4">
                       Add model identifiers to display in chat interfaces from your custom node API.
                     </p>
@@ -960,7 +1585,9 @@ export default function ProvidersPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-600 font-mono italic">No custom models added yet.</p>
+                      <p className="text-xs text-zinc-600 font-mono italic">
+                        No custom models added yet.
+                      </p>
                     )}
                   </div>
                 )}
@@ -987,7 +1614,9 @@ export default function ProvidersPage() {
                         >
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-zinc-200 truncate">{m.name || m.id}</p>
-                            <p className="font-mono text-[9px] text-zinc-500 mt-0.5 truncate">{m.id}</p>
+                            <p className="font-mono text-[9px] text-zinc-500 mt-0.5 truncate">
+                              {m.id}
+                            </p>
                           </div>
                         </div>
                       ))
@@ -1038,7 +1667,11 @@ export default function ProvidersPage() {
                                   }
                                 }}
                                 className="flex items-center gap-1 px-2 py-1 rounded-md border border-zinc-800 text-[10px] font-mono text-zinc-400 hover:text-orange-400 hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors cursor-pointer"
-                                title={m.contextLength ? `${m.name} · ${Math.round(m.contextLength / 1000)}k ctx` : m.name}
+                                title={
+                                  m.contextLength
+                                    ? `${m.name} · ${Math.round(m.contextLength / 1000)}k ctx`
+                                    : m.name
+                                }
                               >
                                 <LuPlus className="w-2.5 h-2.5" />
                                 {m.id.split("/").pop()}
@@ -1051,7 +1684,6 @@ export default function ProvidersPage() {
                   </div>
                 </div>
               </div>
-
             </div>
           </motion.div>
         )}

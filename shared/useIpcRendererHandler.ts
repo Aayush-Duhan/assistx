@@ -5,7 +5,10 @@ import type { IpcToRendererEvents } from "./ipcEvents.js";
 
 type Handler<T extends keyof IpcToRendererEvents> = (payload: IpcToRendererEvents[T]) => void;
 
-const handlersByEvent = new Map<keyof IpcToRendererEvents, { handlers: Set<Handler<any>>; dispose: () => void }>();
+const handlersByEvent = new Map<
+  keyof IpcToRendererEvents,
+  { handlers: Set<Handler<any>>; dispose: () => void }
+>();
 
 function getOrInitHandlers<T extends keyof IpcToRendererEvents>(event: T): Set<Handler<T>> {
   const entry = handlersByEvent.get(event);

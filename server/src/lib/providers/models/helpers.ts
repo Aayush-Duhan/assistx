@@ -13,8 +13,8 @@ export function withCodexReviewModels(models: any[]): any[] {
         id: `${model.id}${CODEX_REVIEW_SUFFIX}`,
         name: `${model.name} Review`,
         upstreamModelId: model.upstreamModelId || model.id,
-        quotaFamily: "review"
-      }
+        quotaFamily: "review",
+      },
     ];
   });
 }

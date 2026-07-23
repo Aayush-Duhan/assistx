@@ -3,43 +3,34 @@
  * Deepgram transcription service - handles real-time audio transcription
  */
 
-import { createClient, type LiveClient, LiveTranscriptionEvents } from "@deepgram/sdk";
+import { DeepgramClient } from "@deepgram/sdk";
 import { getRequiredDeepgramApiKey } from "../env";
 import type { TranscriptionResult } from "../types";
 import { logger } from "../lib/pino/logger";
 
-// Deepgram configuration
+// Deepgram configuration.
+// SDK v5 codegen types the boolean flags as "true" | "false" strings.
 const DEEPGRAM_CONFIG = {
   model: "nova-3", // nova-2 has better real-time performance
   language: "en-US", // Specific language for faster processing
   encoding: "linear16",
   sample_rate: 16000,
   channels: 1,
-  punctuate: true,
-  smart_format: true,
-  interim_results: true, // Enable real-time interim results
+  punctuate: "true",
+  smart_format: "true",
+  interim_results: "true", // Enable real-time interim results
   endpointing: 200, // Faster endpointing for real-time response
   utterance_end_ms: 1000, // End utterance after 1s of silence
-  vad_events: true, // Voice activity detection
+  vad_events: "true", // Voice activity detection
 };
 
-/**
- * Creates a Deepgram live transcription client
- */
-export function createDeepgramClient(): LiveClient {
-  const apiKey = getRequiredDeepgramApiKey();
-  const deepgram = createClient(apiKey);
-
-  const connection = deepgram.listen.live(DEEPGRAM_CONFIG);
-
-  return connection;
-}
+type DeepgramConnection = Awaited<ReturnType<DeepgramClient["listen"]["v1"]["connect"]>>;
 
 /**
  * Manages a Deepgram transcription session
  */
 export class DeepgramSession {
-  private connection: LiveClient | null = null;
+  private connection: DeepgramConnection | null = null;
   private onTranscriptCallback: ((result: TranscriptionResult) => void) | null = null;
   private onErrorCallback: ((error: Error) => void) | null = null;
   private onCloseCallback: (() => void) | null = null;
@@ -48,12 +39,12 @@ export class DeepgramSession {
 
   async start(): Promise<void> {
     const apiKey = getRequiredDeepgramApiKey();
-    const deepgram = createClient(apiKey);
+    const deepgram = new DeepgramClient({ apiKey });
 
-    this.connection = deepgram.listen.live(DEEPGRAM_CONFIG);
+    const connection = await deepgram.listen.v1.connect(DEEPGRAM_CONFIG);
 
-    // Set up event handlers
-    this.connection.on(LiveTranscriptionEvents.Open, () => {
+    // v5 sockets are created closed; handlers must be registered before opening.
+    connection.on("open", () => {
       logger.info("deepgram.connection", "Deepgram connection opened");
       // Notify caller that connection is ready
       if (this.onOpenCallback) {
@@ -62,12 +53,13 @@ export class DeepgramSession {
       // Start keep-alive
       this.keepAliveInterval = setInterval(() => {
         if (this.connection) {
-          this.connection.keepAlive();
+          this.connection.sendKeepAlive({ type: "KeepAlive" });
         }
       }, 10000);
     });
 
-    this.connection.on(LiveTranscriptionEvents.Transcript, (data) => {
+    connection.on("message", (data) => {
+      if (data.type !== "Results") return;
       const transcript = data.channel?.alternatives?.[0];
       if (transcript && this.onTranscriptCallback) {
         this.onTranscriptCallback({
@@ -84,7 +76,7 @@ export class DeepgramSession {
       }
     });
 
-    this.connection.on(LiveTranscriptionEvents.Error, (error) => {
+    connection.on("error", (error) => {
       logger.error(
         error instanceof Error ? error : new Error(String(error)),
         "deepgram.error",
@@ -95,13 +87,17 @@ export class DeepgramSession {
       }
     });
 
-    this.connection.on(LiveTranscriptionEvents.Close, () => {
+    connection.on("close", () => {
       logger.info("deepgram.connection", "Deepgram connection closed");
       this.cleanup();
       if (this.onCloseCallback) {
         this.onCloseCallback();
       }
     });
+
+    connection.connect();
+    await connection.waitForOpen();
+    this.connection = connection;
   }
 
   sendAudio(audioData: Buffer): void {
@@ -110,8 +106,8 @@ export class DeepgramSession {
       const arrayBuffer = audioData.buffer.slice(
         audioData.byteOffset,
         audioData.byteOffset + audioData.byteLength,
-      );
-      this.connection.send(arrayBuffer);
+      ) as ArrayBuffer;
+      this.connection.sendMedia(arrayBuffer);
     }
   }
 
@@ -132,9 +128,7 @@ export class DeepgramSession {
   }
 
   close(): void {
-    if (this.connection) {
-      this.connection.requestClose();
-    }
+    this.connection?.close();
     this.cleanup();
   }
 

@@ -2,9 +2,7 @@ export default {
   id: "opencode-go",
   priority: 210,
   alias: "opencode-go",
-  aliases: [
-    "ocg",
-  ],
+  aliases: ["ocg"],
   uiAlias: "ocg",
   display: {
     name: "OpenCode Go",

@@ -10,7 +10,7 @@ import { electronAcceleratorToLabels } from "@/lib/utils";
 import { useKeybindings } from "@/hooks/useKeybindings";
 import { useGlobalServices } from "@/services/GlobalServicesContextProvider";
 import { useShowConversation } from "../hooks/useShowConversation";
-import { Popover } from "@base-ui-components/react/popover";
+import { Popover } from "@base-ui/react/popover";
 import { CaptureMouseEventsWrapper } from "@/components/captureMouseEventsWrapper";
 import { SettingsPanel } from "./settingsPanel";
 import { ModelList, ModelSelectorTrigger } from "../chat/select-model";
@@ -158,7 +158,7 @@ export function ChatInput({
                 </kit.HeadlessButton>
               </Popover.Trigger>
 
-              <Popover.Portal keepMounted={false}>
+              <Popover.Portal>
                 <Popover.Positioner align="start" side="top" sideOffset={8}>
                   <Popover.Popup>
                     <CaptureMouseEventsWrapper>

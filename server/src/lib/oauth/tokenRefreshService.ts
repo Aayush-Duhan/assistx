@@ -43,7 +43,9 @@ async function processRefreshableTokens(): Promise<void> {
           };
           if (result.refreshToken) updateData.refreshToken = result.refreshToken;
           updateProviderConnection(conn.id, updateData);
-          logger.info("token-refresh.success", `Refreshed token for ${conn.provider}`, { provider: conn.provider });
+          logger.info("token-refresh.success", `Refreshed token for ${conn.provider}`, {
+            provider: conn.provider,
+          });
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

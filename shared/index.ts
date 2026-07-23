@@ -29,19 +29,10 @@ export {
   themeSchema,
   sharedStateSchema,
 } from "./sharedState";
-export type {
-  ClientMetadata,
-  Keybindings,
-  KeybindingsDisabled,
-  SharedState,
-} from "./sharedState";
+export type { ClientMetadata, Keybindings, KeybindingsDisabled, SharedState } from "./sharedState";
 
 // Update status (main-owned, not SharedState)
-export {
-  updateStatusSchema,
-  versionInfoSchema,
-  compareVersions,
-} from "./updateStatus";
+export { updateStatusSchema, versionInfoSchema, compareVersions } from "./updateStatus";
 export type { UpdateStatus, VersionInfo } from "./updateStatus";
 
 // Shared React components and hooks

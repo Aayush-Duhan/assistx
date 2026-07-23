@@ -1,25 +1,12 @@
-import { createConsola, LogLevels } from "consola";
-import { IS_DEV } from "@/shared/constants";
+import { logger as serverLogger } from "@server/lib/pino/logger";
 
 /**
- * Logger instance for the application.
+ * Logger instance for the Electron main process.
  *
- * This logger uses consola to provide logging capabilities with different log levels.
- * In development mode, it logs debug and above levels, while in production it logs
- * info and above levels only. All logs are tagged with "assistx" for easy identification.
- *
- * @example
- * ```typescript
- * logger.info('This is an info message');
- * logger.debug('This is a debug message (only in dev mode)');
- * logger.error('This is an error message');
- * ```
+ * Backed by the same pino logger as the in-process server (see
+ * `server/src/lib/pino/logger.ts`), so main-process and server logs share
+ * one format and one level knob (`LOG_LEVEL` env var).
  */
-const logger = createConsola({
-  level: IS_DEV ? LogLevels.debug : LogLevels.info,
-  defaults: {
-    tag: "assistx",
-  },
-});
+const logger = serverLogger.child("electron");
 
 export default logger;

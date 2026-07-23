@@ -31,7 +31,7 @@ export default defineConfig({
     include: ['buffer', 'process', 'events', 'stream-browserify', 'util']
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
         onboarding: path.resolve(__dirname, 'onboarding.html'),
@@ -59,7 +59,7 @@ export default defineConfig({
             },
           },
           build: {
-            rollupOptions: {
+            rolldownOptions: {
               // Externalize native modules and server dependencies so Rollup doesn't try to bundle them
               // These will be loaded at runtime from node_modules
               external: [
@@ -89,7 +89,7 @@ export default defineConfig({
         input: path.join(__dirname, 'electron/preload.ts'),
         vite: {
           build: {
-            rollupOptions: {
+            rolldownOptions: {
               output: {
                 format: 'cjs',
                 entryFileNames: '[name].cjs',
@@ -98,13 +98,8 @@ export default defineConfig({
           },
         },
       },
-      // Ployfill the Electron and Node.js API for Renderer process.
-      // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
-      // See 👉 https://github.com/electron-vite/vite-plugin-electron-renderer
-      renderer: process.env.NODE_ENV === 'test'
-        // https://github.com/electron-vite/vite-plugin-electron-renderer/issues/78#issuecomment-2053600808
-        ? undefined
-        : {},
+      // Renderer runs with nodeIntegration off and never imports `electron`;
+      // Node built-ins (buffer, etc.) are polyfilled by vite-plugin-node-polyfills.
     }),
   ],
 })

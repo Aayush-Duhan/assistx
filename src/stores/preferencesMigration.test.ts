@@ -9,13 +9,19 @@ import {
 } from "./preferencesMigration";
 
 /** In-memory storage for tests */
-function createMockStorage(initial: Record<string, string> = {}): StorageLike & { store: Record<string, string> } {
+function createMockStorage(
+  initial: Record<string, string> = {},
+): StorageLike & { store: Record<string, string> } {
   const store: Record<string, string> = { ...initial };
   return {
     store,
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
   };
 }
 
@@ -29,15 +35,24 @@ describe("extractSelectedModel", () => {
 
   it("falls back to MobX assistx_settings", () => {
     const storage = createMockStorage({
-      assistx_settings: JSON.stringify({ selectedProvider: "google", selectedModel: "gemini-2.5-flash" }),
+      assistx_settings: JSON.stringify({
+        selectedProvider: "google",
+        selectedModel: "gemini-2.5-flash",
+      }),
     });
-    expect(extractSelectedModel(storage)).toEqual({ provider: "google", model: "gemini-2.5-flash" });
+    expect(extractSelectedModel(storage)).toEqual({
+      provider: "google",
+      model: "gemini-2.5-flash",
+    });
   });
 
   it("prefers chatModel over assistx_settings", () => {
     const storage = createMockStorage({
       chatModel: JSON.stringify({ provider: "anthropic", model: "claude-4" }),
-      assistx_settings: JSON.stringify({ selectedProvider: "google", selectedModel: "gemini-2.5-flash" }),
+      assistx_settings: JSON.stringify({
+        selectedProvider: "google",
+        selectedModel: "gemini-2.5-flash",
+      }),
     });
     expect(extractSelectedModel(storage)).toEqual({ provider: "anthropic", model: "claude-4" });
   });

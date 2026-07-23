@@ -213,6 +213,11 @@ export class Logger {
   getLevel(): LogLevel {
     return this.pinoInstance.level as LogLevel;
   }
+
+  /** Raw pino instance, for libraries that accept their own pino logger (e.g. Fastify's `loggerInstance`). */
+  get pino(): PinoLogger {
+    return this.pinoInstance;
+  }
 }
 
 const isDev = process.env.NODE_ENV !== "production";
