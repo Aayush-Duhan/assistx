@@ -49,58 +49,6 @@ export const agents = sqliteTable("agents", {
 });
 
 // ============================================================================
-// Workflows Table
-// n8n-style workflow definitions
-// ============================================================================
-export const workflows = sqliteTable("workflows", {
-  id: text("id").primaryKey(), // UUIDv7
-  name: text("name").notNull(),
-  description: text("description"),
-  version: text("version").default("1.0.0"),
-  icon: text("icon", { mode: "json" }), // WorkflowIcon: { type: "emoji", value: "🔄" }
-  isPublished: integer("is_published", { mode: "boolean" }).default(false), // Available as AI tool
-  isActive: integer("is_active", { mode: "boolean" }).default(false),
-  triggerType: text("trigger_type"), // 'manual', 'schedule', 'ai'
-  executionContext: text("execution_context", { mode: "json" }), // WorkflowExecutionContext
-  lastRunAt: integer("last_run_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-});
-
-// ============================================================================
-// Workflow Nodes Table
-// Individual nodes within a workflow
-// ============================================================================
-export const workflowNodes = sqliteTable("workflow_nodes", {
-  id: text("id").primaryKey(), // UUIDv7
-  workflowId: text("workflow_id")
-    .references(() => workflows.id, { onDelete: "cascade" })
-    .notNull(),
-  kind: text("kind").notNull(), // NodeKind enum value
-  name: text("name").notNull(),
-  description: text("description"),
-  nodeConfig: text("node_config", { mode: "json" }), // Node-specific configuration
-  uiConfig: text("ui_config", { mode: "json" }), // Position, styling, etc.
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-});
-
-// ============================================================================
-// Workflow Edges Table
-// Connections between nodes in a workflow
-// ============================================================================
-export const workflowEdges = sqliteTable("workflow_edges", {
-  id: text("id").primaryKey(), // UUIDv7
-  workflowId: text("workflow_id")
-    .references(() => workflows.id, { onDelete: "cascade" })
-    .notNull(),
-  source: text("source").notNull(), // Source node ID
-  target: text("target").notNull(), // Target node ID
-  uiConfig: text("ui_config", { mode: "json" }), // Handle positions, labels for condition branches
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
-
-// ============================================================================
 // Audio Sessions Table
 // Granola-style meeting/audio session records
 // ============================================================================

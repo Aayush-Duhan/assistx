@@ -6,7 +6,6 @@ import GeneralPage from "./pages/main/generalPage";
 import KeybindingsPage from "./pages/main/keyBindingsPage";
 import ProvidersPage from "./pages/features/providersPage";
 import ModesPage from "./pages/main/modesPage";
-import WorkflowsPage from "./pages/main/workflowsPage";
 import AgentsPage from "./pages/tools/agentsPage";
 import McpPage from "./pages/tools/mcpPage";
 
@@ -19,7 +18,6 @@ export default function Dashboard() {
     keybindings: <KeybindingsPage />,
     providers: <ProvidersPage />,
     modes: <ModesPage />,
-    workflows: <WorkflowsPage />,
     agents: <AgentsPage />,
     mcps: <McpPage />,
   };

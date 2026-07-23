@@ -3,14 +3,6 @@
  * HTTP client for server API communication with dynamic port and bearer token auth
  */
 
-import type {
-  WorkflowSummary,
-  CreateWorkflowRequest,
-  WorkflowWithStructure,
-  DBNode,
-  DBEdge,
-} from "@/shared/workflow.types";
-
 let cachedServerConfig: { baseUrl: string; wsUrl: string; token: string } | null = null;
 
 export async function getServerConfig(): Promise<{ baseUrl: string; wsUrl: string; token: string }> {
@@ -361,76 +353,5 @@ export const mcpApi = {
     if (!response.ok) throw new Error("Failed to get MCP config path");
     const data = await response.json();
     return data.path;
-  },
-};
-
-// ============================================================================
-// Workflows API
-// ============================================================================
-
-export const workflowsApi = {
-  list: async (): Promise<WorkflowSummary[]> => {
-    const res = await apiFetch("/workflows");
-    if (!res.ok) throw new Error("Failed to fetch workflows");
-    return res.json();
-  },
-  get: async (id: string): Promise<WorkflowWithStructure> => {
-    const res = await apiFetch(`/workflows/${id}`);
-    if (!res.ok) throw new Error("Failed to fetch workflow");
-    return res.json();
-  },
-  create: async (data: CreateWorkflowRequest): Promise<{ id: string }> => {
-    const res = await apiFetch("/workflows", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Failed to create workflow");
-    return res.json();
-  },
-  delete: async (id: string): Promise<void> => {
-    const res = await apiFetch(`/workflows/${id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Failed to delete workflow");
-  },
-  togglePublish: async (id: string, isPublished: boolean): Promise<void> => {
-    const res = await apiFetch(`/workflows/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPublished }),
-    });
-    if (!res.ok) throw new Error("Failed to update workflow");
-  },
-  execute: async (id: string): Promise<unknown> => {
-    const res = await apiFetch(`/workflows/${id}/execute`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (!res.ok) throw new Error("Failed to execute workflow");
-    return res.json();
-  },
-  saveStructure: async (
-    id: string,
-    payloadOrNodes:
-      | {
-          nodes: DBNode[];
-          edges: DBEdge[];
-          deleteNodes?: string[];
-          deleteEdges?: string[];
-        }
-      | DBNode[],
-    edges?: DBEdge[],
-  ): Promise<void> => {
-    const payload = Array.isArray(payloadOrNodes)
-      ? { nodes: payloadOrNodes, edges: edges || [] }
-      : payloadOrNodes;
-    const res = await apiFetch(`/workflows/${id}/structure`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error("Failed to save workflow structure");
   },
 };

@@ -3,7 +3,6 @@ import {
   LuKeyboard,
   LuHistory,
   LuLayers,
-  LuArrowRightLeft,
   LuShield,
   LuBell,
   LuWrench,
@@ -23,7 +22,6 @@ export const sidebarData: Record<string, SidebarSectionData> = {
       { key: "keybindings", label: "Keybindings", icon: <LuKeyboard size={ICON_SIZE} /> },
       { key: "sessions", label: "Sessions", icon: <LuHistory size={ICON_SIZE} /> },
       { key: "modes", label: "Modes", icon: <LuLayers size={ICON_SIZE} /> },
-      { key: "workflows", label: "Workflows", icon: <LuArrowRightLeft size={ICON_SIZE} /> },
     ],
   },
   features: {
