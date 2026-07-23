@@ -34,12 +34,15 @@ export async function getServerConfig(): Promise<{ baseUrl: string; wsUrl: strin
   }
   const defaultPort = import.meta.env?.VITE_SERVER_PORT || "3000";
   const defaultToken = import.meta.env?.VITE_SERVER_TOKEN || "";
-  cachedServerConfig = {
+  const fallbackConfig = {
     baseUrl: `http://127.0.0.1:${defaultPort}/api`,
     wsUrl: `ws://127.0.0.1:${defaultPort}/api`,
     token: defaultToken,
   };
-  return cachedServerConfig;
+  if (typeof window === "undefined" || !window.electron?.getServerConfig) {
+    cachedServerConfig = fallbackConfig;
+  }
+  return fallbackConfig;
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
@@ -197,146 +200,6 @@ export const agentsApi = {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete agent");
-  },
-};
-
-// ============================================================================
-// API Keys API
-// ============================================================================
-
-export interface ApiKeyInfo {
-  provider: string;
-  name: string;
-  isConfigured: boolean;
-  isValid: boolean;
-  updatedAt: Date;
-}
-
-export const apiKeysApi = {
-  async list(): Promise<ApiKeyInfo[]> {
-    const response = await apiFetch("/api-keys");
-    if (!response.ok) throw new Error("Failed to fetch API keys");
-    return response.json();
-  },
-
-  async checkProvider(provider: string): Promise<{ provider: string; isConfigured: boolean }> {
-    const response = await apiFetch(`/api-keys/${provider}/status`);
-    if (!response.ok) throw new Error("Failed to check API key status");
-    return response.json();
-  },
-
-  async save(provider: string, key: string): Promise<void> {
-    const response = await apiFetch("/api-keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, key }),
-    });
-    if (!response.ok) throw new Error("Failed to save API key");
-  },
-
-  async delete(provider: string): Promise<void> {
-    const response = await apiFetch(`/api-keys/${provider}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Failed to delete API key");
-  },
-
-  async copyKey(provider: string): Promise<string> {
-    const response = await apiFetch(`/api-keys/${provider}/copy`);
-    if (!response.ok) throw new Error("Failed to retrieve API key");
-    const data = await response.json();
-    return data.key;
-  },
-};
-
-// ============================================================================
-// Models API
-// ============================================================================
-
-export interface ProviderModels {
-  providerId: string;
-  displayName: string;
-  hasApiKey: boolean;
-  builtInModels: AIModel[];
-  customModels: AIModel[];
-}
-
-export interface AIModel {
-  id: string;
-  providerId: string;
-  modelId: string;
-  displayName: string;
-  contextWindow: number | null;
-  maxOutputTokens: number | null;
-  supportsVision: boolean;
-  supportsTools: boolean;
-  isEnabled: boolean;
-  isBuiltIn: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Alias for backwards compatibility
-export type CustomModel = AIModel;
-
-export interface CreateModelData {
-  providerId: string;
-  modelId: string;
-  displayName: string;
-  contextWindow?: number;
-  maxOutputTokens?: number;
-  supportsVision?: boolean;
-  supportsTools?: boolean;
-}
-
-export interface UpdateModelData {
-  providerId?: string;
-  modelId?: string;
-  displayName?: string;
-  contextWindow?: number;
-  maxOutputTokens?: number;
-  supportsVision?: boolean;
-  supportsTools?: boolean;
-  isEnabled?: boolean;
-}
-
-export const modelsApi = {
-  async list(): Promise<ProviderModels[]> {
-    const response = await apiFetch("/models");
-    if (!response.ok) throw new Error("Failed to fetch models");
-    return response.json();
-  },
-
-  async listCustom(): Promise<CustomModel[]> {
-    const response = await apiFetch("/models/custom");
-    if (!response.ok) throw new Error("Failed to fetch custom models");
-    return response.json();
-  },
-
-  async create(data: CreateModelData): Promise<{ id: string }> {
-    const response = await apiFetch("/models", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Failed to create model");
-    return response.json();
-  },
-
-  async update(id: string, data: UpdateModelData): Promise<void> {
-    const response = await apiFetch(`/models/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Failed to update model");
-  },
-
-  async delete(id: string): Promise<void> {
-    const response = await apiFetch(`/models/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Failed to delete model");
   },
 };
 

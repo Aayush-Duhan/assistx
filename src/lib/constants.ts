@@ -55,10 +55,10 @@ export const FOLLOW_UP_PROMPTS = {
 export const APP_URL = "https://assistx.ai";
 export const DOCS_URL = "https://assistx.ai/docs";
 
-export const GITHUB_REPO = "assistx-ai/assistx";
+/** Canonical GitHub repo — must match electron-builder.json5 publish config. */
+export const GITHUB_REPO = "Aayush-Duhan/assistx";
 export const GITHUB_ISSUES_URL = `https://github.com/${GITHUB_REPO}/issues`;
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
-export const GITHUB_API_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 export const FeatureFlags = {
   VIM_MODE_KEY_BINDINGS: "vim_mode_key_bindings",

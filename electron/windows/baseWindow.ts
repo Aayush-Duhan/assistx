@@ -4,6 +4,7 @@ import { APP_NAME } from "../utils/constants";
 import { IS_WINDOWS, IS_DEV } from "@/shared/constants";
 import { windowManager } from "./WindowManager";
 import { getSharedState } from "../utils/shared/stateManager";
+import { isQuittingForUpdateInstall } from "../features/autoUpdater";
 
 const __dirname = import.meta.dirname;
 
@@ -105,9 +106,8 @@ export abstract class BaseWindow {
     this.window.on("close", (event) => {
       if (
         !this.windowIsClosing &&
-        !windowManager.appIsQuitting
-        // TODO: Add update check
-        // && !isQuittingForUpdateInstall()
+        !windowManager.appIsQuitting &&
+        !isQuittingForUpdateInstall()
       ) {
         event.preventDefault();
         windowManager.fakeQuit();

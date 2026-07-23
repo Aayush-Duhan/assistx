@@ -14,10 +14,13 @@ import {
 import { IoArrowUpCircleOutline, IoPower } from "react-icons/io5";
 import { GrCircleQuestion } from "react-icons/gr";
 import { useDarkMode } from "usehooks-ts";
+import { useUpdateStatus } from "@/hooks/useUpdateStatus";
 
 export function FallbackMenu() {
   const { isDarkMode } = useDarkMode();
-  const { appVersion, autoUpdateState } = useSharedState();
+  const { appVersion } = useSharedState();
+  const updateStatus = useUpdateStatus();
+
   return (
     <Dropdown>
       <DropdownButton className="outline-none group p-2 cursor-pointer">
@@ -33,7 +36,7 @@ export function FallbackMenu() {
           <GrCircleQuestion />
           <DropdownLabel>Help Center</DropdownLabel>
         </DropdownItem>
-        {autoUpdateState.state === "downloaded" && (
+        {updateStatus.state === "downloaded" && (
           <DropdownItem
             warn
             onClick={() => {

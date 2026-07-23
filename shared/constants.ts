@@ -13,4 +13,9 @@ export const IS_DEV =
 
 // App metadata (static, no environment detection needed)
 export const APP_NAME = "AssistX";
-export const APP_VERSION = "1.0.0";
+/**
+ * Fallback version string for non-Electron contexts.
+ * Runtime UI should prefer `sharedState.appVersion` / `app.getVersion()`
+ * (sourced from package.json by Electron).
+ */
+export const APP_VERSION = "0.0.1";

@@ -1,7 +1,12 @@
-import { app, desktopCapturer, shell, systemPreferences } from "electron";
+import { app, desktopCapturer, shell, systemPreferences, BrowserWindow } from "electron";
 import { windowManager } from "../windows/WindowManager";
 import { handle, on } from "./ipcMain";
-import { checkForUpdates, installUpdate } from "../features/autoUpdater";
+import {
+  checkForUpdates,
+  getUpdateStatus,
+  installUpdate,
+} from "../features/autoUpdater";
+import { getVersionInfo } from "../utils/versionInfo";
 import {
   enableDevShortcuts,
   registerGlobalShortcut,
@@ -44,9 +49,9 @@ export function initializeIpcHandlers(): void {
     app.quit();
   });
   // Auto-updater
-  on("check-for-update", () => {
-    checkForUpdates();
-  });
+  handle("check-for-updates", () => checkForUpdates());
+  handle("get-update-status", () => getUpdateStatus());
+  handle("get-version-info", () => getVersionInfo());
   on("install-update", () => {
     installUpdate();
   });
@@ -162,4 +167,64 @@ export function initializeIpcHandlers(): void {
     //   }
     // });
   }
+
+  handle("open-oauth-popup", async (_event, { url, redirectUrlPrefix }) => {
+    return new Promise((resolve) => {
+      const authWindow = new BrowserWindow({
+        width: 600,
+        height: 800,
+        show: true,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+        },
+      });
+
+      let resolved = false;
+
+      const handleCallback = (currentUrl: string) => {
+        if (currentUrl.startsWith(redirectUrlPrefix)) {
+          const parsed = new URL(currentUrl);
+          const code = parsed.searchParams.get("code");
+          const error = parsed.searchParams.get("error");
+          
+          resolved = true;
+          authWindow.destroy();
+          resolve({ code, error });
+        }
+      };
+
+      authWindow.webContents.on("will-navigate", (_e, currentUrl) => {
+        handleCallback(currentUrl);
+      });
+
+      authWindow.webContents.on("will-redirect", (_e, currentUrl) => {
+        handleCallback(currentUrl);
+      });
+
+      authWindow.on("closed", () => {
+        if (!resolved) {
+          resolve({ code: null, error: "Window closed by user" });
+        }
+      });
+
+      authWindow.loadURL(url).catch((err) => {
+        console.error("Failed to load OAuth URL:", err);
+        resolved = true;
+        authWindow.destroy();
+        resolve({ code: null, error: "Failed to load URL" });
+      });
+    });
+  });
+
+  handle("open-oauth-external", async (_event, { url }) => {
+    try {
+      await shell.openExternal(url);
+      return { success: true };
+    } catch (err) {
+      console.error("Failed to open OAuth URL externally:", err);
+      return { success: false };
+    }
+  });
 }
+

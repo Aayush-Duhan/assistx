@@ -1,6 +1,7 @@
 import { Buffer } from "buffer";
 import z from "zod";
 import { type SharedState, sharedStateSchema } from "./sharedState";
+import { updateStatusSchema, versionInfoSchema } from "./updateStatus";
 
 const dialogPagesSchema = z.union([
   z.literal("/about"),
@@ -74,7 +75,6 @@ export const ipcToMainEvents = {
   "update-shared-state": sharedStateSchema.partial(),
   "quit-app": z.null(),
   "relaunch-app": z.null(),
-  "check-for-update": z.null(),
   "install-update": z.null(),
   "finish-onboarding": z.null(),
   "reset-onboarding": z.null(),
@@ -123,6 +123,7 @@ export const ipcToMainEvents = {
 
 export type IpcToRendererEvents = {
   "update-shared-state": SharedState;
+  "update-status-changed": z.infer<typeof updateStatusSchema>;
   "global-shortcut-triggered": {
     accelerator: string;
   };
@@ -136,7 +137,7 @@ export const ipcInvokeEvents = {
     response: z.void(),
   },
   "get-shared-state": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: sharedStateSchema,
   },
   "check-media-permission": {
@@ -148,18 +149,18 @@ export const ipcInvokeEvents = {
     response: z.boolean(),
   },
   "capture-screenshot": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.object({
       contentType: z.string(),
       data: z.instanceof(Buffer),
     }),
   },
   "is-cursor-outside-target-display": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.boolean(),
   },
   "move-window-to-display-containing-cursor": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.object({
       postMoveInfo: z
         .object({
@@ -170,11 +171,19 @@ export const ipcInvokeEvents = {
     }),
   },
   "check-for-updates": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.enum(["none", "available", "failed"]),
   },
+  "get-update-status": {
+    payload: z.null().optional(),
+    response: updateStatusSchema,
+  },
+  "get-version-info": {
+    payload: z.null().optional(),
+    response: versionInfoSchema,
+  },
   "get-server-config": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response:
       z.object({
         port: z.number(),
@@ -186,7 +195,7 @@ export const ipcInvokeEvents = {
   },
   // MCP
   "mcp-list-clients": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.array(
       z.object({
         id: z.string(),
@@ -236,15 +245,15 @@ export const ipcInvokeEvents = {
     response: z.object({}).passthrough(),
   },
   "mcp-get-config-path": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.object({ path: z.string() }),
   },
   "mcp-open-config": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.void(),
   },
   "mcp-reveal-config": {
-    payload: z.null(),
+    payload: z.null().optional(),
     response: z.void(),
   },
   "mcp-remove-client": {
@@ -254,5 +263,16 @@ export const ipcInvokeEvents = {
   "mcp-set-allowed-tools": {
     payload: z.object({ id: z.string(), allowedTools: z.array(z.string()) }),
     response: z.void(),
+  },
+  "open-oauth-popup": {
+    payload: z.object({ url: z.string().url(), redirectUrlPrefix: z.string() }),
+    response: z.object({
+      code: z.string().nullable(),
+      error: z.string().nullable(),
+    }),
+  },
+  "open-oauth-external": {
+    payload: z.object({ url: z.string().url() }),
+    response: z.object({ success: z.boolean() }),
   },
 };

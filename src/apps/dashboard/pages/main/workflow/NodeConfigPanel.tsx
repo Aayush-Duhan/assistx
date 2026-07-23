@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LuX, LuTrash2, LuChevronDown, LuChevronUp } from "react-icons/lu";
-import { modelsApi } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { NodeKind } from "@/shared/workflow.interface";
 import type { WorkflowNode, WorkflowNodeData } from "./WorkflowNode";
 
@@ -61,19 +61,20 @@ const NodeConfigPanel = ({ node, onUpdate, onDelete, onClose }: NodeConfigPanelP
     const loadModels = async () => {
       setIsModelsLoading(true);
       try {
-        const providers = await modelsApi.list();
+        const res = await apiFetch("/providers/models");
+        if (!res.ok) throw new Error("Failed to fetch models");
         if (!isMounted) return;
-        const flattened = providers.flatMap((provider) => {
-          const models = [...provider.builtInModels, ...provider.customModels];
-          return models
-            .filter((model) => model.isEnabled !== false)
-            .map((model) => ({
-              value: `${model.providerId}/${model.modelId}`,
-              label: `${provider.displayName} • ${model.displayName}`,
-              providerId: model.providerId,
-              modelId: model.modelId,
-            }));
-        });
+        const { providerModels } = (await res.json()) as {
+          providerModels: Record<string, { id: string; name: string }[]>;
+        };
+        const flattened = Object.entries(providerModels).flatMap(([providerId, models]) =>
+          models.map((model) => ({
+            value: `${providerId}/${model.id}`,
+            label: `${providerId} • ${model.name}`,
+            providerId,
+            modelId: model.id,
+          })),
+        );
         setAvailableModels(flattened);
       } catch (error) {
         console.error("Failed to load models:", error);

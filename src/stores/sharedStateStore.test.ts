@@ -35,7 +35,6 @@ const makeState = (overrides: Partial<SharedState> = {}): SharedState => ({
   keybindingsDisabled: {},
   recordingKeybinding: false,
   ignoreMouseEvents: false,
-  autoUpdateState: { state: "none" },
   currentAudioSessionId: null,
   clientMetadata: null,
   platform: "win32",

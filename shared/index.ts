@@ -21,7 +21,6 @@ export type { OnboardingMode } from "./onboardingState";
 
 // Shared state
 export {
-  autoUpdateStateSchema,
   clientMetadataSchema,
   keybindingsSchema,
   keybindingsDisabledSchema,
@@ -31,12 +30,19 @@ export {
   sharedStateSchema,
 } from "./sharedState";
 export type {
-  AutoUpdateState,
   ClientMetadata,
   Keybindings,
   KeybindingsDisabled,
   SharedState,
 } from "./sharedState";
+
+// Update status (main-owned, not SharedState)
+export {
+  updateStatusSchema,
+  versionInfoSchema,
+  compareVersions,
+} from "./updateStatus";
+export type { UpdateStatus, VersionInfo } from "./updateStatus";
 
 // Shared React components and hooks
 export { SharedStateProvider, useSharedState, updateState } from "./shared";

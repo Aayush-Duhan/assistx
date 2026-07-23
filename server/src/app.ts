@@ -42,8 +42,15 @@ export { logger };
 // Authentication hook for loopback security
 app.addHook("onRequest", async (request, reply) => {
   const url = request.raw.url || "";
-  // Exclude health check endpoint and CORS preflight OPTIONS requests
-  if (url === "/health" || url.startsWith("/health?") || request.method === "OPTIONS") {
+  // Exclude health check, OAuth callback landing, favicon, and CORS preflight OPTIONS requests
+  if (
+    url === "/health" ||
+    url.startsWith("/health?") ||
+    url === "/oauth/callback" ||
+    url.startsWith("/oauth/callback?") ||
+    url === "/favicon.ico" ||
+    request.method === "OPTIONS"
+  ) {
     return;
   }
 

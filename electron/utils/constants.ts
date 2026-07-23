@@ -17,13 +17,7 @@ export function isMacOsSequoia(): boolean {
 }
 
 export const MIN_MACOS_VERSION = 14;
-export const RENDERER_VERSION = "1.0.0";
 
 export const DASHBOARD_PARAM_KEY = "isDashboard";
 
 export const IS_INTEL_MAC = IS_MAC && process.arch === "x64";
-
-export const PACKAGE_INFO = {
-  name: APP_NAME,
-  version: "1.0.0",
-};

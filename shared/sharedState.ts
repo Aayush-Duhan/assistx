@@ -3,19 +3,6 @@ import { onboardingStateSchema } from "./onboardingState";
 
 /** Just defines types. Used by ipcEvents, can't have circular imports. */
 
-export const autoUpdateStateSchema = z.union([
-  z.object({
-    state: z.literal("none"),
-  }),
-  z.object({
-    state: z.enum(["available", "downloaded"]),
-    version: z.string(),
-    isBelowWarningThreshold: z.boolean(),
-  }),
-]);
-
-export type AutoUpdateState = z.infer<typeof autoUpdateStateSchema>;
-
 export const clientMetadataSchema = z
   .object({
     finishedDemoMeeting: z.boolean().optional(),
@@ -83,7 +70,6 @@ export const sharedStateSchema = z.object({
   keybindingsDisabled: keybindingsDisabledSchema,
   recordingKeybinding: z.boolean(),
   ignoreMouseEvents: z.boolean(),
-  autoUpdateState: autoUpdateStateSchema,
   currentAudioSessionId: z.string().nullable(),
   clientMetadata: clientMetadataSchema,
   platform: z.string(),

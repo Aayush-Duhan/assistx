@@ -38,6 +38,19 @@ function handleProtocolUrl(url: string) {
       return;
     }
 
+    // Special-case Provider OAuth callback: assistx://oauth/callback?code=...&state=...
+    if (
+      (host === "oauth" && pathname.replace(/\/+$/, "") === "/callback") ||
+      (host === "provider" && pathname.replace(/\/+$/, "") === "/oauth/callback")
+    ) {
+      const code = params["code"] as string | undefined;
+      const state = params["state"] as string | undefined;
+      const error = params["error"] as string | undefined;
+      protocolEvents.emit("provider-oauth-callback", { code, state, error, url });
+      windowManager.sendToWebContents("provider-oauth-callback", { code, state, error, __rawUrl: url });
+      return;
+    }
+
     // Generic route: deliver host as channel with params and pathname
     windowManager.sendToWebContents("protocol-data", { host, pathname, params });
   } catch (error) {
@@ -81,7 +94,14 @@ export function setupMainProtocolHandlers(): void {
     handleProtocolUrl(initialProtocolUrl);
     initialProtocolUrl = null;
   }
+
+  // Listen for local server HTTP loopback callbacks (e.g. Google OAuth / Antigravity redirect)
+  process.on("provider-oauth-callback", (payload: { code?: string; state?: string; error?: string }) => {
+    protocolEvents.emit("provider-oauth-callback", payload);
+    windowManager.sendToWebContents("provider-oauth-callback", payload);
+  });
 }
+
 
 // Allow other main-process modules to subscribe to MCP OAuth callbacks
 export function onMcpOAuthCallback(
@@ -90,3 +110,11 @@ export function onMcpOAuthCallback(
   protocolEvents.on("mcp-oauth-callback", handler);
   return () => protocolEvents.off("mcp-oauth-callback", handler);
 }
+
+export function onProviderOAuthCallback(
+  handler: (payload: { code?: string; state?: string; error?: string; url: string }) => void,
+): () => void {
+  protocolEvents.on("provider-oauth-callback", handler);
+  return () => protocolEvents.off("provider-oauth-callback", handler);
+}
+

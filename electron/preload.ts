@@ -28,7 +28,7 @@ const electronAPI: ElectronAPI = {
       NODE_ENV: process.env.NODE_ENV,
     },
   },
-  getServerConfig: () => ipcRenderer.invoke("get-server-config"),
+  getServerConfig: () => ipcRenderer.invoke("get-server-config", null),
 };
 try {
   contextBridge.exposeInMainWorld("electron", electronAPI);

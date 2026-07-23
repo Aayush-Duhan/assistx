@@ -47,7 +47,6 @@ function createInitialState(): SharedState {
     onboardingState: loadOnboardingState(),
     panelHidden: false,
     ignoreMouseEvents: false,
-    autoUpdateState: { state: "none" },
     keybindings: loadJsonFile(STATE_FILES.keybindings, keybindingsSchema) ?? DEFAULT_KEYBINDINGS,
     keybindingsDisabled:
       loadJsonFile(STATE_FILES.keybindingsDisabled, keybindingsDisabledSchema) ??
@@ -168,7 +167,6 @@ export function resetState(options?: { resetOnboarding?: boolean }): void {
 
   updateSharedState({
     ...createInitialState(),
-    autoUpdateState: currentState.autoUpdateState,
     onboardingState: options?.resetOnboarding
       ? DEFAULT_ONBOARDING_STATE
       : currentState.onboardingState,

@@ -1,36 +1,33 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 // ============================================================================
-// API Keys Table
-// Stores encrypted API keys for various AI providers
+// Provider Connections Table
+// Stores credentials (encrypted API keys or OAuth tokens) and configuration
 // ============================================================================
-export const apiKeys = sqliteTable("api_keys", {
-  id: text("id").primaryKey(), // UUIDv7
-  provider: text("provider").notNull(), // e.g., 'openai', 'anthropic', 'google'
-  name: text("name").notNull(), // User-friendly name
-  encryptedKey: text("encrypted_key").notNull(), // AES-256 encrypted
-  isValid: integer("is_valid", { mode: "boolean" }).default(true),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+export const providerConnections = sqliteTable("provider_connections", {
+  id: text("id").primaryKey(), // UUID
+  provider: text("provider").notNull(),
+  authType: text("auth_type").notNull(), // 'apikey' | 'oauth' | 'cookie' | 'none'
+  name: text("name"),
+  email: text("email"),
+  priority: integer("priority"),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  data: text("data").notNull(), // AES-256 encrypted JSON string containing credentials, defaultModel, testStatus, proxy configs
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
 });
 
 // ============================================================================
-// AI Models Table
-// Metadata about available AI models
+// Provider Nodes Table
+// Custom endpoints configurations (e.g. OpenAI Compatible, Custom Embedding)
 // ============================================================================
-export const aiModels = sqliteTable("ai_models", {
-  id: text("id").primaryKey(), // UUIDv7
-  providerId: text("provider_id").notNull(), // e.g., 'openai', 'anthropic'
-  modelId: text("model_id").notNull(), // e.g., 'gpt-4o', 'claude-3-5-sonnet'
-  displayName: text("display_name").notNull(),
-  contextWindow: integer("context_window"), // in tokens
-  maxOutputTokens: integer("max_output_tokens"),
-  supportsVision: integer("supports_vision", { mode: "boolean" }).default(false),
-  supportsTools: integer("supports_tools", { mode: "boolean" }).default(false),
-  isEnabled: integer("is_enabled", { mode: "boolean" }).default(true),
-  isBuiltIn: integer("is_built_in", { mode: "boolean" }).default(false), // Built-in models from seed data
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+export const providerNodes = sqliteTable("provider_nodes", {
+  id: text("id").primaryKey(), // provider identifier / node ID
+  type: text("type"), // 'openai-compatible' | 'anthropic-compatible' | 'custom-embedding'
+  name: text("name"),
+  data: text("data").notNull(), // JSON string (baseUrl, prefix, apiType)
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
 });
 
 // ============================================================================
@@ -43,7 +40,7 @@ export const agents = sqliteTable("agents", {
   description: text("description"),
   role: text("role"), // "This agent is a ___"
   systemPrompt: text("system_prompt").notNull(),
-  modelId: text("model_id").references(() => aiModels.id),
+  modelId: text("model_id"), // Custom model ID (no reference constraints as models are listed dynamically)
   iconUrl: text("icon_url"), // CDN emoji URL
   iconBgColor: text("icon_bg_color"), // Background color (oklch format)
   toolConfig: text("tool_config", { mode: "json" }), // JSON: enabled MCP tools

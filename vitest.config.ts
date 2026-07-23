@@ -10,7 +10,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: [
       'electron/lib/ai/mcp/__tests__/**/*.test.ts',
-      'shared/__tests__/**/*.test.ts',
+      'shared/**/*.test.ts',
       'src/apps/onboardingApp/steps/__tests__/**/*.test.ts',
       'src/stores/**/*.test.ts',
     ],

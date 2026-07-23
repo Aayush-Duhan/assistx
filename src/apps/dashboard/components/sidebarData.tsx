@@ -10,7 +10,6 @@ import {
   LuBot,
   LuCable,
   LuKeyRound,
-  LuBrain,
 } from "react-icons/lu";
 import { SidebarSectionData } from "./types";
 
@@ -30,8 +29,7 @@ export const sidebarData: Record<string, SidebarSectionData> = {
   features: {
     title: "Features",
     items: [
-      { key: "apikeys", label: "API Keys", icon: <LuKeyRound size={ICON_SIZE} /> },
-      { key: "models", label: "Models", icon: <LuBrain size={ICON_SIZE} /> },
+      { key: "providers", label: "Providers", icon: <LuKeyRound size={ICON_SIZE} /> },
       { key: "shield", label: "Shield", icon: <LuShield size={ICON_SIZE} /> },
       { key: "bell", label: "Bell", icon: <LuBell size={ICON_SIZE} /> },
     ],

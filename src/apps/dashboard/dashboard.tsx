@@ -4,8 +4,7 @@ import { ElectronDragWrapper } from "@/components/electronDragWrapper";
 import { Sidebar } from "./components";
 import GeneralPage from "./pages/main/generalPage";
 import KeybindingsPage from "./pages/main/keyBindingsPage";
-import ApiKeysPage from "./pages/features/apiKeysPage";
-import ModelsPage from "./pages/features/modelsPage";
+import ProvidersPage from "./pages/features/providersPage";
 import ModesPage from "./pages/main/modesPage";
 import WorkflowsPage from "./pages/main/workflowsPage";
 import AgentsPage from "./pages/tools/agentsPage";
@@ -18,8 +17,7 @@ export default function Dashboard() {
   const pageComponents: Record<string, React.ReactNode> = {
     general: <GeneralPage />,
     keybindings: <KeybindingsPage />,
-    apikeys: <ApiKeysPage />,
-    models: <ModelsPage />,
+    providers: <ProvidersPage />,
     modes: <ModesPage />,
     workflows: <WorkflowsPage />,
     agents: <AgentsPage />,

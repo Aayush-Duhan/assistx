@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import * as schema from "./schema";
 import path from "node:path";
 import { existsSync, mkdirSync } from "node:fs";
@@ -8,7 +8,6 @@ import { uuidv7 } from "uuidv7";
 import {
   DEFAULT_MODES,
   DEFAULT_AGENTS,
-  BUILT_IN_MODELS,
   getProviderDisplayName,
 } from "./seed-data";
 import { logger } from "../lib/pino/logger";
@@ -70,10 +69,14 @@ export function initializeDatabase() {
   // Seed default data
   seedDefaultModes();
   seedDefaultAgents();
-  seedBuiltInModels();
+  migrateApiKeysToProviderConnections();
+
+  // Start proactive token refresh for OAuth connections
+  import("../lib/oauth/tokenRefreshService").then((m) => m.startTokenRefreshService()).catch(() => {});
 
   logger.info("db.init", "Database initialized", { path: dbPath });
   return db;
+
 }
 
 /**
@@ -125,31 +128,34 @@ function runMigrations() {
         )
     `);
 
-  // AI Models table (for built-in and custom models)
+  // Provider Connections table
   sqlite.exec(`
-        CREATE TABLE IF NOT EXISTS ai_models (
+        CREATE TABLE IF NOT EXISTS provider_connections (
             id TEXT PRIMARY KEY NOT NULL,
-            provider_id TEXT NOT NULL,
-            model_id TEXT NOT NULL,
-            display_name TEXT NOT NULL,
-            context_window INTEGER,
-            max_output_tokens INTEGER,
-            supports_vision INTEGER DEFAULT 0,
-            supports_tools INTEGER DEFAULT 0,
-            is_enabled INTEGER DEFAULT 1,
-            is_built_in INTEGER DEFAULT 0,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL
+            provider TEXT NOT NULL,
+            auth_type TEXT NOT NULL,
+            name TEXT,
+            email TEXT,
+            priority INTEGER,
+            is_active INTEGER DEFAULT 1,
+            data TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
         )
     `);
 
-  // Migration: Add is_built_in column if it doesn't exist
-  const columns = sqlite.prepare("PRAGMA table_info(ai_models)").all() as { name: string }[];
-  const hasBuiltInColumn = columns.some((col) => col.name === "is_built_in");
-  if (!hasBuiltInColumn) {
-    sqlite.exec("ALTER TABLE ai_models ADD COLUMN is_built_in INTEGER DEFAULT 0");
-    logger.info("db.migration", "Added is_built_in column to ai_models");
-  }
+  // Provider Nodes table
+  sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS provider_nodes (
+            id TEXT PRIMARY KEY NOT NULL,
+            type TEXT,
+            name TEXT,
+            data TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    `);
+
 
   // Workflows table
   sqlite.exec(`
@@ -275,59 +281,6 @@ function seedDefaultAgents() {
   }
 
   logger.info("db.seed", "Seeded default agents");
-}
-
-/**
- * Seed built-in AI models if they don't exist.
- * Unlike default modes/agents, we check for each model individually
- * since users may have added custom models.
- */
-function seedBuiltInModels() {
-  if (!sqlite) return;
-
-  const now = Date.now();
-
-  // Get existing model IDs grouped by provider+modelId
-  const existingModels = sqlite.prepare("SELECT provider_id, model_id FROM ai_models").all() as {
-    provider_id: string;
-    model_id: string;
-  }[];
-
-  const existingKeys = new Set(existingModels.map((m) => `${m.provider_id}:${m.model_id}`));
-
-  const stmt = sqlite.prepare(`
-        INSERT INTO ai_models (
-            id, provider_id, model_id, display_name,
-            context_window, max_output_tokens,
-            supports_vision, supports_tools,
-            is_enabled, is_built_in,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?)
-    `);
-
-  let seededCount = 0;
-  for (const model of BUILT_IN_MODELS) {
-    const key = `${model.providerId}:${model.modelId}`;
-    if (!existingKeys.has(key)) {
-      stmt.run(
-        uuidv7(),
-        model.providerId,
-        model.modelId,
-        model.displayName,
-        model.contextWindow ?? null,
-        model.maxOutputTokens ?? null,
-        model.supportsVision ? 1 : 0,
-        model.supportsTools ? 1 : 0,
-        now,
-        now,
-      );
-      seededCount++;
-    }
-  }
-
-  if (seededCount > 0) {
-    logger.info("db.seed", `Seeded ${seededCount} built-in AI models`, { count: seededCount });
-  }
 }
 
 /**
@@ -525,8 +478,388 @@ function decryptApiKey(encrypted: string): string {
 }
 
 // ============================================================================
-// API Keys CRUD Operations
+// Provider Connections & Nodes CRUD Operations
 // ============================================================================
+
+export function rowToConn(row: any): any {
+  if (!row) return null;
+  let decryptedData = {};
+  try {
+    if (row.data) {
+      decryptedData = JSON.parse(decryptApiKey(row.data));
+    }
+  } catch (e) {
+    logger.error(e instanceof Error ? e : new Error(String(e)), "db.rowToConn.decrypt.error", "Failed to decrypt connection data");
+  }
+  return {
+    ...decryptedData,
+    id: row.id,
+    provider: row.provider,
+    authType: row.authType,
+    name: row.name,
+    email: row.email,
+    priority: row.priority,
+    isActive: row.isActive === 1 || row.isActive === true || row.isActive === "1",
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function connToRow(c: any): any {
+  const { id, provider, authType, name, email, priority, isActive, createdAt, updatedAt, ...rest } = c;
+  const encryptedData = encryptApiKey(JSON.stringify(rest));
+  return {
+    id,
+    provider,
+    authType,
+    name: name ?? null,
+    email: email ?? null,
+    priority: priority ?? null,
+    isActive: isActive !== false,
+    data: encryptedData,
+    createdAt: createdAt || new Date().toISOString(),
+    updatedAt: updatedAt || new Date().toISOString(),
+  };
+}
+
+export function getProviderConnections(filter: { provider?: string; isActive?: boolean } = {}): any[] {
+  const database = getDatabase();
+  const conditions = [];
+  if (filter.provider) {
+    conditions.push(eq(schema.providerConnections.provider, filter.provider));
+  }
+  if (filter.isActive !== undefined) {
+    conditions.push(eq(schema.providerConnections.isActive, filter.isActive));
+  }
+
+  let query = database.select().from(schema.providerConnections);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  const rows = query.all();
+  const list = rows.map(rowToConn);
+  list.sort((a, b) => (a.priority || 999) - (b.priority || 999));
+  return list;
+}
+
+export function getProviderConnectionById(id: string): any {
+  const database = getDatabase();
+  const row = database
+    .select()
+    .from(schema.providerConnections)
+    .where(eq(schema.providerConnections.id, id))
+    .get();
+  return rowToConn(row);
+}
+
+export function createProviderConnection(data: any): any {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  
+  const all = getProviderConnections({ provider: data.provider });
+  let existing = null;
+  if (data.authType === "oauth" && data.email) {
+    const incomingUsername = data.providerSpecificData?.username;
+    const incomingWs = data.providerSpecificData?.chatgptAccountId;
+    existing = all.find(c => {
+      if (c.authType !== "oauth" || c.email !== data.email) return false;
+      if (data.provider === "codex") {
+        const existingWs = c.providerSpecificData?.chatgptAccountId;
+        return !!incomingWs && !!existingWs && incomingWs === existingWs;
+      }
+      const existingWs = c.providerSpecificData?.chatgptAccountId;
+      if (incomingWs && existingWs) return incomingWs === existingWs;
+      if (incomingWs && !existingWs) return false;
+      if (!incomingWs && existingWs) return false;
+      const existingUsername = c.providerSpecificData?.username;
+      if (incomingUsername && existingUsername) {
+        return incomingUsername === existingUsername;
+      }
+      if (incomingUsername || existingUsername) return false;
+      return true;
+    });
+  } else if (data.authType === "apikey" && data.name) {
+    existing = all.find(c => c.authType === "apikey" && c.name === data.name);
+  }
+
+  if (existing) {
+    const merged = { ...existing, ...data, updatedAt: now };
+    const r = connToRow(merged);
+    database
+      .update(schema.providerConnections)
+      .set({
+        provider: r.provider,
+        authType: r.authType,
+        name: r.name,
+        email: r.email,
+        priority: r.priority,
+        isActive: r.isActive,
+        data: r.data,
+        updatedAt: r.updatedAt,
+      })
+      .where(eq(schema.providerConnections.id, existing.id))
+      .run();
+    return getProviderConnectionById(existing.id);
+  }
+
+  let connectionName = data.name || null;
+  if (!connectionName && (data.authType === "oauth" || data.authType === "access_token")) {
+    connectionName = deriveConnectionName(data, data.email || `Account ${all.length + 1}`);
+  }
+  let connectionPriority = data.priority;
+  if (!connectionPriority) {
+    connectionPriority = all.reduce((m, c) => Math.max(m, c.priority || 0), 0) + 1;
+  }
+
+  const conn: any = {
+    id: uuidv7(),
+    provider: data.provider,
+    authType: data.authType || "oauth",
+    name: connectionName,
+    priority: connectionPriority,
+    isActive: data.isActive !== undefined ? data.isActive : true,
+    createdAt: now,
+    updatedAt: now,
+  };
+  
+  const OPTIONAL_FIELDS = [
+    "displayName", "email", "globalPriority", "defaultModel",
+    "accessToken", "refreshToken", "expiresAt", "tokenType",
+    "scope", "projectId", "apiKey", "testStatus",
+    "lastTested", "lastError", "lastErrorAt", "rateLimitedUntil", "expiresIn", "errorCode",
+    "consecutiveUseCount", "idToken", "lastRefreshAt",
+  ];
+  for (const f of OPTIONAL_FIELDS) {
+    if (data[f] !== undefined && data[f] !== null) conn[f] = data[f];
+  }
+  if (data.providerSpecificData && Object.keys(data.providerSpecificData).length > 0) {
+    conn.providerSpecificData = data.providerSpecificData;
+  }
+  if (data.email !== undefined) conn.email = data.email;
+
+  const r = connToRow(conn);
+  database.insert(schema.providerConnections).values(r).run();
+  
+  reorderInTx(data.provider);
+
+  return getProviderConnectionById(conn.id);
+}
+
+export function updateProviderConnection(id: string, data: any): any {
+  const database = getDatabase();
+  const existing = getProviderConnectionById(id);
+  if (!existing) return null;
+
+  const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
+  const r = connToRow(merged);
+  
+  database
+    .update(schema.providerConnections)
+    .set({
+      provider: r.provider,
+      authType: r.authType,
+      name: r.name,
+      email: r.email,
+      priority: r.priority,
+      isActive: r.isActive,
+      data: r.data,
+      updatedAt: r.updatedAt,
+    })
+    .where(eq(schema.providerConnections.id, id))
+    .run();
+
+  if (data.priority !== undefined) {
+    reorderInTx(existing.provider);
+  }
+  
+  return getProviderConnectionById(id);
+}
+
+export function deleteProviderConnection(id: string): boolean {
+  const database = getDatabase();
+  const existing = getProviderConnectionById(id);
+  if (!existing) return false;
+
+  database
+    .delete(schema.providerConnections)
+    .where(eq(schema.providerConnections.id, id))
+    .run();
+
+  reorderInTx(existing.provider);
+  return true;
+}
+
+export function deleteProviderConnectionsByProvider(providerId: string): number {
+  const database = getDatabase();
+  const rows = getProviderConnections({ provider: providerId });
+  database
+    .delete(schema.providerConnections)
+    .where(eq(schema.providerConnections.provider, providerId))
+    .run();
+  return rows.length;
+}
+
+function deriveConnectionName(data: any, fallbackName: string) {
+  if (data.provider === "github") {
+    return data.providerSpecificData?.githubLogin
+      || data.providerSpecificData?.githubEmail
+      || data.email
+      || data.providerSpecificData?.githubName
+      || fallbackName;
+  }
+  return fallbackName;
+}
+
+function reorderInTx(providerId: string) {
+  const database = getDatabase();
+  const list = getProviderConnections({ provider: providerId });
+  list.sort((a, b) => {
+    const pDiff = (a.priority || 0) - (b.priority || 0);
+    if (pDiff !== 0) return pDiff;
+    return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+  });
+  list.forEach((c, i) => {
+    database
+      .update(schema.providerConnections)
+      .set({ priority: i + 1 })
+      .where(eq(schema.providerConnections.id, c.id))
+      .run();
+  });
+}
+
+export function rowToNode(row: any): any {
+  if (!row) return null;
+  let parsedData = {};
+  try {
+    if (row.data) {
+      parsedData = JSON.parse(row.data);
+    }
+  } catch (e) {
+    logger.error(e instanceof Error ? e : new Error(String(e)), "db.rowToNode.parse.error", "Failed to parse node data");
+  }
+  return {
+    ...parsedData,
+    id: row.id,
+    type: row.type,
+    name: row.name,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function nodeToRow(n: any): any {
+  const { id, type, name, createdAt, updatedAt, ...rest } = n;
+  return {
+    id,
+    type: type ?? null,
+    name: name ?? null,
+    data: JSON.stringify(rest),
+    createdAt: createdAt || new Date().toISOString(),
+    updatedAt: updatedAt || new Date().toISOString(),
+  };
+}
+
+export function getProviderNodes(filter: { type?: string } = {}): any[] {
+  const database = getDatabase();
+  let query = database.select().from(schema.providerNodes);
+  if (filter.type) {
+    query = query.where(eq(schema.providerNodes.type, filter.type)) as any;
+  }
+  const rows = query.all();
+  return rows.map(rowToNode);
+}
+
+export function getProviderNodeById(id: string): any {
+  const database = getDatabase();
+  const row = database
+    .select()
+    .from(schema.providerNodes)
+    .where(eq(schema.providerNodes.id, id))
+    .get();
+  return rowToNode(row);
+}
+
+export function createProviderNode(data: any): any {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const node = {
+    id: data.id || uuidv7(),
+    type: data.type,
+    name: data.name,
+    prefix: data.prefix,
+    apiType: data.apiType,
+    baseUrl: data.baseUrl,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const r = nodeToRow(node);
+  
+  database
+    .insert(schema.providerNodes)
+    .values(r)
+    .onConflictDoUpdate({
+      target: schema.providerNodes.id,
+      set: {
+        type: r.type,
+        name: r.name,
+        data: r.data,
+        updatedAt: r.updatedAt,
+      }
+    })
+    .run();
+    
+  return node;
+}
+
+export function updateProviderNode(id: string, data: any): any {
+  const database = getDatabase();
+  const existing = getProviderNodeById(id);
+  if (!existing) return null;
+  const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
+  const r = nodeToRow(merged);
+  
+  database
+    .update(schema.providerNodes)
+    .set({
+      type: r.type,
+      name: r.name,
+      data: r.data,
+      updatedAt: r.updatedAt,
+    })
+    .where(eq(schema.providerNodes.id, id))
+    .run();
+    
+  return getProviderNodeById(id);
+}
+
+export function deleteProviderNode(id: string): any {
+  const database = getDatabase();
+  const existing = getProviderNodeById(id);
+  if (!existing) return null;
+  
+  database
+    .delete(schema.providerNodes)
+    .where(eq(schema.providerNodes.id, id))
+    .run();
+    
+  return existing;
+}
+
+export function getActiveCredentialForProvider(providerId: string): { apiKey?: string; accessToken?: string } | null {
+  const connections = getProviderConnections({ provider: providerId, isActive: true });
+  if (connections.length === 0) return null;
+  const conn = connections[0];
+  return {
+    apiKey: conn.apiKey,
+    accessToken: conn.accessToken
+  };
+}
+
+export function getApiKeyForProvider(provider: string): string | null {
+  const cred = getActiveCredentialForProvider(provider);
+  return cred?.apiKey || cred?.accessToken || null;
+}
 
 export interface ApiKeyInfo {
   provider: string;
@@ -537,200 +870,88 @@ export interface ApiKeyInfo {
 }
 
 export function listApiKeys(): ApiKeyInfo[] {
-  const database = getDatabase();
-  const rows = database
-    .select({
-      provider: schema.apiKeys.provider,
-      name: schema.apiKeys.name,
-      isValid: schema.apiKeys.isValid,
-      createdAt: schema.apiKeys.createdAt,
-      updatedAt: schema.apiKeys.updatedAt,
-    })
-    .from(schema.apiKeys)
-    .all();
-
-  return rows.map((row) => ({
-    provider: row.provider,
-    name: row.name,
-    isValid: row.isValid ?? true,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+  const connections = getProviderConnections();
+  return connections.map((conn) => ({
+    provider: conn.provider,
+    name: conn.name || getProviderDisplayName(conn.provider),
+    isValid: conn.isActive,
+    createdAt: new Date(conn.createdAt),
+    updatedAt: new Date(conn.updatedAt),
   }));
-}
-
-export function getApiKeyForProvider(provider: string): string | null {
-  const database = getDatabase();
-  const row = database
-    .select()
-    .from(schema.apiKeys)
-    .where(eq(schema.apiKeys.provider, provider))
-    .get();
-
-  if (!row || !row.encryptedKey) return null;
-
-  try {
-    return decryptApiKey(row.encryptedKey);
-  } catch (e) {
-    logger.error(
-      e instanceof Error ? e : new Error(String(e)),
-      "db.decrypt.error",
-      `Failed to decrypt API key for ${provider}`,
-      { provider },
-    );
-    return null;
-  }
 }
 
 export function saveApiKey(provider: string, plainKey: string, name?: string): void {
-  const database = getDatabase();
-  const now = new Date();
-  const encrypted = encryptApiKey(plainKey);
-
-  // Check if key already exists for this provider
-  const existing = database
-    .select()
-    .from(schema.apiKeys)
-    .where(eq(schema.apiKeys.provider, provider))
-    .get();
-
-  if (existing) {
-    // Update existing
-    database
-      .update(schema.apiKeys)
-      .set({
-        encryptedKey: encrypted,
-        name: name ?? getProviderDisplayName(provider),
-        isValid: true,
-        updatedAt: now,
-      })
-      .where(eq(schema.apiKeys.provider, provider))
-      .run();
-  } else {
-    // Insert new
-    database
-      .insert(schema.apiKeys)
-      .values({
-        id: uuidv7(),
-        provider,
-        name: name ?? getProviderDisplayName(provider),
-        encryptedKey: encrypted,
-        isValid: true,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .run();
-  }
+  createProviderConnection({
+    provider,
+    authType: "apikey",
+    apiKey: plainKey,
+    name: name ?? getProviderDisplayName(provider),
+    isActive: true,
+  });
 }
 
 export function deleteApiKey(provider: string): void {
-  const database = getDatabase();
-  database.delete(schema.apiKeys).where(eq(schema.apiKeys.provider, provider)).run();
+  deleteProviderConnectionsByProvider(provider);
 }
+
+export function migrateApiKeysToProviderConnections() {
+  if (!sqlite) return;
+  try {
+    const apiKeysCount = sqlite.prepare("SELECT COUNT(*) as count FROM api_keys").get() as { count: number };
+    if (!apiKeysCount || apiKeysCount.count === 0) return;
+
+    logger.info("db.migration", "Starting API keys migration to provider_connections...");
+
+    const rows = sqlite.prepare("SELECT * FROM api_keys").all() as any[];
+    const now = new Date().toISOString();
+
+    for (const row of rows) {
+      const existing = sqlite.prepare("SELECT id FROM provider_connections WHERE provider = ? AND auth_type = 'apikey'").get([row.provider]);
+      if (!existing) {
+        let plainKey = "";
+        try {
+          plainKey = decryptApiKey(row.encrypted_key);
+        } catch (e) {
+          logger.error(e instanceof Error ? e : new Error(String(e)), "db.migration.decrypt_error", `Failed to decrypt key for ${row.provider}`);
+          continue;
+        }
+
+        const connData = { apiKey: plainKey };
+        const encryptedData = encryptApiKey(JSON.stringify(connData));
+
+        sqlite.prepare(`
+          INSERT INTO provider_connections (id, provider, auth_type, name, priority, is_active, data, created_at, updated_at)
+          VALUES (?, ?, 'apikey', ?, 1, 1, ?, ?, ?)
+        `).run([
+          uuidv7(),
+          row.provider,
+          row.name || getProviderDisplayName(row.provider),
+          encryptedData,
+          now,
+          now
+        ]);
+        
+        logger.info("db.migration", `Successfully migrated key for provider ${row.provider} to provider_connections`);
+      }
+    }
+  } catch (error) {
+    logger.error(
+      error instanceof Error ? error : new Error(String(error)),
+      "db.migration.error",
+      "Failed to run API keys to provider_connections migration"
+    );
+  }
+}
+
 
 // getProviderDisplayName is now imported from seed-data.ts
-
-// ============================================================================
-// AI Models CRUD Operations
-// ============================================================================
-
-export interface AIModel {
-  id: string;
-  providerId: string;
-  modelId: string;
-  displayName: string;
-  contextWindow: number | null;
-  maxOutputTokens: number | null;
-  supportsVision: boolean;
-  supportsTools: boolean;
-  isEnabled: boolean;
-  isBuiltIn: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface NewAIModel {
-  providerId: string;
-  modelId: string;
-  displayName: string;
-  contextWindow?: number;
-  maxOutputTokens?: number;
-  supportsVision?: boolean;
-  supportsTools?: boolean;
-  isBuiltIn?: boolean;
-}
-
-export function listAIModels(): AIModel[] {
-  const database = getDatabase();
-  const rows = database.select().from(schema.aiModels).all();
-  return rows.map((row) => ({
-    id: row.id,
-    providerId: row.providerId,
-    modelId: row.modelId,
-    displayName: row.displayName,
-    contextWindow: row.contextWindow,
-    maxOutputTokens: row.maxOutputTokens,
-    supportsVision: row.supportsVision ?? false,
-    supportsTools: row.supportsTools ?? false,
-    isEnabled: row.isEnabled ?? true,
-    isBuiltIn: row.isBuiltIn ?? false,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  }));
-}
-
-export function createAIModel(data: NewAIModel): { id: string } {
-  const database = getDatabase();
-  const now = new Date();
-  const id = uuidv7();
-
-  database
-    .insert(schema.aiModels)
-    .values({
-      id,
-      providerId: data.providerId,
-      modelId: data.modelId,
-      displayName: data.displayName,
-      contextWindow: data.contextWindow,
-      maxOutputTokens: data.maxOutputTokens,
-      supportsVision: data.supportsVision ?? false,
-      supportsTools: data.supportsTools ?? false,
-      isEnabled: true,
-      isBuiltIn: data.isBuiltIn ?? false,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .run();
-
-  return { id };
-}
-
-export function updateAIModel(
-  id: string,
-  data: Partial<NewAIModel & { isEnabled: boolean }>,
-): void {
-  const database = getDatabase();
-  const now = new Date();
-
-  database
-    .update(schema.aiModels)
-    .set({
-      ...data,
-      updatedAt: now,
-    })
-    .where(eq(schema.aiModels.id, id))
-    .run();
-}
-
-export function deleteAIModel(id: string): void {
-  const database = getDatabase();
-  database.delete(schema.aiModels).where(eq(schema.aiModels.id, id)).run();
-}
 
 // ============================================================================
 // Workflows CRUD Operations
 // ============================================================================
 
-import { and, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
+
 
 export interface Workflow {
   id: string;
@@ -1067,12 +1288,9 @@ export { schema };
 // Re-export seed data for external use
 export {
   PROVIDERS,
-  BUILT_IN_MODELS,
   DEFAULT_MODES,
   DEFAULT_AGENTS,
   getProviderDisplayName,
-  getBuiltInModelsByProvider,
-  type BuiltInModel,
   type DefaultMode,
   type DefaultAgent,
   type ProviderConfig,

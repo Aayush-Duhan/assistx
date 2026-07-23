@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { modelsApi, type ProviderModels } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 interface ModelInfo {
   name: string;
@@ -20,19 +20,27 @@ export const useChatModels = () => {
     const fetchModels = async () => {
       try {
         setIsLoading(true);
-        const providers = await modelsApi.list();
+        const [modelsRes, connectionsRes] = await Promise.all([
+          apiFetch("/providers/models"),
+          apiFetch("/providers"),
+        ]);
+        if (!modelsRes.ok || !connectionsRes.ok) throw new Error("Failed to fetch models");
+        const { providerModels } = (await modelsRes.json()) as {
+          providerModels: Record<string, { id: string; name: string }[]>;
+        };
+        const { connections } = (await connectionsRes.json()) as {
+          connections: { provider: string; isActive: boolean }[];
+        };
 
-        // Transform API response to expected format
-        const transformed: ProviderInfo[] = providers.map((p: ProviderModels) => ({
-          provider: p.providerId,
-          hasAPIKey: p.hasApiKey,
-          models: [
-            // Built-in models - extract modelId from AIModel objects
-            ...p.builtInModels.map((m) => ({ name: m.modelId })),
-            // Custom models - use displayName for custom models
-            ...p.customModels.map((m) => ({ name: m.displayName })),
-          ],
-        }));
+        const activeProviders = new Set(connections.filter((c) => c.isActive).map((c) => c.provider));
+
+        const transformed: ProviderInfo[] = Object.entries(providerModels).map(
+          ([providerId, models]) => ({
+            provider: providerId,
+            hasAPIKey: activeProviders.has(providerId),
+            models: models.map((m) => ({ name: m.name })),
+          }),
+        );
 
         // Sort by API key availability
         transformed.sort((a, b) => {
