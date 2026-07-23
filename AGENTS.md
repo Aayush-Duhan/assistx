@@ -29,7 +29,6 @@ assistx/
 │   ├── state/             # Global state (atoms, stores)
 │   └── stores/            # Zustand stores
 ├── electron/              # Electron main process
-│   ├── lib/ai/mcp/       # MCP (Model Context Protocol) implementation
 │   └── preload.ts        # Preload script
 ├── shared/                # Shared types and utilities
 ├── server/                # Fastify server for local API
@@ -194,19 +193,12 @@ Located in `src/components/ui/`, follow these patterns:
 ### Main Process (`electron/`)
 - Entry point: `main.ts` (not shown in structure, implied)
 - IPC handlers: `ipc/` directory
-- MCP implementation: `lib/ai/mcp/`
 - Preload script: `preload.ts`
 
 ### IPC Communication
 - Use type-safe IPC channels
 - Validate all inputs in main process
 - Keep preload script minimal and secure
-
-### MCP (Model Context Protocol)
-Implementation in `electron/lib/ai/mcp/`:
-- Configuration storage: `fb-mcp-config-storage.ts`
-- Server management: `McpServerManager.ts`
-- Tool execution: `McpToolExecutor.ts`
 
 ## Testing Guidelines
 

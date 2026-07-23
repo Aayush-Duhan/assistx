@@ -52,3 +52,5 @@ better-chatbot/
 
 .agent/
 .claude/
+# Local databases
+data/

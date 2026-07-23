@@ -13,7 +13,6 @@ import { logger } from "./lib/pino";
 import ctxPlugin from "./lib/plugins/ctxPlugin";
 import { registerRoutes } from "./routes";
 import { initializeDatabase } from "./db";
-import { initMCPService } from "./services/mcp.service";
 
 // Load environment variables
 dotenv.config();
@@ -107,18 +106,6 @@ export async function initializeApp(): Promise<void> {
 
   // Initialize database
   initializeDatabase();
-
-  // Initialize MCP service
-  try {
-    await initMCPService();
-    logger.info("app.init", "MCP service initialized");
-  } catch (error) {
-    logger.error(
-      error instanceof Error ? error : new Error(String(error)),
-      "app.init.error",
-      "Failed to initialize MCP service",
-    );
-  }
 
   // Register plugins
   await registerPlugins();

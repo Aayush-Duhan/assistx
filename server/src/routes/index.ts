@@ -9,7 +9,6 @@ import { modesRoutes } from "./modes.routes";
 import { agentsRoutes } from "./agents.routes";
 import { providersRoutes } from "./providers.routes";
 import { oauthRoutes } from "./oauth.routes";
-import { mcpRoutes } from "./mcp.routes";
 import { chatRoutes } from "./chat.routes";
 
 /**
@@ -30,9 +29,6 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
 
   // Providers routes (unified connection and node management)
   await fastify.register(providersRoutes, { prefix: "/api/providers" });
-
-  // MCP routes (Model Context Protocol server management)
-  await fastify.register(mcpRoutes, { prefix: "/api/mcp" });
 
   // Chat routes (OpenAI-compatible proxy over provider connections)
   await fastify.register(chatRoutes, { prefix: "/api/chat" });

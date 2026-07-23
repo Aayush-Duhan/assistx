@@ -12,14 +12,8 @@ import {
 import { captureScreenshot } from "../features/screenshot";
 import { IS_MAC } from "@/shared/constants";
 import { getSharedState, updateSharedState } from "../utils/shared/stateManager";
-import { join } from "path";
 
 import { getServerConfig } from "../utils/serverConfig";
-
-// Get MCP config path (same logic as mcp-config.service.ts)
-function getMcpConfigPath(): string {
-  return join(app.getPath("userData"), ".mcp-config.json");
-}
 
 export function initializeIpcHandlers(): void {
   // Server configuration for renderer
@@ -89,18 +83,6 @@ export function initializeIpcHandlers(): void {
     await shell.openExternal(url);
   });
 
-  // MCP configuration OS handlers
-  handle("mcp-get-config-path", async () => {
-    return { path: getMcpConfigPath() };
-  });
-
-  handle("mcp-open-config", async () => {
-    await shell.openPath(getMcpConfigPath());
-  });
-
-  handle("mcp-reveal-config", async () => {
-    shell.showItemInFolder(getMcpConfigPath());
-  });
   // Permissions
   handle("request-media-permission", async (_event, mediaType) => {
     if (IS_MAC) {

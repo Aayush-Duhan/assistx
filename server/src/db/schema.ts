@@ -43,7 +43,7 @@ export const agents = sqliteTable("agents", {
   modelId: text("model_id"), // Custom model ID (no reference constraints as models are listed dynamically)
   iconUrl: text("icon_url"), // CDN emoji URL
   iconBgColor: text("icon_bg_color"), // Background color (oklch format)
-  toolConfig: text("tool_config", { mode: "json" }), // JSON: enabled MCP tools
+  toolConfig: text("tool_config", { mode: "json" }), // JSON: enabled tools
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
@@ -76,22 +76,6 @@ export const transcripts = sqliteTable("transcripts", {
   timestampMs: integer("timestamp_ms").notNull(), // Milliseconds from session start
   confidence: integer("confidence"), // 0-100
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
-
-// ============================================================================
-// MCP Servers Table
-// Model Context Protocol server configurations
-// ============================================================================
-export const mcpServers = sqliteTable("mcp_servers", {
-  id: text("id").primaryKey(), // UUIDv7
-  name: text("name").notNull(),
-  command: text("command").notNull(), // e.g., 'node', 'python'
-  args: text("args", { mode: "json" }), // Command arguments as JSON array
-  envVars: text("env_vars", { mode: "json" }), // Environment variables as JSON
-  isEnabled: integer("is_enabled", { mode: "boolean" }).default(true),
-  lastConnectedAt: integer("last_connected_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
 // ============================================================================

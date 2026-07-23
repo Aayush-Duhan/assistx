@@ -8,7 +8,7 @@ import { updateSharedState } from "./utils/shared/stateManager";
 const PROTOCOL_NAME = "assistx";
 const isDev = process.env.NODE_ENV === "development";
 
-// Simple event bus for main-process consumers (e.g., MCP OAuth manager)
+// Simple event bus for main-process consumers (e.g., provider OAuth manager)
 const protocolEvents = new EventEmitter();
 let initialProtocolUrl: string | null = null;
 
@@ -19,24 +19,9 @@ export function setInitialProtocolUrl(url: string): void {
 function handleProtocolUrl(url: string) {
   try {
     const parsedUrl = new URL(url);
-    const host = parsedUrl.hostname; // e.g., 'mcp'
+    const host = parsedUrl.hostname; // e.g., 'oauth'
     const pathname = parsedUrl.pathname || "/"; // e.g., '/oauth/callback'
     const params = Object.fromEntries(parsedUrl.searchParams);
-
-    // Special-case MCP OAuth callback: assistx://mcp/oauth/callback?code=...&state=...
-    if (host === "mcp" && pathname.replace(/\/+$/, "") === "/oauth/callback") {
-      const code = params["code"] as string | undefined;
-      const state = params["state"] as string | undefined;
-      if (!code || !state) {
-        console.error("MCP OAuth callback missing code/state", { code, state });
-        return;
-      }
-      // Notify main-process listeners
-      protocolEvents.emit("mcp-oauth-callback", { code, state, url });
-      // Also notify renderer (optional UI handling)
-      windowManager.sendToWebContents("mcp-oauth-callback", { code, state, __rawUrl: url });
-      return;
-    }
 
     // Special-case Provider OAuth callback: assistx://oauth/callback?code=...&state=...
     if (
@@ -108,14 +93,6 @@ export function setupMainProtocolHandlers(): void {
       windowManager.sendToWebContents("provider-oauth-callback", payload);
     },
   );
-}
-
-// Allow other main-process modules to subscribe to MCP OAuth callbacks
-export function onMcpOAuthCallback(
-  handler: (payload: { code: string; state: string; url: string }) => void,
-): () => void {
-  protocolEvents.on("mcp-oauth-callback", handler);
-  return () => protocolEvents.off("mcp-oauth-callback", handler);
 }
 
 export function onProviderOAuthCallback(

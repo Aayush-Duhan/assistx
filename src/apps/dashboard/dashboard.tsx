@@ -7,7 +7,6 @@ import KeybindingsPage from "./pages/main/keyBindingsPage";
 import ProvidersPage from "./pages/features/providersPage";
 import ModesPage from "./pages/main/modesPage";
 import AgentsPage from "./pages/tools/agentsPage";
-import McpPage from "./pages/tools/mcpPage";
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState("general");
@@ -19,7 +18,6 @@ export default function Dashboard() {
     providers: <ProvidersPage />,
     modes: <ModesPage />,
     agents: <AgentsPage />,
-    mcps: <McpPage />,
   };
 
   const renderPage = () => pageComponents[activePage] ?? <GeneralPage />;

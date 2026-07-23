@@ -7,7 +7,6 @@ import {
   LuBell,
   LuWrench,
   LuBot,
-  LuCable,
   LuKeyRound,
 } from "react-icons/lu";
 import { SidebarSectionData } from "./types";
@@ -35,7 +34,6 @@ export const sidebarData: Record<string, SidebarSectionData> = {
   tools: {
     title: "Tools",
     items: [
-      { key: "mcps", label: "MCPs", icon: <LuCable size={ICON_SIZE} /> },
       { key: "built-in", label: "Built-in", icon: <LuWrench size={ICON_SIZE} /> },
       { key: "agents", label: "Agents", icon: <LuBot size={ICON_SIZE} /> },
     ],

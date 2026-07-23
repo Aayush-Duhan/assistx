@@ -36,7 +36,6 @@
     "@fastify/cors": "^11.3.0",
     "@fastify/websocket": "^11.3.0",
     "@headlessui/react": "^2.2.10",
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "@openrouter/ai-sdk-provider": "^3.0.0",
     "@radix-ui/react-dialog": "^1.1.21",
     "@radix-ui/react-popover": "^1.1.21",
